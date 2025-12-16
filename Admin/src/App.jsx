@@ -3,6 +3,13 @@ import Menu from "./components/Menu"
 import Home from "./pages/Home"
 import Users from "./pages/Users"
 import Products from "./pages/Products"
+import Orders from "./pages/Orders"
+import Banners from "./pages/Banners"
+import Settings from "./pages/Settings"
+import Backups from "./pages/Backups"
+import Charts from "./pages/Charts"
+import Myaccounts from "./pages/Myaccounts"
+import Logout from "./pages/Logout"
 
 
 const Layout = () => {
@@ -28,6 +35,10 @@ const router = createBrowserRouter([
         element: <Home/>,
       },
       {
+        path: "/profile",
+        element: <Myaccounts />,
+      },
+      {
         path: "/users",
         element: <Users />,
       },
@@ -35,6 +46,34 @@ const router = createBrowserRouter([
         path: "/products",
         element: <Products />,
       },
+       {
+        path: "/orders",
+        element: <Orders />,
+      },
+       {
+        path: "/banners",
+        element: <Banners />,
+      },
+      {
+        path: "/settings",
+        element: <Settings />,
+      },
+       {
+        path: "/backups",
+        element: <Backups />,
+      },
+      {
+        path: "/charts",
+        element: <Charts />,
+      },
+      {
+        path: "/all-logs",
+        element: <Backups />,
+      },{
+        path: "/logout",
+        element: <Logout />,
+      }
+      
     ],
   },
 ])
