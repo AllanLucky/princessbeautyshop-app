@@ -5,8 +5,8 @@ import { useState } from "react";
 
 const NewProduct = () => {
   const [selectedImage, setSelectedImage] = useState(null);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState("");
   const [inputs, setInputs] = useState({});
-  const [image, setImage] = useState("");
   const [uploading, setUploading] = useState("Uploading is 0%");
   const [selectedOptions, setSelectedOptions] = useState({
     concern: [],
@@ -19,7 +19,7 @@ const NewProduct = () => {
     if (e.target.files && e.target.files.length > 0) {
       setSelectedImage(e.target.files[0]);
     }
-  };
+  }
 
   // Input change handler
   const handleChange = (e) => {
@@ -27,7 +27,7 @@ const NewProduct = () => {
       ...prev,
       [e.target.name]: e.target.value
     }));
-  };
+  }
 
   // Add selected option
   const handleSelectedChange = (e) => {
@@ -36,7 +36,7 @@ const NewProduct = () => {
       ...prev,
       [name]: [...prev[name], value]
     }));
-  };
+  }
 
   // Remove selected option
   const handleRemoveOption = (name, value) => {
@@ -44,9 +44,9 @@ const NewProduct = () => {
       ...prev,
       [name]: prev[name].filter((option) => option !== value)
     }));
-  };
+  }
 
-  // Upload handler
+  // Upload and create product
   const handleUpload = async (e) => {
     e.preventDefault();
     if (!selectedImage) return;
@@ -63,23 +63,23 @@ const NewProduct = () => {
         data
       );
 
-      const uploadedImageUrl = uploadRes.data.secure_url;
-      setImage(uploadedImageUrl);
+      const { url } = uploadRes.data;
+      setUploadedImageUrl(url);
 
-      // Send product data to backend
+      // Send product data to server
       await userRequest.post("/products", {
-        img: uploadedImageUrl,
+        img: url,
         ...inputs,
         ...selectedOptions
       });
 
-      setUploading("Uploaded 100%");
-      console.log("Uploaded image URL:", uploadedImageUrl);
+      setUploading("Upload completed!");
+      console.log("Product uploaded successfully!");
     } catch (error) {
       console.error("Upload failed:", error);
       setUploading("Upload failed!");
     }
-  };
+  }
 
   return (
     <div className="p-5 w-[79vw]">
@@ -163,6 +163,7 @@ const NewProduct = () => {
                 placeholder="KES 2000"
               />
             </div>
+
           </div>
 
           {/* RIGHT SIDE */}
@@ -266,8 +267,9 @@ const NewProduct = () => {
 
             {/* Create Button */}
             <button
-              className="bg-slate-500 text-white py-2 px-4 rounded-lg"
+              type="button"
               onClick={handleUpload}
+              className="bg-slate-500 text-white py-2 px-4 rounded-lg"
             >
               Create Product
             </button>
