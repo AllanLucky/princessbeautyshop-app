@@ -10,6 +10,8 @@ import Backups from "./pages/Backups"
 import Charts from "./pages/Charts"
 import Myaccounts from "./pages/Myaccounts"
 import Logout from "./pages/Logout"
+import NewProduct from "./pages/NewProduct"
+import Product from "./pages/Product"
 
 
 const Layout = () => {
@@ -45,6 +47,14 @@ const router = createBrowserRouter([
       {
         path: "/products",
         element: <Products />,
+      },
+      {
+        path: "/newproduct",
+        element: <NewProduct />,
+      },
+      {
+        path: "/product/:productId",
+        element: <Product />,
       },
        {
         path: "/orders",
