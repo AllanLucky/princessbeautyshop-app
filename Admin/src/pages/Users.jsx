@@ -1,74 +1,28 @@
 import { DataGrid } from "@mui/x-data-grid";
 import { Link } from "react-router-dom";
 import { FaTrash } from "react-icons/fa";
+import { userRequest } from "../requestMethods";
+import { useEffect, useState } from 'react';
 
 const Users = () => {
-  const userData = [
-  {
-    _id: 1,
-    name: "Lucky Tsori",
-    email: "lucky@gmail.com",
-    avatar: "https://picsum.photos/100?7",
-    role: "Admin",
-    active: true
-  },
-  {
-    _id: 2,
-    name: "John Doe",
-    email: "john@gmail.com",
-    avatar: "https://picsum.photos/100?8",
-    role: "User",
-    active: true
-  },
-  {
-    _id: 3,
-    name: "Mary Wanjiku",
-    email: "mary@gmail.com",
-    avatar: "https://picsum.photos/100?9",
-    role: "Manager",
-    active: false
-  },
-  {
-    _id: 4,
-    name: "Brian Kim",
-    email: "brian@gmail.com",
-    avatar: "https://picsum.photos/100?10",
-    role: "User",
-    active: true
-  },
-  {
-    _id: 5,
-    name: "Sarah Mumo",
-    email: "sarah@gmail.com",
-    avatar: "https://picsum.photos/100?11",
-    role: "User",
-    active: false
-  },
-  {
-    _id: 6,
-    name: "Kevin Otieno",
-    email: "kevin@gmail.com",
-    avatar: "https://picsum.photos/100?12",
-    role: "Support",
-    active: true
-  },
-  {
-    _id: 7,
-    name: "Jackson Otieno",
-    email: "kevin@gmail.com",
-    avatar: "https://picsum.photos/100?12",
-    role: "Support",
-    active: true
-  },
-  {
-    _id: 8,
-    name: "Kevin Otieno",
-    email: "kevin@gmail.com",
-    avatar: "https://picsum.photos/100?12",
-    role: "Support",
-    active: true
-  }
-];
+
+    const [users, setUsers] = useState([]);
+  
+  useEffect(() => {
+    const getUsers = async () => {
+      try {
+        const response = await userRequest.get("/users");
+        setUsers(response.data.users);
+      } catch(error) {
+        console.log(error);
+      }
+    }
+    getUsers();
+  }, [])
+
+
+
+
 
 const userColumns = [
   { field: "_id", headerName: "ID", width: 90 },
@@ -110,14 +64,6 @@ const userColumns = [
     },
   },
 
-  // {
-  //   field: "delete",
-  //   headerName: "Delete",
-  //   width: 100,
-  //   renderCell: () => {
-  //     return <FaTrash className="text-red-500 cursor-pointer" />;
-  //   },
-  // },
 ];
 
   return (
@@ -127,7 +73,7 @@ const userColumns = [
       </div>
       {/* CREATING TABLE TO DISPLAY PRODUCTS */}
       <div className='m-[15px]'>
-          <DataGrid rows={userData} checkboxSelection columns={userColumns} getRowId={(row) => row._id} />
+          <DataGrid rows={users} checkboxSelection columns={userColumns} getRowId={(row) => row._id} />
       </div>
     </div>
   )
