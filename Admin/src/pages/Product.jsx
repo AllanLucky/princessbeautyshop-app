@@ -6,9 +6,11 @@ const Product = () => {
     <div className="p-5 w-[79vw]">
       <div className="flex items-center justify-between mb-5">
         <h3 className="text-3xl font-semibold">Product</h3>
+        <Link t0="/newproduct">
         <button className="bg-slate-500 text-white py-2 px-4 rounded-lg">
           Create
         </button>
+        </Link>
       </div>
 
       {/* SECOND PART */}
