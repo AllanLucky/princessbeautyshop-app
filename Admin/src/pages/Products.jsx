@@ -1,90 +1,23 @@
 import { DataGrid } from '@mui/x-data-grid';
 import { Link } from "react-router-dom";
 import { FaTrash } from "react-icons/fa";
+import {userRequest} from "../requestMethods";
+import { useEffect, useState } from 'react';
 const Products = () => {
-const data = [
-  {
-    _id: 1,
-    title: "Wireless Headphones",
-    img: "https://picsum.photos/100?1",
-    desc: "Comfortable wireless headphones",
-    originaPrice: 120,
-    discountPrice: 99,
-    instock: true
-  },
-  {
-    _id: 2,
-    title: "Smart Watch",
-    img: "https://picsum.photos/100?2",
-    desc: "Fitness tracking smart watch",
-    originaPrice: 150,
-    discountPrice: 130,
-    instock: true
-  },
-  {
-    _id: 3,
-    title: "Bluetooth Speaker",
-    img: "https://picsum.photos/100?3",
-    desc: "High quality portable speaker",
-    originaPrice: 80,
-    discountPrice: 65,
-    instock: false
-  },
-  {
-    _id: 4,
-    title: "Gaming Mouse",
-    img: "https://picsum.photos/100?4",
-    desc: "Ergonomic RGB gaming mouse",
-    originaPrice: 60,
-    discountPrice: 45,
-    instock: true
-  },
-  {
-    _id: 5,
-    title: "Mechanical Keyboard",
-    img: "https://picsum.photos/100?5",
-    desc: "Backlit mechanical keyboard",
-    originaPrice: 140,
-    discountPrice: 110,
-    instock: true
-  },
-  {
-    _id: 6,
-    title: "4K Monitor",
-    img: "https://picsum.photos/100?6",
-    desc: "Ultra HD display monitor",
-    originaPrice: 450,
-    discountPrice: 399,
-    instock: false
-  },
-  {
-    _id: 7,
-    title: "4K Monitor",
-    img: "https://picsum.photos/100?6",
-    desc: "Ultra HD display monitor",
-    originaPrice: 450,
-    discountPrice: 399,
-    instock: false
-  },
-   {
-    _id: 8,
-    title: "4K Monitor",
-    img: "https://picsum.photos/100?6",
-    desc: "Ultra HD display monitor",
-    originaPrice: 450,
-    discountPrice: 399,
-    instock: false
-  },
-  //  {
-  //   _id: 7,
-  //   title: "4K Monitor",
-  //   img: "https://picsum.photos/100?6",
-  //   desc: "Ultra HD display monitor",
-  //   originaPrice: 450,
-  //   discountPrice: 399,
-  //   instock: false
-  // }
-];
+
+  const [products, setProducts] = useState([]);
+  
+  useEffect(()=>{
+    const getProducts = async () =>{
+      try{
+        const response = await userRequest.get("/products");
+        setProducts(response.data)
+      }catch(error){
+        console.log(error)
+      }
+    }
+    getProducts();
+  },[])
 
 const columns = [
   { field: "_id", headerName: "ID", width: 90 },
@@ -148,7 +81,7 @@ const columns = [
       </div>
       {/* CREATING TABLE TO DISPLAY PRODUCTS */}
       <div className='m-[15px]'>
-          <DataGrid rows={data} checkboxSelection columns={columns} getRowId={(row) => row._id} />
+          <DataGrid rows={products} checkboxSelection columns={columns} getRowId={(row) => row._id} />
       </div>
     </div>
   )
