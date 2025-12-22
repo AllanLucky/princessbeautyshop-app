@@ -6,7 +6,7 @@ import { useState } from "react";
 const NewProduct = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [inputs, setInputs] = useState({});
-  const [uploading, setUploading] = useState("Uploading is 0%");
+  const [uploading, setUploading] = useState("Uploading is 0%")
   const [selectedOptions, setSelectedOptions] = useState({
     concern: [],
     skintype: [],
