@@ -5,7 +5,6 @@ import { useState } from "react";
 
 const NewProduct = () => {
   const [selectedImage, setSelectedImage] = useState(null);
-  const [uploadedImageUrl, setUploadedImageUrl] = useState("");
   const [inputs, setInputs] = useState({});
   const [uploading, setUploading] = useState("Uploading is 0%");
   const [selectedOptions, setSelectedOptions] = useState({
@@ -64,16 +63,9 @@ const NewProduct = () => {
       );
 
       const { url } = uploadRes.data;
-      setUploadedImageUrl(url);
-
-      // Send product data to server
-      await userRequest.post("/products", {
-        img: url,
-        ...inputs,
-        ...selectedOptions
-      });
-
-      setUploading("Upload completed!");
+      // Sending the data to the server
+      setUploading("Uploaded 100%")
+      await userRequest.post("/products",{img:url,...inputs, ...selectedOptions})
       console.log("Product uploaded successfully!");
     } catch (error) {
       console.error("Upload failed:", error);
