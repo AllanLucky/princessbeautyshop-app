@@ -1,162 +1,116 @@
 import Product from "../models/productModel.js";
 import asyncHandler from "express-async-handler";
 
-// ========================
 // CREATE PRODUCT
-// POST /api/v1/products
-// ACCESS: PRIVATE/ADMIN
-// ========================
 const createProduct = asyncHandler(async (req, res) => {
-  const newProduct = new Product(req.body);
-  const product = await newProduct.save();
+  const newProduct = await Product(req.body);
+  const product = newProduct.save();
 
   if (product) {
-    res.status(201).json({
-      success: true,
-      message: "Product created successfully",
-      product,
-    });
+    res.status(201).json(product);
   } else {
     res.status(400);
-    throw new Error("Failed to create product");
+    throw new Error("Product was not created");
   }
 });
 
-// ========================
+// UPDATE PRODUCT
+
+const updateProduct = asyncHandler(async (req, res) => {
+  const updatedProduct = await Product.findByIdAndUpdate(
+    req.params.id,
+    {
+      $set: req.body,
+    },
+    { new: true }
+  );
+
+  if (!updateProduct) {
+    res.status(400);
+    throw new Error("Product has not been updated");
+  } else {
+    res.status(201).json(updatedProduct);
+  }
+});
+
+//DELETE PRODUCT
+const deleteProduct = asyncHandler(async (req, res) => {
+  const product = await Product.findByIdAndDelete(req.params.id);
+  if (!product) {
+    res.status(400);
+    throw new Error("product was not deleted");
+  } else {
+    res.status(201).json("Product deleted successfully");
+  }
+});
+
+// GET PRODUCT
+const getProduct = asyncHandler(async (req, res) => {
+  const product = await Product.findById(req.params.id);
+
+  if (!product) {
+    res.status(400);
+    throw new Error("Product not found");
+  } else {
+    res.status(200).json(product);
+  }
+});
+
 // GET ALL PRODUCTS
-// GET /api/v1/products
-// ACCESS: PUBLIC
-// ========================
-const getProducts = asyncHandler(async (req, res) => {
-  const { new: qNew, category: qCategory, search: qSearch } = req.query;
+const getALLproducts = asyncHandler(async (req, res) => {
+  const qNew = req.query.new;
+  const qCategory = req.query.category;
+  const qsearch = req.query.search;
+
   let products;
 
   if (qNew) {
-    products = await Product.find().sort({ createdAt: -1 }).limit(5);
+    products = await Product.find().sort({ createdAt: -1 });
   } else if (qCategory) {
+    products = await Product.find({ categories: { $in: [qCategory] } });
+  } else if (qsearch) {
     products = await Product.find({
-      categories: { $in: [qCategory] },
-    });
-  } else if (qSearch) {
-    products = await Product.find({
-      title: { $regex: qSearch, $options: "i" },
+      $text: {
+        $search: qsearch,
+        $caseSensitive: false,
+        $diacriticSensitive: false,
+      },
     });
   } else {
     products = await Product.find().sort({ createdAt: -1 });
+   
   }
-
-  res.status(200).json({
-    success: true,
-    count: products.length,
-    products,
-  });
+  res.status(200).json(products)
 });
 
-// ========================
-// GET SINGLE PRODUCT
-// GET /api/v1/products/:id
-// ACCESS: PUBLIC
-// ========================
-const getProductById = asyncHandler(async (req, res) => {
-  const product = await Product.findById(req.params.id);
+// RATING PRODUCT
 
-  if (product) {
-    res.status(200).json({
-      success: true,
-      product,
-    });
-  } else {
-    res.status(404);
-    throw new Error("Product not found");
-  }
-});
-
-// ========================
-// UPDATE PRODUCT
-// PUT /api/v1/products/:id
-// ACCESS: PRIVATE/ADMIN
-// ========================
-const updateProduct = asyncHandler(async (req, res) => {
-  const product = await Product.findByIdAndUpdate(
-    req.params.id,
-    { $set: req.body },
-    { new: true, runValidators: true }
-  );
-
-  if (product) {
-    res.status(200).json({
-      success: true,
-      message: "Product updated successfully",
-      product,
-    });
-  } else {
-    res.status(404);
-    throw new Error("Product not found or could not be updated");
-  }
-});
-
-// ========================
-// DELETE PRODUCT
-// DELETE /api/v1/products/:id
-// ACCESS: PRIVATE/ADMIN
-// ========================
-const deleteProduct = asyncHandler(async (req, res) => {
-  const product = await Product.findByIdAndDelete(req.params.id);
-
-  if (product) {
-    res.status(200).json({
-      success: true,
-      message: "Product deleted successfully",
-    });
-  } else {
-    res.status(404);
-    throw new Error("Product not found");
-  }
-});
-
-// ========================
-// RATE PRODUCT
-// POST /api/v1/products/:id/rate
-// ACCESS: PUBLIC (or PRIVATE if login required)
-// ========================
-const rateProduct = asyncHandler(async (req, res) => {
+const ratingProduct = asyncHandler(async (req, res) => {
   const { star, name, comment, postedBy } = req.body;
 
-  if (!star || !name || !postedBy) {
+  console.log(star, name, comment, postedBy)
+  console.log(req.params.id)
+
+
+  if (star) {
+    await Product.findByIdAndUpdate(
+      req.params.id,
+
+      {
+        $push: { ratings: { star, name, comment, postedBy } },
+      },
+      {
+        new: true,
+      }
+    );
+    res.status(201).json("product was rated successfully");
+  } else {
     res.status(400);
-    throw new Error("Star rating, name, and postedBy are required");
+    throw new Error("product was not rated successfully");
   }
-
-  const starNumber = Number(star);
-  if (isNaN(starNumber) || starNumber < 1 || starNumber > 5) {
-    res.status(400);
-    throw new Error("Star rating must be a number between 1 and 5");
-  }
-
-  const product = await Product.findByIdAndUpdate(
-    req.params.id,
-    {
-      $push: { rating: { star: starNumber, name, comment, postedBy } },
-    },
-    { new: true, runValidators: true }
-  );
-
-  if (!product) {
-    res.status(404);
-    throw new Error("Product not found");
-  }
-
-  res.status(200).json({
-    success: true,
-    message: "Product rated successfully",
-    product,
-  });
 });
 
-export {
-  createProduct, getProducts, getProductById, updateProduct, deleteProduct, rateProduct,
-};
-
+export {ratingProduct, getALLproducts,getProduct, createProduct,updateProduct, deleteProduct}
 
 
 
