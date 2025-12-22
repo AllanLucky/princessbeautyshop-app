@@ -1,41 +1,26 @@
-import express from "express";
 import {
-  getProducts,
-  rateProduct,
-  getProductById,
+  ratingProduct,
+  getALLproducts,
+  getProduct,
   createProduct,
   updateProduct,
   deleteProduct,
 } from "../controllers/productController.js";
-
+import express from "express";
 const router = express.Router();
 
-// ========================
-// PRODUCT ROUTES
-// ========================
-
+// RATING PRODUCT ROUTE
+router.put("/rating/:id", ratingProduct);
 // GET ALL PRODUCTS
-// GET /api/v1/products
-router.get("/", getProducts);
-
-// GET SINGLE PRODUCT
-// GET /api/v1/products/:id
-router.get("/:id", getProductById);
-
-// CREATE PRODUCT
-// POST /api/v1/products
+router.get("/", getALLproducts);
+// GET ONE PRODUCT
+router.get("/find/:id", getProduct);
+//CREATE PRODUCT
 router.post("/", createProduct);
-
 // UPDATE PRODUCT
-// PUT /api/v1/products/:id
 router.put("/:id", updateProduct);
 
-// DELETE PRODUCT
-// DELETE /api/v1/products/:id
+//DELETE PRODUCT
 router.delete("/:id", deleteProduct);
-
-// RATE PRODUCT
-// PUT /api/v1/products/rating/:productId
-router.put("/rating/:productId", rateProduct);
 
 export default router;
