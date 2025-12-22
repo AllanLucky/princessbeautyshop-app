@@ -1,8 +1,45 @@
 import { LineChart } from "@mui/x-charts/LineChart";
+import {  useEffect, useState } from "react";
 import { FaUpload } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import {userRequest} from "../requestMethods"
 
 const Product = () => {
+  const location = useLocation();
+  const id = location.pathname.split("/")[2];
+  const [product, setProduct] = useState({});
+  const [inputs, setInputs] = useState({});
+
+
+useEffect(()=>{
+  const getProduct = async()=>{
+    try{
+      const response = await userRequest .get("/products/find/" + id)
+      setProduct(response.data);
+    }catch(error){
+      console.log(error)
+    }
+  }
+  getProduct();
+
+},[])
+
+ const handleChange = (e) => {
+    setInputs((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
+  }
+
+  const handleUpdate  = async () =>{
+    try{
+      await userRequest.put(`/product/${id}`, {...inputs})
+
+    }catch(error){
+      console.log(error)
+    }
+  }
+
   return (
     <div className="p-5 w-[79vw]">
       <div className="flex items-center justify-between mb-5">
@@ -31,7 +68,7 @@ const Product = () => {
         <div className="flex-1 bg-white p-5 rounded-lg shadow-lg">
           <div className="flex items-center mb-5">
             <img
-              src="/lotion.jpg"
+              src={product.img}
               alt=""
               className="h-20 w-20 rounded-full mr-5"
             />
@@ -42,11 +79,11 @@ const Product = () => {
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="font-semibold">ID</span>
-              <span>65235678</span>
+              <span>{product._id}</span>
             </div>
             <div className="flex justify-between">
               <span className="font-semibold">Sales</span>
-              <span>652</span>
+              <span>{product._id}</span>
             </div>
             <div className="flex justify-between">
               <span className="font-semibold">In Stock</span>
@@ -67,6 +104,9 @@ const Product = () => {
               </label>
               <input
                 type="text"
+                name="title"
+                placeholder={product.title}
+                onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded"
               />
             </div>
@@ -77,6 +117,9 @@ const Product = () => {
               </label>
               <input
                 type="text"
+                name="desc"
+                 placeholder={product.desc}
+                   onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded"
               />
             </div>
@@ -87,6 +130,9 @@ const Product = () => {
               </label>
               <input
                 type="number"
+                name="originalPrice"
+                 placeholder={product.originalPrice}
+                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded"
               />
             </div>
@@ -97,6 +143,9 @@ const Product = () => {
               </label>
               <input
                 type="number"
+                name="discountedPrice"
+                 placeholder={product.discountedPrice}
+                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded"
               />
             </div>
@@ -115,14 +164,16 @@ const Product = () => {
           {/* RIGHT SIDE */}
           <div className="flex-1 flex flex-col items-center space-y-5">
             <img
-              src="/lotion.jpg"
+              src={product.img}
               alt=""
               className="h-32 w-32 rounded-full"
             />
             <label className="cursor-pointer">
               <FaUpload className="text-3xl text-gray-800" />
             </label>
-            <button className="bg-slate-600 text-white py-3 px-6 rounded-lg">
+            <button className="bg-slate-600 text-white py-3 px-6 rounded-lg"
+            onClick={handleUpdate}
+            >
               Update
             </button>
           </div>
