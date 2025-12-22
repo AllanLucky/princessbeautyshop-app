@@ -12,7 +12,7 @@ const Products = () => {
     const getProducts = async () => {
       try {
         const response = await userRequest.get("/products");
-        setProducts(response.data.products);
+        setProducts(response.data);
       } catch(error) {
         console.log(error);
       }
