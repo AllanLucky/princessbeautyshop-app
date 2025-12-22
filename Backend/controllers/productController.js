@@ -1,4 +1,4 @@
-import Product from "../models/productModel.js";
+import Product from "../models/product.model.js";
 import asyncHandler from "express-async-handler";
 
 // CREATE PRODUCT
@@ -111,8 +111,3 @@ const ratingProduct = asyncHandler(async (req, res) => {
 });
 
 export {ratingProduct, getALLproducts,getProduct, createProduct,updateProduct, deleteProduct}
-
-
-
-
-
