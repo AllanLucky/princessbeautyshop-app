@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { FaStar, FaStarHalfAlt, FaRegStar, FaMinus, FaPlus } from 'react-icons/fa';
+import { useLocation } from 'react-router-dom';
+import {userRequest} from "../requestMethod"
 
 // Star Rating Component
 const StarRating = ({ rating, maxRating = 5 }) => {
@@ -19,13 +21,41 @@ const StarRating = ({ rating, maxRating = 5 }) => {
 };
 
 const Product = () => {
+  const location = useLocation();
+  const id = location.pathname.split("/")[2];
+  const [product, setProduct] = useState({});
+  const [quantity, setQuantity] = useState(1);
+
+  let Price;
+
+  const handleQuantity = (action) =>{
+    if(action === "decrement"){
+      setQuantity(quantity ===1 ? 1: quantity - 1)
+    }
+    if(action === "increment"){
+      setQuantity(quantity + 1)
+    }
+  }
+
+  useEffect(()=>{
+    const getProduct = async () =>{
+      try{
+      const response = await userRequest.get("/products/find/" + id);
+        setProduct(response.data)
+      }catch(error){
+        console.log(error)
+      }
+    }
+
+    getProduct();
+  },[])
   return (
     <div className="flex flex-col md:flex-row justify-between p-6 md:p-12 gap-8">
 
       {/* LEFT IMAGE */}
       <div className="flex-1 h-[1000px] w-full md:w-[600px]">
         <img
-          src="/lotion2.jpg"
+          src={product.img}
           alt="NATURE WELL Lavender Cream"
           className="h-full w-full object-cover rounded-lg shadow-md"
         />
@@ -34,14 +64,12 @@ const Product = () => {
       {/* RIGHT DETAILS */}
       <div className="flex-1 flex flex-col md:ml-10">
         <h2 className="text-2xl md:text-3xl font-bold mb-4">
-          NATURE WELL Lavender Smooth & Soften Moisturizing Cream for Face & Body
+         {product.title}
         </h2>
 
-        {/* <span className="text-gray-700 text-[16px] leading-relaxed mb-4">
-          Indulge your skin with the calming and nourishing properties of lavender.
-          Deeply hydrates, improves elasticity, and leaves your skin soft and revitalized.
-          Suitable for daily use on face & body.
-        </span> */}
+        <span className="text-gray-700 text-[16px] leading-relaxed mb-4">
+         {product.desc}
+        </span>
 
         <h3 className="text-lg font-semibold mt-4 mb-2">Key Benefits:</h3>
         <ul className="list-disc list-inside text-gray-700 text-[15px] space-y-1 mb-4">
@@ -54,7 +82,7 @@ const Product = () => {
 
         <div className="flex items-center gap-6 mb-4">
           <span className="text-xl font-bold text-pink-600">
-            Price: Kes <span>900</span>
+            Price: Kes <span>{product.price}</span>
           </span>
           <StarRating rating={4.5} />
         </div>
@@ -71,9 +99,13 @@ const Product = () => {
 
         {/* Quantity Selector */}
         <div className="flex items-center gap-4 mb-6">
-          <FaMinus className="bg-[#ef93db] text-white cursor-pointer p-2 rounded-full text-2xl" />
-          <span className="text-lg font-semibold">1</span>
-          <FaPlus className="bg-[#ef93db] text-white cursor-pointer p-2 rounded-full text-2xl" />
+          <FaMinus className="bg-[#ef93db] text-white cursor-pointer p-2 rounded-full text-2xl"
+          onClick={()=>handleQuantity("decrement")}
+           />
+          <span className="text-lg font-semibold">{quantity}</span>
+          <FaPlus className="bg-[#ef93db] text-white cursor-pointer p-2 rounded-full text-2xl"
+          onClick={()=>handleQuantity("increment")}
+           />
         </div>
 
         {/* Buttons */}
