@@ -3,8 +3,8 @@ import asyncHandler from "express-async-handler";
 
 // CREATE PRODUCT
 const createProduct = asyncHandler(async (req, res) => {
-  const newProduct = await Product(req.body);
-  const product = newProduct.save();
+  const newProduct = new Product(req.body);
+  const product = await newProduct.save();
 
   if (product) {
     res.status(201).json(product);
@@ -15,32 +15,29 @@ const createProduct = asyncHandler(async (req, res) => {
 });
 
 // UPDATE PRODUCT
-
 const updateProduct = asyncHandler(async (req, res) => {
   const updatedProduct = await Product.findByIdAndUpdate(
     req.params.id,
-    {
-      $set: req.body,
-    },
+    { $set: req.body },
     { new: true }
   );
 
-  if (!updateProduct) {
+  if (!updatedProduct) {
     res.status(400);
     throw new Error("Product has not been updated");
   } else {
-    res.status(201).json(updatedProduct);
+    res.status(200).json(updatedProduct);
   }
 });
 
-//DELETE PRODUCT
+// DELETE PRODUCT
 const deleteProduct = asyncHandler(async (req, res) => {
   const product = await Product.findByIdAndDelete(req.params.id);
   if (!product) {
     res.status(400);
-    throw new Error("product was not deleted");
+    throw new Error("Product was not deleted");
   } else {
-    res.status(201).json("Product deleted successfully");
+    res.status(200).json({ message: "Product deleted successfully" });
   }
 });
 
@@ -49,7 +46,7 @@ const getProduct = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id);
 
   if (!product) {
-    res.status(400);
+    res.status(404);
     throw new Error("Product not found");
   } else {
     res.status(200).json(product);
@@ -78,36 +75,33 @@ const getALLproducts = asyncHandler(async (req, res) => {
     });
   } else {
     products = await Product.find().sort({ createdAt: -1 });
-   
   }
-  res.status(200).json(products)
+
+  res.status(200).json(products);
 });
 
 // RATING PRODUCT
-
 const ratingProduct = asyncHandler(async (req, res) => {
   const { star, name, comment, postedBy } = req.body;
 
-  console.log(star, name, comment, postedBy)
-  console.log(req.params.id)
-
-
   if (star) {
-    await Product.findByIdAndUpdate(
+    const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
-
-      {
-        $push: { ratings: { star, name, comment, postedBy } },
-      },
-      {
-        new: true,
-      }
+      { $push: { ratings: { star, name, comment, postedBy } } },
+      { new: true }
     );
-    res.status(201).json("product was rated successfully");
+    res.status(200).json(updatedProduct);
   } else {
     res.status(400);
-    throw new Error("product was not rated successfully");
+    throw new Error("Product was not rated successfully");
   }
 });
 
-export {ratingProduct, getALLproducts,getProduct, createProduct,updateProduct, deleteProduct}
+export {
+  ratingProduct,
+  getALLproducts,
+  getProduct,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+};
