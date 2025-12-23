@@ -13,11 +13,16 @@ const ProductSchema = mongoose.Schema({
     type: String,
   },
   img: {
-    type: [String], // Changed from String to Array of Strings
+    type: [String],
     required: true,
   },
   video: {
     type: String,
+  },
+  // 👇 Add a single price field
+  price: {
+    type: Number,
+    required: true,
   },
   wholesalePrice: {
     type: Number,
@@ -26,7 +31,7 @@ const ProductSchema = mongoose.Schema({
     type: Number,
   },
   categories: {
-    type: [String], // Changed to array for consistency
+    type: [String],
   },
   concern: {
     type: [String],
@@ -56,7 +61,7 @@ const ProductSchema = mongoose.Schema({
     },
   ],
 }, {
-  timestamps: true // Added timestamps for better data management
+  timestamps: true
 });
 
 ProductSchema.index({"$**":"text"});
