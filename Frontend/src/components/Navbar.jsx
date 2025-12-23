@@ -6,6 +6,8 @@ import { Link } from 'react-router-dom';
 
 const Navbar = () => {
   const [openSearch, setOpenSearch] = useState(false);
+  const [search, setSearch] = useState("")
+
 
   return (
     <>
@@ -24,10 +26,13 @@ const Navbar = () => {
         <div className="relative hidden md:flex flex-1 mx-6 max-w-[500px]">
           <input
             type="text"
+            onChange={(e)=>setSearch(e.target.value)}
             placeholder="Search products"
             className="p-[14px] pl-4 border border-pink-300 w-full outline-none rounded-lg pr-10 focus:ring-2 focus:ring-pink-300 focus:border-pink-500 "
           />
+        <Link to={`/products/${search}`}>
           <FaSearch className="absolute right-4 top-[16px] text-gray-600 cursor-pointer" />
+        </Link>
         </div>
 
         {/* Right Buttons */}

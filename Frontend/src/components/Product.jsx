@@ -1,0 +1,52 @@
+import React from "react";
+import { FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
+
+const StarRating = ({ rating, maxRating = 5 }) => {
+  const stars = [];
+
+  for (let i = 1; i <= maxRating; i++) {
+    if (i <= Math.floor(rating)) {
+      stars.push(<FaStar key={i} className="text-yellow-400" />);
+    } else if (i === Math.ceil(rating) && rating % 1 !== 0) {
+      stars.push(<FaStarHalfAlt key={i} className="text-yellow-400" />);
+    } else {
+      stars.push(<FaRegStar key={i} className="text-yellow-400" />);
+    }
+  }
+
+  return <div className="flex space-x-1 justify-center mt-1">{stars}</div>;
+};
+
+const Product = ({ id, name, price, image, rating, description }) => {
+  return (
+    <div
+      key={id}
+      className="flex flex-col items-center justify-center h-auto m-5 cursor-pointer transform transition duration-500 hover:scale-105 hover:shadow-lg"
+    >
+      <img
+        src={image}
+        alt={name}
+        className="w-full h-[250px] object-cover rounded-lg shadow-md"
+      />
+
+      <h2 className="mt-2 text-center text-xl font-semibold text-gray-800">
+        {name}
+      </h2>
+
+      <p className="mt-1 text-center text-gray-600 text-sm">{description}</p>
+
+      <StarRating rating={rating} />
+
+      <span className="mt-2 text-lg font-bold text-pink-600">
+        Price: Kes <span>{price}</span>
+      </span>
+
+      <button className="mt-4 px-6 py-2 bg-pink-600 text-white font-semibold rounded-lg hover:bg-pink-700 transition duration-300 mb-3">
+        Buy Now
+      </button>
+    </div>
+  );
+};
+
+export default Product;
+
