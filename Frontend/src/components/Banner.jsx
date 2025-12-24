@@ -1,4 +1,7 @@
+
+
 const Banner = () => {
+
   return (
     <div className="bg-[url('/beautybanner2.jpg')] bg-no-repeat bg-cover h-[80vh] mb-10">
       <div className="absolute inset-0 bg-black opacity-20">

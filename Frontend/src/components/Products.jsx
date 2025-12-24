@@ -7,7 +7,6 @@ import { Link } from "react-router-dom";
 const Products = ({ filters, sort, query }) => {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
-  console.log(products)
 
   useEffect(() => {
     const getProducts = async () => {
@@ -20,7 +19,7 @@ const Products = ({ filters, sort, query }) => {
         }
         setProducts(response.data);
       } catch (error) {
-        console.log(error);
+        console.error("Error fetching products:", error);
       }
     };
     getProducts();
@@ -34,7 +33,7 @@ const Products = ({ filters, sort, query }) => {
       tempoProducts = tempoProducts.filter((item) =>
         Object.entries(filters).every(([key, value]) => {
           if (!value) return true;
-          return String(item[key]).includes(value);
+          return String(item[key]).toLowerCase().includes(String(value).toLowerCase());
         })
       );
     }
@@ -45,9 +44,9 @@ const Products = ({ filters, sort, query }) => {
         (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
       );
     } else if (sort === "asc") {
-      tempoProducts.sort((a, b) => a.price - b.price);
+      tempoProducts.sort((a, b) => (a.price || a.originalPrice) - (b.price || b.originalPrice));
     } else if (sort === "desc") {
-      tempoProducts.sort((a, b) => b.price - a.price);
+      tempoProducts.sort((a, b) => (b.price || b.originalPrice) - (a.price || a.originalPrice));
     }
 
     setFilteredProducts(tempoProducts);
@@ -56,17 +55,17 @@ const Products = ({ filters, sort, query }) => {
   return (
     <div className="flex flex-wrap gap-4">
       {filteredProducts.map((product) => (
-  <Link key={product._id} to={`/product/${product._id}`}>
-    <Product
-      id={product._id}
-      name={product.title}
-      description={product.desc}
-      price={product.price}
-      image={product.img[0]}  
-      rating={product.rating} 
-    />
-  </Link>
-))}
+        <Link key={product._id} to={`/product/${product._id}`}>
+          <Product
+            id={product._id}
+            name={product.title}
+            description={product.desc}
+            price={product.price || product.originalPrice || "N/A"}
+            image={Array.isArray(product.img) ? product.img[0] : product.img}
+            rating={product.rating || 0}
+          />
+        </Link>
+      ))}
     </div>
   );
 };
