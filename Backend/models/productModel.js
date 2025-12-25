@@ -19,11 +19,7 @@ const ProductSchema = mongoose.Schema({
   video: {
     type: String,
   },
-  // 👇 Add a single price field
-  price: {
-    type: Number,
-    required: true,
-  },
+
   wholesalePrice: {
     type: Number,
   },
