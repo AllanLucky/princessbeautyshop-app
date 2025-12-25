@@ -1,56 +1,53 @@
 import Banner from "../models/bannerModel.js";
 import asyncHandler from "express-async-handler";
 
-// @desc   Create Banner
-// @route  POST /api/banners
-// @access Private/Admin
+// CREATE BANNER
 const createBanner = asyncHandler(async (req, res) => {
-  const banner = new Banner(req.body);
-
-  const savedBanner = await banner.save();
+  const newBanner = Banner(req.body);
+  const savedBanner = newBanner.save();
 
   if (!savedBanner) {
     res.status(400);
-    throw new Error("Failed to create banner");
+    throw new Error("Banner was not created");
+  } else {
+    res.status(200).json(savedBanner);
   }
-
-  res.status(201).json(savedBanner);
 });
 
-// @desc   Get All Banners
-// @route  GET /api/banners
-// @access Public
-const getAllBanners = asyncHandler(async (req, res) => {
-  const banners = await Banner.find();
-  res.status(200).json(banners);
-});
-
-// @desc   Get Single Banner
-// @route  GET /api/banners/:id
-// @access Public
-const getSingleBanner = asyncHandler(async (req, res) => {
-  const banner = await Banner.findById(req.params.id);
-
-  if (!banner) {
-    res.status(404);
-    throw new Error("Banner not found");
-  }
-
-  res.status(200).json(banner);
-});
-
-// @desc   Delete Banner
-// @route  DELETE /api/banners/:id
-// @access Private/Admin
+// DELETE BANNER
 const deleteBanner = asyncHandler(async (req, res) => {
   const banner = await Banner.findByIdAndDelete(req.params.id);
-
   if (!banner) {
-    res.status(404);
-    throw new Error("Banner not found");
+    res.status(400);
+    throw new Error("Banner was not deleted");
+  } else {
+    res.status(201).json("Banner was deleted successfully");
   }
-
-  res.status(200).json({ message: "Banner deleted successfully" });
 });
 
-export { createBanner, getAllBanners, getSingleBanner, deleteBanner, };
+//GET ALL BANNERS
+const getAllBanners = asyncHandler(async (req, res) => {
+  const banners = await Banner.find();
+  if (!banners) {
+    res.status(400);
+    throw new Error("Banners were not fetched or something went wrong");
+  } else {
+    res.status(200).json(banners);
+  }
+});
+
+// GET RANDOM BANNNER
+const getRandomBanner = asyncHandler(async (req, res) => {
+  const banners = await Banner.find();
+
+  if (!banners) {
+    res.status(400);
+    throw new Error("Banners were not fetched or something went wrong");
+  } else {
+    const randomIndex = Math.floor(Math.random() * banners.length);
+    const randomBanner = banners[randomIndex];
+    res.status(200).json(randomBanner);
+  }
+});
+
+export {getAllBanners, createBanner, deleteBanner, getRandomBanner};

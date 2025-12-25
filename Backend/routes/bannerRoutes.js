@@ -1,18 +1,23 @@
 import express from "express";
-import { createBanner, deleteBanner, getAllBanners, getSingleBanner } from "../controllers/bannerController.js";
 const router = express.Router();
+import {
+  createBanner,
+  getAllBanners,
+  getRandomBanner,
+  deleteBanner,
+} from "../controllers/bannerController.js";
 
-// CREATE BANNER
+// CREATE BANNER ROUTE
 router.post("/", createBanner);
-// GET ALL BANNERS
 
+// GET ALL BANNERS ROUTE
 router.get("/", getAllBanners);
 
-// GET SINGLE BANNER
-router.get("/:id", getSingleBanner);
+// DELETE BANNER ROUTE
 
-// DELETE BANNER
 router.delete("/:id", deleteBanner);
 
+// GET RANDOM BANNER ROUTE
+router.get("/random", getRandomBanner);
 
 export default router;
