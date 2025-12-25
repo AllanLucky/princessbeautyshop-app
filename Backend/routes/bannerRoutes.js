@@ -8,8 +8,14 @@ import {
 } from "../controllers/bannerController.js";
 
 const router = express.Router();
+import {
+  createBanner,
+  getAllBanners,
+  getRandomBanner,
+  deleteBanner,
+} from "../controllers/bannerController.js";
 
-// CREATE BANNER
+// CREATE BANNER ROUTE
 router.post("/", createBanner);
 
 // GET ALL BANNERS
@@ -21,7 +27,6 @@ router.get("/random", getRandomBanner);
 // GET SINGLE BANNER BY ID
 router.get("/:id", getBannerById);
 
-// DELETE BANNER
 router.delete("/:id", deleteBanner);
 
 export default router;

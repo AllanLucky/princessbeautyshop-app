@@ -21,9 +21,11 @@ const Banner = () => {
   }
 
   return (
-    <div className={`relative bg-[url(--banner.img)] bg-no-repeat bg-cover h-[80vh] mb-10`} style={{ backgroundImage:`url(${banner.img})` }}>
-      <div className="absolute inset-0 bg-black opacity-20">
-      </div>
+    <div
+      className="relative bg-no-repeat bg-cover h-[80vh] mb-10"
+      style={{ backgroundImage: `url(${banner.img})` }}
+    >
+      <div className="absolute inset-0 bg-black opacity-20"></div>
       <div className="relative flex flex-col text-white w-50% p-[10%]">
         <span className="text-3xl font-bold mt-3">{banner.subtitle}</span>
         <h1 className="text-2xl font-bold mt-3">{banner.title}</h1>
@@ -35,12 +37,9 @@ const Banner = () => {
             Call: (+25488425000)
           </button>
         </div>
-
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Banner
-
-
+export default Banner;

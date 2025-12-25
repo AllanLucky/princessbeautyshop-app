@@ -1,6 +1,22 @@
-import Products from "../components/Products"
+import { useLocation } from "react-router-dom";
+import Products from "../components/Products";
+import { useState } from "react";
 
 const ProductList = () => {
+  const location = useLocation();
+  const query = location.pathname.split("/")[2];
+  const [filters, setFilters] = useState({}); // 👈 initialize as object
+  const [sort, setSort] = useState("newest");
+
+  const handleFilters = (e) => {
+    const value = e.target.value;
+    const name = e.target.name; // 👈 use the select's name attribute
+    setFilters({
+      ...filters,
+      [name]: value,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       {/* FILTER & SORT SECTION */}
@@ -10,7 +26,7 @@ const ProductList = () => {
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 flex-wrap">
           <span className="text-lg font-semibold whitespace-nowrap">Filter Products</span>
 
-          <select name="concern" className="p-2 border rounded-md min-w-[150px]">
+          <select name="concern" className="p-2 border rounded-md min-w-[150px]" onChange={handleFilters}>
             <option>Dry Skin</option>
             <option>Oily Skin</option>
             <option>Combination Skin</option>
@@ -33,7 +49,7 @@ const ProductList = () => {
             <option>Uneven Tone</option>
           </select>
 
-          <select name="Popular Brand" className="p-2 border rounded-md min-w-[150px]">
+          <select name="brand" className="p-2 border rounded-md min-w-[150px]" onChange={handleFilters}>
             <option>Neutrogena</option>
             <option>Olay</option>
             <option>L'Oréal</option>
@@ -60,7 +76,7 @@ const ProductList = () => {
         {/* RIGHT: Sort Products */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-2 lg:mt-0">
           <span className="text-lg font-semibold whitespace-nowrap">Sort Products</span>
-          <select name="Price" className="p-2 border rounded-md min-w-[150px]">
+          <select name="Price" className="p-2 border rounded-md min-w-[150px]" onChange={(e) => setSort(e.target.value)}>
             <option value="newest">Newest</option>
             <option value="asc">Price (asc)</option>
             <option value="desc">Price (desc)</option>
@@ -69,9 +85,9 @@ const ProductList = () => {
       </div>
 
       {/* PRODUCTS GRID */}
-      <Products />
+      <Products query={query} filters={filters} sort={sort} />
     </div>
-  )
-}
+  );
+};
 
-export default ProductList
+export default ProductList;
