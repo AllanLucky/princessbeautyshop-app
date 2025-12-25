@@ -5,7 +5,7 @@ import {
   getAllBanners,
   getRandomBanner,
   deleteBanner,
-} from "../controller/banner.controller.js";
+} from "../controllers/bannerController.js";
 
 // CREATE BANNER ROUTE
 router.post("/", createBanner);
