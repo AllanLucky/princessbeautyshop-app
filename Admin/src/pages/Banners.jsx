@@ -53,53 +53,61 @@ const Banners = () => {
 
   useEffect(() => {
     const getBanners = async () => {
+      setLoading(true); // ✅ start loading
       try {
         const response = await userRequest.get("/banners");
         setBanners(response.data);
       } catch (error) {
         console.log(error);
+      } finally {
+        setLoading(false); // ✅ stop loading
       }
     };
-    getBanners(); // ✅ call the function
+    getBanners();
   }, []);
 
-  const handleDelete = async (id) =>{
-    try{
+  const handleDelete = async (id) => {
+    try {
       await userRequest.delete(`/banners/${id}`);
       window.location.reload();
-    }catch(error){
-      console.log(error)
+    } catch (error) {
+      console.log(error);
     }
-  }
+  };
 
   return (
     <div className="flex justify-evenly m-[10%]">
       {/* LEFT SIDE – Displays existing banners */}
       <div className="mr-[50px]">
         <h2 className="text-xl font-semibold mb-4">Active Banners</h2>
-        <div className="flex flex-col space-y-4">
-          {banners.map((banner) => (
-            <div
-              key={banner._id}
-              className="flex items-center justify-between border-b border-x-gray-200 pb-4"
-            >
-              <img
-                src={banner.img}
-                alt=""
-                className="w-32 h-32 object-cover rounded-md"
-              />
-              <div className="flex-1 ml-4">
-                <h3 className="text-xl font-semibold mb-2">{banner.title}</h3>
-                <p className="text-gray-600 mb-2">{banner.subtitle}</p>
-              </div>
-              <button className="bg-red-600 p-2 text-white font-semibold cursor-pointer ml-4"
-              onClick={handleDelete}
+        {loading ? (
+          <p className="text-gray-500">Loading banners...</p> // ✅ show loading
+        ) : (
+          <div className="flex flex-col space-y-4">
+            {banners.map((banner) => (
+              <div
+                key={banner._id}
+                className="flex items-center justify-between border-b border-x-gray-200 pb-4"
               >
-                Delete
-              </button>
-            </div>
-          ))}
-        </div>
+                <img
+                  src={banner.img}
+                  alt=""
+                  className="w-32 h-32 object-cover rounded-md"
+                />
+                <div className="flex-1 ml-4">
+                  <h3 className="text-xl font-semibold mb-2">{banner.title}</h3>
+                  <p className="text-gray-600 mb-2">{banner.subtitle}</p>
+                </div>
+                <button
+                  className="bg-red-600 p-2 text-white font-semibold cursor-pointer ml-4"
+                  onClick={() => handleDelete(banner._id)} // ✅ pass id correctly
+                >
+                  Delete
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* RIGHT SIDE – Form to upload a new banner */}
