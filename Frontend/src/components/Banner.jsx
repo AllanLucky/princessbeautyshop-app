@@ -1,23 +1,22 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "react"
 import { userRequest } from "../requestMethod";
 
 const Banner = () => {
-  const [banner, setBanner] = useState(null);
+  const [banner, setBanner] = useState({});
 
-  useEffect(() => {
-    const fetchRandomBanner = async () => {
-      try {
+  useEffect(()=>{
+    const fetchRandomBanner = async () =>{
+      try{
         const response = await userRequest.get("/banners/random");
         setBanner(response.data);
-      } catch (error) {
-        console.error("Failed to fetch random banner", error);
+      }catch(error){
+        console.error("Failed to fetch random banner", error)
       }
-    };
-
+    }
     fetchRandomBanner();
-  }, []);
+  },[])
 
-  if (!banner) {
+  if(!banner){
     return <div>Loading...</div>;
   }
 
