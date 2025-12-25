@@ -1,93 +1,53 @@
 import Banner from "../models/bannerModel.js";
 import asyncHandler from "express-async-handler";
 
-/**
- * @desc    Create Banner
- * @route   POST /api/v1/banners
- * @access  Private/Admin
- */
+// CREATE BANNER
 const createBanner = asyncHandler(async (req, res) => {
-  const newBanner = new Banner(req.body);
-  const savedBanner = await newBanner.save();
+  const newBanner = Banner(req.body);
+  const savedBanner = newBanner.save();
 
   if (!savedBanner) {
     res.status(400);
     throw new Error("Banner was not created");
   } else {
-    res.status(201).json(savedBanner);
-  }
-
-  res.status(201).json(savedBanner);
-});
-
-/**
- * @desc    Get All Banners
- * @route   GET /api/v1/banners
- * @access  Public
- */
-const getAllBanners = asyncHandler(async (req, res) => {
-  const banners = await Banner.find();
-  res.status(200).json(banners);
-});
-
-/**
- * @desc    Get Random Banner
- * @route   GET /api/v1/banners/random
- * @access  Public
- */
-const getRandomBanner = asyncHandler(async (req, res) => {
-  // Efficient MongoDB way: sample one random document
-  const [randomBanner] = await Banner.aggregate([{ $sample: { size: 1 } }]);
-
-  if (!randomBanner) {
-    res.status(404);
-    throw new Error("No banners found");
-  }
-
-  res.status(200).json(randomBanner);
-});
-
-/**
- * @desc    Get Single Banner by ID
- * @route   GET /api/v1/banners/:id
- * @access  Public
- */
-const getBannerById = asyncHandler(async (req, res) => {
-  const banner = await Banner.findById(req.params.id);
-
-  if (!banner) {
-    res.status(404);
-    throw new Error("Banner not found");
-  } else {
-    res.status(200).json({ message: "Banner deleted successfully" });
+    res.status(200).json(savedBanner);
   }
 });
 
-/**
- * @desc    Delete Banner
- * @route   DELETE /api/v1/banners/:id
- * @access  Private/Admin
- */
+// DELETE BANNER
 const deleteBanner = asyncHandler(async (req, res) => {
   const banner = await Banner.findByIdAndDelete(req.params.id);
-
-// GET RANDOM BANNER
-const getRandomBanner = asyncHandler(async (req, res) => {
-  const count = await Banner.countDocuments();
-  if (count === 0) {
-    res.status(404);
-    throw new Error("No banners found");
+  if (!banner) {
+    res.status(400);
+    throw new Error("Banner was not deleted");
   } else {
-    const randomIndex = Math.floor(Math.random() * count);
-    const randomBanner = await Banner.findOne().skip(randomIndex);
+    res.status(201).json("Banner was deleted successfully");
+  }
+});
+
+//GET ALL BANNERS
+const getAllBanners = asyncHandler(async (req, res) => {
+  const banners = await Banner.find();
+  if (!banners) {
+    res.status(400);
+    throw new Error("Banners were not fetched or something went wrong");
+  } else {
+    res.status(200).json(banners);
+  }
+});
+
+// GET RANDOM BANNNER
+const getRandomBanner = asyncHandler(async (req, res) => {
+  const banners = await Banner.find();
+
+  if (!banners) {
+    res.status(400);
+    throw new Error("Banners were not fetched or something went wrong");
+  } else {
+    const randomIndex = Math.floor(Math.random() * banners.length);
+    const randomBanner = banners[randomIndex];
     res.status(200).json(randomBanner);
   }
 });
 
-export {
-  createBanner,
-  getAllBanners,
-  getRandomBanner,
-  getBannerById,
-  deleteBanner,
-};
+export {getAllBanners, createBanner, deleteBanner, getRandomBanner};
