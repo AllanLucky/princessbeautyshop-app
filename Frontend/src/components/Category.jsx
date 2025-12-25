@@ -1,6 +1,6 @@
 const Category = () => {
   return (
-    <div className="flex flex-wrap items-center justify-center m-5">
+    <div className="flex flex-wrap items-center justify-center m-5 gap-4">
 
       {/* Serum */}
       <div className="relative bg-[url('/serum.jpg')] bg-no-repeat bg-cover bg-center h-[400px] w-full sm:w-1/2 md:w-1/3 lg:w-1/5 mx-4 my-4 sm:my-2 rounded-lg overflow-hidden cursor-pointer transform transition duration-500 hover:scale-105 hover:brightness-110">

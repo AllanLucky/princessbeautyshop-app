@@ -63,6 +63,15 @@ const Banners = () => {
     getBanners(); // ✅ call the function
   }, []);
 
+  const handleDelete = async (id) =>{
+    try{
+      await userRequest.delete(`/banners/${id}`);
+      window.location.reload();
+    }catch(error){
+      console.log(error)
+    }
+  }
+
   return (
     <div className="flex justify-evenly m-[10%]">
       {/* LEFT SIDE – Displays existing banners */}
@@ -83,7 +92,9 @@ const Banners = () => {
                 <h3 className="text-xl font-semibold mb-2">{banner.title}</h3>
                 <p className="text-gray-600 mb-2">{banner.subtitle}</p>
               </div>
-              <button className="bg-red-600 p-2 text-white font-semibold cursor-pointer ml-4">
+              <button className="bg-red-600 p-2 text-white font-semibold cursor-pointer ml-4"
+              onClick={handleDelete}
+              >
                 Delete
               </button>
             </div>
