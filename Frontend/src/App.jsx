@@ -37,7 +37,7 @@ function App() {
         { path: "/profile", element: <MyAccount /> },
         { path: "/product/:productId", element: <Product /> },
         { path: "/products/:searchterm", element: <ProductList /> },
-        { path: "/my-orders", element: <Orders /> },
+        { path: "/myorders", element: <Orders /> },
       ],
     },
   ]);
