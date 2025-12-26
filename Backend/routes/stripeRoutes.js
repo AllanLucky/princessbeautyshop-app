@@ -25,24 +25,21 @@ router.post("/create-checkout-session", async (req, res) => {
     name = req.body.name;
     cart = req.body.cart;
 
-    // ✅ Safe mapping of products
-    const line_items = cart.products.map((product) => {
-      return {
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: product.title || "Untitled",
-            images: product.img ? [product.img] : [],
-            description: product.desc || "",
-            metadata: {
-              id: product._id || "",
-            },
+    const line_items = cart.products.map((product) => ({
+      price_data: {
+        currency: "KES",
+        product_data: {
+          name: product.title || "Untitled",
+          images: product.img ? [String(product.img)] : [], // ✅ ensure string array
+          description: product.desc || "",
+          metadata: {
+            id: product._id || "",
           },
-          unit_amount: Math.round(Number(product.price) * 100), // ensure integer cents
         },
-        quantity: product.quantity > 0 ? product.quantity : 1,
-      };
-    });
+        unit_amount: Math.round(Number(product.price) * 100),
+      },
+      quantity: product.quantity > 0 ? product.quantity : 1,
+    }));
 
     const session = await stripe.checkout.sessions.create({
       customer: customer.id,
@@ -54,7 +51,7 @@ router.post("/create-checkout-session", async (req, res) => {
 
     res.send({ url: session.url });
   } catch (error) {
-    console.error("Checkout error:", error); // ✅ log exact error
+    console.error("Checkout error:", error);
     res.status(500).send({ error: error.message });
   }
 });
