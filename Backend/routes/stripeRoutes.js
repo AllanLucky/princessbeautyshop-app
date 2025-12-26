@@ -13,36 +13,37 @@ let email;
 let userId;
 
 router.post("/create-checkout-session", async (req, res) => {
-  const customer = await stripe.customers.create({
-    metadata: {
-      userId: req.body.userId,
-    },
-  });
-
-  userId = req.body.userId;
-  email = req.body.email;
-  name = req.body.name;
-  cart = req.body.cart;
-
-  const line_items = req.body.cart.products.map((product) => {
-    return {
-      price_data: {
-        currency: "usd",
-        product_data: {
-          name: product.title,
-          images: [product.img],
-          description: product.desc,
-          metadata: {
-            id: product._id,
-          },
-        },
-        unit_amount: product.price * 100,
-      },
-      quantity: product.quantity,
-    };
-  });
-
   try {
+    const customer = await stripe.customers.create({
+      metadata: {
+        userId: req.body.userId || "guest",
+      },
+    });
+
+    userId = req.body.userId;
+    email = req.body.email;
+    name = req.body.name;
+    cart = req.body.cart;
+
+    // ✅ Safe mapping of products
+    const line_items = cart.products.map((product) => {
+      return {
+        price_data: {
+          currency: "usd",
+          product_data: {
+            name: product.title || "Untitled",
+            images: product.img ? [product.img] : [],
+            description: product.desc || "",
+            metadata: {
+              id: product._id || "",
+            },
+          },
+          unit_amount: Math.round(Number(product.price) * 100), // ensure integer cents
+        },
+        quantity: product.quantity > 0 ? product.quantity : 1,
+      };
+    });
+
     const session = await stripe.checkout.sessions.create({
       customer: customer.id,
       line_items,
@@ -53,62 +54,9 @@ router.post("/create-checkout-session", async (req, res) => {
 
     res.send({ url: session.url });
   } catch (error) {
+    console.error("Checkout error:", error); // ✅ log exact error
     res.status(500).send({ error: error.message });
   }
 });
-
-// webhook
-let endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-// Example: set STRIPE_WEBHOOK_SECRET in your .env file
-
-router.post(
-  "/webhook",
-  express.raw({ type: "application/json" }),
-  (req, res) => {
-    const sig = req.headers["stripe-signature"];
-
-    let data;
-    let eventType;
-
-    if (endpointSecret) {
-      let event;
-      try {
-        event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
-        console.log("Webhook verified");
-        data = event.data.object;
-        eventType = event.type;
-      } catch (err) {
-        console.log("Webhook error:", err.message);
-        res.status(400).send(`Webhook Error: ${err.message}`);
-        return;
-      }
-    } else {
-      data = req.body.data.object;
-      eventType = req.body.type;
-    }
-
-    // Handle the event
-    if (eventType === "checkout.session.completed") {
-      stripe.customers
-        .retrieve(data.customer)
-        .then(async (customer) => {
-          const newOrder = Order({
-            name,
-            userId,
-            products: cart.products,
-            total: cart.total,
-            email,
-          });
-          await newOrder.save();
-        })
-        .catch((err) => {
-          console.log(err.message);
-        });
-    }
-
-    // Return a 200 response to acknowledge receipt of the event
-    res.send();
-  }
-);
 
 export default router;

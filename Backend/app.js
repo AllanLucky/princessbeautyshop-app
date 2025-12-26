@@ -5,6 +5,7 @@ import productRoute from "./routes/productRoutes.js";
 import bannerRoute from "./routes/bannerRoutes.js";
 import usersRoute from "./routes/userRoutes.js";
 import orderRoute from "./routes/orderRoutes.js";
+import stripeRoute from "./routes/stripeRoutes.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 
@@ -29,6 +30,7 @@ app.use("/api/v1/products", productRoute);
 app.use("/api/v1/banners", bannerRoute);
 app.use("/api/v1/users", usersRoute);
 app.use("/api/v1/orders", orderRoute);
+app.use("/api/v1/stripe", stripeRoute);
 
 
 // ERROR HANDLING MIDDLEWARE
