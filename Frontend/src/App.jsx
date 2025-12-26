@@ -13,6 +13,7 @@ import NotFoundPage from "./pages/NotFoundPage";
 import Orders from "./pages/Orders";
 
 
+
 const Layout = () => {
   return (
     <div>
@@ -37,7 +38,7 @@ function App() {
         { path: "/profile", element: <MyAccount /> },
         { path: "/product/:productId", element: <Product /> },
         { path: "/products/:searchterm", element: <ProductList /> },
-        { path: "/myorders", element: <Orders /> },
+       { path: "/myorders", element: <Orders /> },
       ],
     },
   ]);
