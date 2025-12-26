@@ -4,9 +4,11 @@ import { removeProduct, updateQuantity, clearCart } from "../redux/cartRedux";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
+import { userRequest } from "../requestMethod";
 
 const Cart = () => {
   const cart = useSelector((state) => state.cart);
+  // const user = useSelector((state) => state.user); // ✅ get user from Redux
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -40,6 +42,22 @@ const Cart = () => {
   const subtotal = cart.products.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const deliveryFee = cart.products.length > 0 ? 150 : 0;
   const total = subtotal + deliveryFee;
+
+  const handlePaymentCheckout = async () => {
+    try {
+      const res = await userRequest.post("/stripe/create-checkout-session", {
+        cart,
+        userId: "1234567",  // ✅ fixed reference
+        email: "allanlucky@gmail.com",  // ✅ fixed reference
+        name: "Allan",    // ✅ fixed reference
+      });
+      if (res.data.url) {
+        window.location.href = res.data.url;
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <div className="min-h-screen px-4 sm:px-6 md:px-10 lg:px-20 py-10 bg-gray-50">
@@ -122,7 +140,10 @@ const Cart = () => {
                 <span>KES {total}</span>
               </div>
             </div>
-            <button className="bg-pink-600 w-full mt-6 py-3 rounded-lg text-white font-semibold hover:bg-pink-700">
+            <button
+              className="bg-pink-600 w-full mt-6 py-3 rounded-lg text-white font-semibold hover:bg-pink-700"
+              onClick={handlePaymentCheckout}
+            >
               Proceed Checkout
             </button>
           </div>
