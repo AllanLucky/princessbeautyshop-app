@@ -3,10 +3,12 @@ import { FaSearch, FaUser } from "react-icons/fa";
 import Badge from '@mui/material/Badge';
 import ShoppingBasketIcon from '@mui/icons-material/ShoppingBasket';
 import { Link } from 'react-router-dom';
+import { useSelector } from "react-redux";
 
 const Navbar = () => {
   const [openSearch, setOpenSearch] = useState(false);
   const [search, setSearch] = useState("")
+  const cart = useSelector((state)=>state.cart)
 
 
   return (
@@ -46,7 +48,7 @@ const Navbar = () => {
 
           {/* Cart Icon */}
           <Link to="/cart" className="relative">
-            <Badge badgeContent={2} color="secondary">
+            <Badge badgeContent={cart.quantity} color="secondary">
               <ShoppingBasketIcon className="text-pink-500 text-[26px]" />
             </Badge>
           </Link>
