@@ -1,47 +1,48 @@
 import express from "express";
 import Stripe from "stripe";
 import dotenv from "dotenv";
-import Order from "../models/orderModel.js"
+import Order from "../models/orderModel.js";
+
 dotenv.config();
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_KEY);
+
+// globals (kept as in your structure)
 let cart;
 let name;
 let email;
 let userId;
 
 router.post("/create-checkout-session", async (req, res) => {
-  const customer = await stripe.customers.create({
-    metadata: {
-      userId: req.body.userId
-    },
-  });
+  try {
+    const customer = await stripe.customers.create({
+      metadata: {
+        userId: req.body.userId,
+      },
+    });
 
-  userId=req.body.userId;
-  email=req.body.email;
-  name=req.body.name;
-  cart=req.body.cart;
-  
+    // assign globals
+    userId = req.body.userId;
+    email = req.body.email;
+    name = req.body.name;
+    cart = req.body.cart;
 
-
-  const line_items = req.body.cart.products.map((product) => {
-    return {
+    // guard against missing products
+    const products = req.body.cart?.products || [];
+    const line_items = products.map((product) => ({
       price_data: {
         currency: "usd",
         product_data: {
           name: product.title,
           images: [product.img],
           description: product.desc,
-          metadata: {
-            id: product._id,
-          },
+          metadata: { id: product._id },
         },
         unit_amount: product.price * 100,
       },
       quantity: product.quantity,
-    };
-  });
-  try {
+    }));
+
     const session = await stripe.checkout.sessions.create({
       customer: customer.id,
       line_items,
@@ -52,15 +53,14 @@ router.post("/create-checkout-session", async (req, res) => {
 
     res.send({ url: session.url });
   } catch (error) {
+    console.error("Checkout error:", error);
     res.status(500).send({ error: error.message });
   }
 });
 
-
-// web hook
+// webhook
 let endpointSecret;
-// This is your Stripe CLI webhook secret for testing your endpoint locally.
-//let endpointSecret = "whsec_f0afeb838a5a0ae9b1160016c9632978d6a16c6d1a0fb1a9d60c32f1151ae20b";
+// let endpointSecret = "whsec_..."; // uncomment and set when testing with Stripe CLI
 
 router.post(
   "/webhook",
@@ -74,20 +74,15 @@ router.post(
     if (endpointSecret) {
       let event;
       try {
-        event = stripe.webhooks.constructEvent(
-          req.body,
-          sig,
-          endpointSecret
-        );
-        console.log("webhook verified ");
+        event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+        console.log("webhook verified");
+        data = event.data.object;
+        eventType = event.type;
       } catch (err) {
-        console.log("webhook error", err.message);
-        response.status(400).send(`Webhook Error: ${err.message}`);
+        console.error("webhook error", err.message);
+        res.status(400).send(`Webhook Error: ${err.message}`);
         return;
       }
-
-      data = event.data.object;
-      eventType = event.type;
     } else {
       data = req.body.data.object;
       eventType = req.body.type;
@@ -97,18 +92,18 @@ router.post(
     if (eventType === "checkout.session.completed") {
       stripe.customers
         .retrieve(data.customer)
-        .then(async(customer) => {
-          const newOrder =  Order({
+        .then(async (customer) => {
+          const newOrder = Order({
             name,
             userId,
-            products:cart.products,
-            total:cart.total,
-            email
+            products: cart?.products || [],
+            total: cart?.total || 0,
+            email,
           });
           await newOrder.save();
         })
         .catch((err) => {
-          console.log(err.message);
+          console.error("Order save error:", err.message);
         });
     }
 
@@ -116,7 +111,5 @@ router.post(
     res.send().end();
   }
 );
-
-
 
 export default router;
