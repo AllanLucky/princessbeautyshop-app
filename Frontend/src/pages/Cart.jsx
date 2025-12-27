@@ -8,7 +8,6 @@ import { userRequest } from "../requestMethod";
 
 const Cart = () => {
   const cart = useSelector((state) => state.cart);
-  const user = useSelector((state) => state.user); // ✅ Redux user slice
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -48,15 +47,16 @@ const Cart = () => {
     try {
       const res = await userRequest.post("/stripe/create-checkout-session", {
         cart,
-        userId: user?.currentUser?._id,   // ✅ safe access
-        email: user?.currentUser?.email,
-        name: user?.currentUser?.name,
+        userId: "1234567",              // ✅ placeholder userId
+        email: "allanlucky@gmail.com",  // ✅ placeholder email
+        name: "Allan",                  // ✅ placeholder name
       });
       if (res.data.url) {
         window.location.href = res.data.url;
       }
     } catch (error) {
-      console.log(error);
+      console.error("Checkout error:", error);
+      toast.error("Checkout failed. Please try again.", { position: "top-right", autoClose: 3000 });
     }
   };
 
