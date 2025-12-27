@@ -16,8 +16,9 @@ const StarRating = ({ rating, maxRating = 5 }) => {
   return <div className="flex space-x-1 mt-2">{stars}</div>;
 };
 
+
 const Orders = () => {
-  return (
+   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-xl p-6 space-y-6">
 
@@ -112,4 +113,4 @@ const Orders = () => {
   );
 };
 
-export default Orders;
+export default Orders
