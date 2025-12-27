@@ -34,7 +34,8 @@ router.post("/create-checkout-session", async (req, res) => {
         currency: "usd",
         product_data: {
           name: product.title,
-          images: [product.img],
+          // ✅ Ensure images is always an array of strings
+          images: product.img ? [String(product.img)] : [],
           description: product.desc,
           metadata: { id: product._id },
         },
