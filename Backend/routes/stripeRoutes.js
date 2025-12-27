@@ -1,7 +1,7 @@
 import express from "express";
 import Stripe from "stripe";
 import dotenv from "dotenv";
-import Order from "../models/orderModel.js"
+import Order from "../models/orderModel.js";
 
 dotenv.config();
 const router = express.Router();
@@ -18,12 +18,10 @@ router.post("/create-checkout-session", async (req, res) => {
     },
   });
 
-  userId=req.body.userId;
-  email=req.body.email;
-  name=req.body.name;
-  cart=req.body.cart;
-  
-
+  userId = req.body.userId;
+  email = req.body.email;
+  name = req.body.name;
+  cart = req.body.cart;
 
   const line_items = req.body.cart.products.map((product) => {
     return {
@@ -42,6 +40,7 @@ router.post("/create-checkout-session", async (req, res) => {
       quantity: product.quantity,
     };
   });
+
   try {
     const session = await stripe.checkout.sessions.create({
       customer: customer.id,
@@ -57,11 +56,8 @@ router.post("/create-checkout-session", async (req, res) => {
   }
 });
 
-
-// web hook
+// webhook
 let endpointSecret;
-// This is your Stripe CLI webhook secret for testing your endpoint locally.
-//let endpointSecret = "whsec_f0afeb838a5a0ae9b1160016c9632978d6a16c6d1a0fb1a9d60c32f1151ae20b";
 
 router.post(
   "/webhook",
@@ -83,7 +79,7 @@ router.post(
         console.log("webhook verified ");
       } catch (err) {
         console.log("webhook error", err.message);
-        response.status(400).send(`Webhook Error: ${err.message}`);
+        res.status(400).send(`Webhook Error: ${err.message}`);
         return;
       }
 
@@ -96,28 +92,38 @@ router.post(
 
     // Handle the event
     if (eventType === "checkout.session.completed") {
-      stripe.customers
-        .retrieve(data.customer)
-        .then(async(customer) => {
-          const newOrder =  Order({
-            name,
-            userId,
-            products:cart.products,
-            total:cart.total,
-            email
+      if (data.customer) {
+        stripe.customers
+          .retrieve(data.customer)
+          .then(async (customer) => {
+            const newOrder = Order({
+              name,
+              userId,
+              products: cart.products,
+              total: cart.total,
+              email
+            });
+            await newOrder.save();
+          })
+          .catch((err) => {
+            console.log(err.message);
           });
-          await newOrder.save();
-        })
-        .catch((err) => {
-          console.log(err.message);
+      } else {
+        // fallback if no customer object
+        const newOrder = Order({
+          name,
+          userId,
+          products: cart.products,
+          total: cart.total,
+          email
         });
+        newOrder.save().catch((err) => console.log(err.message));
+      }
     }
 
     // Return a 200 response to acknowledge receipt of the event
     res.send().end();
   }
 );
-
-
 
 export default router;
