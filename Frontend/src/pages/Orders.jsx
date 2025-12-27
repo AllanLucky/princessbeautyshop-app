@@ -1,5 +1,6 @@
 import { FaCheckCircle, FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link } from "react-router-dom"
+
 
 // Star Rating Component
 const StarRating = ({ rating, maxRating = 5 }) => {
@@ -16,9 +17,8 @@ const StarRating = ({ rating, maxRating = 5 }) => {
   return <div className="flex space-x-1 mt-2">{stars}</div>;
 };
 
-
 const Orders = () => {
-   return (
+    return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-xl p-6 space-y-6">
 
@@ -111,6 +111,6 @@ const Orders = () => {
       </div>
     </div>
   );
-};
+}
 
 export default Orders

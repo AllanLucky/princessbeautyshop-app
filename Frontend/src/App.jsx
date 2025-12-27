@@ -9,8 +9,9 @@ import Product from "./pages/Product";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ProductList from "./pages/ProductList";
-import Orders from "./pages/Order";
 import NotFoundPage from "./pages/NotFoundPage";
+import Orders from "./pages/Orders";
+
 
 
 const Layout = () => {
@@ -37,7 +38,7 @@ function App() {
         { path: "/profile", element: <MyAccount /> },
         { path: "/product/:productId", element: <Product /> },
         { path: "/products/:searchterm", element: <ProductList /> },
-        { path: "/myorder", element: <Orders /> },
+       { path: "/myorders", element: <Orders /> },
       ],
     },
   ]);
