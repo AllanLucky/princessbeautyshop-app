@@ -47,9 +47,9 @@ const Cart = () => {
     try {
       const res = await userRequest.post("/stripe/create-checkout-session", {
         cart,
-        userId: "1234567",  // ✅ fixed reference
-        email: "allanlucky@gmail.com",  // ✅ fixed reference
-        name: "Allan",    // ✅ fixed reference
+        userId: "1234567",
+        email: "allanlucky@gmail.com",
+        name: "Allan",    
       });
       if (res.data.url) {
         window.location.href = res.data.url;
