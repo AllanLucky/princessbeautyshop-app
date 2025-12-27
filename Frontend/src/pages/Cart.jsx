@@ -8,7 +8,7 @@ import { userRequest } from "../requestMethod";
 
 const Cart = () => {
   const cart = useSelector((state) => state.cart);
-  // const user = useSelector((state) => state.user); // ✅ get user from Redux
+  const user = useSelector((state) => state.user); // ✅ Redux user slice
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -43,13 +43,14 @@ const Cart = () => {
   const deliveryFee = cart.products.length > 0 ? 150 : 0;
   const total = subtotal + deliveryFee;
 
+  // 💳 Checkout
   const handlePaymentCheckout = async () => {
     try {
       const res = await userRequest.post("/stripe/create-checkout-session", {
         cart,
-        userId: "1234567",  // ✅ fixed reference
-        email: "allanlucky@gmail.com",  // ✅ fixed reference
-        name: "Allan",    // ✅ fixed reference
+        userId: user?.currentUser?._id,   // ✅ safe access
+        email: user?.currentUser?.email,
+        name: user?.currentUser?.name,
       });
       if (res.data.url) {
         window.location.href = res.data.url;
