@@ -28,6 +28,6 @@ router.get("/user/:userId", getUserOrders);
 // @route   GET /api/orders
 // @desc    Get all orders
 // @access  Private/Admin
-router.get("/", protect, getAllOrders);
+router.get("/", getAllOrders);
 
 export default router;
