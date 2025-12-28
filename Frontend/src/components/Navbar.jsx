@@ -3,13 +3,21 @@ import { FaSearch, FaUser } from "react-icons/fa";
 import Badge from '@mui/material/Badge';
 import ShoppingBasketIcon from '@mui/icons-material/ShoppingBasket';
 import { Link } from 'react-router-dom';
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 
 const Navbar = () => {
   const [openSearch, setOpenSearch] = useState(false);
-  const [search, setSearch] = useState("")
-  const cart = useSelector((state)=>state.cart)
+  const [search, setSearch] = useState("");
+  const [openDropdown, setOpenDropdown] = useState(false);
 
+  const cart = useSelector((state) => state.cart);
+  const user = useSelector((state) => state.user);
+  const dispatch = useDispatch();
+
+  const handleLogout = () => {
+    // Example: dispatch a logout action
+    dispatch({ type: "LOGOUT" });
+  };
 
   return (
     <>
@@ -28,13 +36,13 @@ const Navbar = () => {
         <div className="relative hidden md:flex flex-1 mx-6 max-w-[500px]">
           <input
             type="text"
-            onChange={(e)=>setSearch(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
             placeholder="Search products"
             className="p-[14px] pl-4 border border-pink-300 w-full outline-none rounded-lg pr-10 focus:ring-2 focus:ring-pink-300 focus:border-pink-500 "
           />
-        <Link to={`/products/${search}`}>
-          <FaSearch className="absolute right-4 top-[16px] text-gray-600 cursor-pointer" />
-        </Link>
+          <Link to={`/products/${search}`}>
+            <FaSearch className="absolute right-4 top-[16px] text-gray-600 cursor-pointer" />
+          </Link>
         </div>
 
         {/* Right Buttons */}
@@ -53,15 +61,46 @@ const Navbar = () => {
             </Badge>
           </Link>
 
-          {/* Login */}
-          <Link to="/login">
-            <div className="flex items-center gap-2 border border-pink-300 px-3 py-2 rounded-lg hover:bg-pink-100 duration-300">
-              <FaUser className="text-[#e455c5]" />
-              <span className="text-[#e455c5] hidden md:block font-semibold">
-                Login
-              </span>
+          {/* User / Login */}
+          {!user.currentUser ? (
+            <Link to="/login">
+              <div className="flex items-center gap-2 border border-pink-300 px-3 py-2 rounded-lg hover:bg-pink-100 duration-300">
+                <FaUser className="text-[#e455c5]" />
+                <span className="text-[#e455c5] hidden md:block font-semibold">
+                  Login
+                </span>
+              </div>
+            </Link>
+          ) : (
+            <div className="relative">
+              <button
+                onClick={() => setOpenDropdown(!openDropdown)}
+                className="flex items-center gap-2 border border-pink-300 px-3 py-2 rounded-lg hover:bg-pink-100 duration-300"
+              >
+                <FaUser className="text-[#e455c5]" />
+                <span className="text-[#e455c5] hidden md:block font-semibold">
+                  {user.currentUser.name}
+                </span>
+              </button>
+
+              {openDropdown && (
+                <div className="absolute right-0 mt-2 w-40 bg-white border rounded-lg shadow-lg">
+                  <Link
+                    to="/profile"
+                    className="block px-4 py-2 hover:bg-pink-100"
+                  >
+                    Profile
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-4 py-2 hover:bg-pink-100"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
             </div>
-          </Link>
+          )}
         </div>
       </div>
 
