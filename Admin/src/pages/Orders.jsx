@@ -4,125 +4,87 @@ import { useEffect, useState } from "react";
 import { userRequest } from "../requestMethods";
 
 const Orders = () => {
-  // ✅ always start with array
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  /* ================= FETCH ORDERS ================= */
+  // Fetch orders from backend
   useEffect(() => {
-    const getOrders = async () => {
+    const fetchOrders = async () => {
       try {
-        const response = await userRequest.get("/orders");
-
-        // ✅ handle different backend responses safely
-        const data = Array.isArray(response.data)
-          ? response.data
-          : response.data.orders || [];
-
+        const res = await userRequest.get("/orders");
+        // Ensure array
+        const data = Array.isArray(res.data) ? res.data : res.data.orders || [];
         setOrders(data);
       } catch (error) {
-        console.log("Fetch orders error:", error);
+        console.error("Fetch orders error:", error);
         setOrders([]);
       } finally {
         setLoading(false);
       }
     };
+    fetchOrders();
+  }, []);
 
-    getOrders();
-  }, []); // ✅ IMPORTANT
-
-  /* ================= UPDATE ORDER ================= */
+  // Update order status
   const handleUpdateOrder = async (id) => {
     try {
-      await userRequest.put(`/orders/${id}`, { status: 2 });
-
-      // update UI instantly
+      await userRequest.put(`/orders/${id}`, { status: "Delivered" }); // match backend status
       setOrders((prev) =>
-        prev.map((o) =>
-          o._id === id ? { ...o, status: 2 } : o
-        )
+        prev.map((o) => (o._id === id ? { ...o, status: "Delivered" } : o))
       );
     } catch (error) {
       console.log("Update order error:", error);
     }
   };
 
-  /* ================= TABLE COLUMNS ================= */
-  const dataColumn = [
-    {
-      field: "_id",
-      headerName: "Order ID",
-      width: 120,
-      renderCell: (params) => (
-        <span className="font-mono text-sm">
-          #{params.row._id.slice(-6)}
-        </span>
-      ),
-    },
-    {
-      field: "name",
-      headerName: "Customer",
-      width: 180,
-      valueGetter: (params) => params.row.name || "N/A",
-    },
-    {
-      field: "email",
-      headerName: "Email",
-      width: 220,
-    },
-    {
-      field: "total",
-      headerName: "Total Amount",
-      width: 130,
-      renderCell: (params) => `KES ${params.row.total || 0}`,
-    },
-    {
-      field: "status",
-      headerName: "Status",
-      width: 120,
-      renderCell: (params) => (
-        <>
-          {params.row.status === 0 ? (
-            <FaClock className="text-yellow-500 text-[22px]" />
-          ) : (
-            <FaCheckDouble className="text-green-500 text-[22px]" />
-          )}
-        </>
-      ),
-    },
-    {
-      field: "deliver",
-      headerName: "Mark as Delivered",
-      width: 160,
-      renderCell: (params) =>
-        params.row.status === 0 ? (
-          <FaRegCheckCircle
-            className="text-[22px] cursor-pointer text-green-600"
-            onClick={() => handleUpdateOrder(params.row._id)}
-          />
-        ) : (
-          <span className="text-gray-400 text-sm">Completed</span>
-        ),
-    },
+  // Filtered orders for search
+  const filteredOrders = orders.filter(
+    (o) =>
+      o.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      o.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      o._id?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // DataGrid columns
+  const columns = [
+    { field: "_id", headerName: "Order ID", width: 120 },
+    { field: "customerName", headerName: "Customer", width: 200 },
+    { field: "productName", headerName: "Product", width: 200 },
+    { field: "quantity", headerName: "Quantity", width: 120 },
+    { field: "totalAmount", headerName: "Total", width: 120 },
+    { field: "status", headerName: "Status", width: 150, renderCell: (params) => (
+      params.row.status === "Pending" ? 
+      <FaClock className="text-yellow-500 text-[25px]" /> : 
+      <FaCheckDouble className="text-green-500 text-[25px]" />
+    ) },
+    { field: "deliver", headerName: "Mark Delivered", width: 150, renderCell: (params) =>
+      params.row.status === "Pending" ? (
+        <FaRegCheckCircle
+          className="text-[25px] cursor-pointer"
+          onClick={() => handleUpdateOrder(params.row._id)}
+        />
+      ) : null
+    }
   ];
 
-  /* ================= UI ================= */
   return (
-    <div className="p-5 w-[79vw]">
-      <div className="flex items-center justify-between m-[30px]">
-        <h1 className="text-[20px] font-semibold">All Orders</h1>
-      </div>
-
-      <div className="m-[30px] bg-white rounded-lg shadow">
+    <div className="p-5 w-full">
+      <h1 className="text-2xl font-bold mb-4">All Orders</h1>
+      <input
+        className="border p-2 mb-4 w-full"
+        placeholder="Search orders..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      />
+      <div className="h-[600px]">
         <DataGrid
-          rows={orders}
-          columns={dataColumn}
+          rows={filteredOrders}
+          columns={columns}
           getRowId={(row) => row._id}
-          checkboxSelection
           loading={loading}
+          checkboxSelection
           autoHeight
-          disableRowSelectionOnClick
-          pageSizeOptions={[10, 20, 30]}
         />
       </div>
     </div>
