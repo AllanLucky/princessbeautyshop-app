@@ -28,7 +28,7 @@ const Footer = () => {
         <div className="md:w-1/3 text-center md:text-left">
           <h3 className="text-xl font-semibold">Contact Us</h3>
           <p className="mt-2">123 BeautyBliss Ave, City, Country</p>
-          <p className="mt-2">Phone: (123) 788425000</p>
+          <p className="mt-2">Phone: (+254) 788425000</p>
           <p className="mt-2">Email: info@beautybliss.com</p>
         </div>
 

@@ -1,5 +1,6 @@
 import { FaCheckCircle, FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link } from "react-router-dom"
+
 
 // Star Rating Component
 const StarRating = ({ rating, maxRating = 5 }) => {
@@ -111,6 +112,6 @@ const Orders = () => {
       </div>
     </div>
   );
-};
+}
 
 export default Orders

@@ -2,25 +2,32 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { userRequest } from "../requestMethod";
 import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css"; // ✅ make sure styles are imported
+import "react-toastify/dist/ReactToastify.css"; 
 
 const Register = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false); // Added loading state
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    setLoading(true); // Start loading
     try {
       await userRequest.post("/auth/register", { name, email, password });
-      navigate("/login");
+      toast.success("Account created successfully!");
+      setTimeout(() => {
+        navigate("/login");
+      }, 500); // Delay navigation slightly to show toast
     } catch (error) {
       if (error.response && error.response.data.message) {
         toast.error(error.response.data.message);
       } else {
         toast.error("An unexpected error occurred, please try again");
       }
+    } finally {
+      setLoading(false); // Stop loading
     }
   };
 
@@ -31,7 +38,7 @@ const Register = () => {
         autoClose={5000}
         hideProgressBar={false}
         newestOnTop={false}
-        closeOnClick={false}
+        closeOnClick
         pauseOnFocusLoss
         draggable
         pauseOnHover
@@ -102,9 +109,12 @@ const Register = () => {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full py-3 bg-[#d55fbb] text-white font-semibold rounded-md transition duration-300 hover:bg-[#c54fae]"
+              disabled={loading} // Disable while loading
+              className={`w-full py-3 text-white font-semibold rounded-md transition duration-300 ${
+                loading ? "bg-gray-400 cursor-not-allowed" : "bg-[#d55fbb] hover:bg-[#c54fae]"
+              }`}
             >
-              Register
+              {loading ? "Registering..." : "Register"}
             </button>
 
             {/* Login Link */}
