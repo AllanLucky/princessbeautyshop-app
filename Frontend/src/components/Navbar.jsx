@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { FaSearch, FaUser } from "react-icons/fa";
 import Badge from '@mui/material/Badge';
 import ShoppingBasketIcon from '@mui/icons-material/ShoppingBasket';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from "react-redux";
+import { logOut } from "../redux/userRedux";
 
 const Navbar = () => {
   const [openSearch, setOpenSearch] = useState(false);
@@ -13,11 +14,28 @@ const Navbar = () => {
   const cart = useSelector((state) => state.cart);
   const user = useSelector((state) => state.user);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const dropdownRef = useRef(null);
 
   const handleLogout = () => {
-    // Example: dispatch a logout action
-    dispatch({ type: "LOGOUT" });
+      dispatch(logOut());
+      navigate("/login")
   };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setOpenDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   return (
     <>
@@ -72,7 +90,7 @@ const Navbar = () => {
               </div>
             </Link>
           ) : (
-            <div className="relative">
+            <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setOpenDropdown(!openDropdown)}
                 className="flex items-center gap-2 border border-pink-300 px-3 py-2 rounded-lg hover:bg-pink-100 duration-300"
