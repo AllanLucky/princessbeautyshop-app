@@ -73,7 +73,7 @@ const Products = () => {
   return (
     <div className="p-5 w-[79vw]">
       <div className="flex items-center justify-between m-[30px]">
-        <h1 className="m-[20px] text-[20px]">All Products</h1>
+        <h1 className="m-[20px] text-[20px] font-bold">All Products</h1>
         <Link to="/newproduct">
           <button className="py-3 px-4 bg-green-600 text-white font-semibold rounded-lg">Create Product</button>
         </Link>
