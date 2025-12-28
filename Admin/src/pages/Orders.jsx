@@ -77,7 +77,7 @@ const Orders = () => {
   ];
 
   return (
-    <div className="p-5 w-[79vw] mt-8">
+    <div className="p-5 w-full">
       <h1 className="text-2xl font-bold mb-4">All Orders</h1>
       <input
         className="border p-2 mb-4 w-full"
