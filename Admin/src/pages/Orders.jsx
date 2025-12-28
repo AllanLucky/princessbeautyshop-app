@@ -77,7 +77,7 @@ const Orders = () => {
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
       />
-      <div className="h-[600px]">
+      <div className="h-[500px]">
         <DataGrid
           rows={filteredOrders}
           columns={columns}
