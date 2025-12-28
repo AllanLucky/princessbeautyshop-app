@@ -1,137 +1,132 @@
-
 import { FaCheckDouble, FaClock, FaRegCheckCircle } from "react-icons/fa";
-import { DataGrid } from '@mui/x-data-grid';
+import { DataGrid } from "@mui/x-data-grid";
+import { useEffect, useState } from "react";
+import { userRequest } from "../requestMethods";
 
 const Orders = () => {
+  // ✅ always start with array
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const dataOrders = [
-    {
-      _id: "1",
-      customerName: "John Doe",
-      productName: "Wireless Headphones",
-      quantity: 2,
-      totalAmount: 120,
-      status: "Completed",
-      date: "2025-02-10"
-    },
-    {
-      _id: "2",
-      customerName: "Mary Johnson",
-      productName: "Smartphone Case",
-      quantity: 1,
-      totalAmount: 15,
-      status: "Pending",
-      date: "2025-02-09"
-    },
-    {
-      _id: "3",
-      customerName: "Alex Kim",
-      productName: "Bluetooth Speaker",
-      quantity: 3,
-      totalAmount: 180,
-      status: "Completed",
-      date: "2025-02-08"
-    },
-    {
-      _id: "4",
-      customerName: "Sarah Lee",
-      productName: "Laptop Stand",
-      quantity: 1,
-      totalAmount: 45,
-      status: "Cancelled",
-      date: "2025-02-07"
-    },
-    {
-      _id: "5",
-      customerName: "James Brown",
-      productName: "USB-C Cable",
-      quantity: 4,
-      totalAmount: 40,
-      status: "Completed",
-      date: "2025-02-06"
-    },
-    {
-      _id: "6",
-      customerName: "Vivian Atieno",
-      productName: "Mechanical Keyboard",
-      quantity: 1,
-      totalAmount: 95,
-      status: "Pending",
-      date: "2025-02-05"
-    },
-    {
-      _id: "6",
-      customerName: "Vivian Atieno",
-      productName: "Mechanical Keyboard",
-      quantity: 1,
-      totalAmount: 95,
-      status: "Pending",
-      date: "2025-02-05"
+  /* ================= FETCH ORDERS ================= */
+  useEffect(() => {
+    const getOrders = async () => {
+      try {
+        const response = await userRequest.get("/orders");
+
+        // ✅ handle different backend responses safely
+        const data = Array.isArray(response.data)
+          ? response.data
+          : response.data.orders || [];
+
+        setOrders(data);
+      } catch (error) {
+        console.log("Fetch orders error:", error);
+        setOrders([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getOrders();
+  }, []); // ✅ IMPORTANT
+
+  /* ================= UPDATE ORDER ================= */
+  const handleUpdateOrder = async (id) => {
+    try {
+      await userRequest.put(`/orders/${id}`, { status: 2 });
+
+      // update UI instantly
+      setOrders((prev) =>
+        prev.map((o) =>
+          o._id === id ? { ...o, status: 2 } : o
+        )
+      );
+    } catch (error) {
+      console.log("Update order error:", error);
     }
-  ];
+  };
 
+  /* ================= TABLE COLUMNS ================= */
   const dataColumn = [
-    { field: "_id", headerName: "Order ID", width: 100 },
-    { field: "customerName", headerName: "Customer", width: 200 },
-    { field: "productName", headerName: "Product", width: 150 },
-    { field: "quantity", headerName: "Quantity", width: 100 },
-    { field: "totalAmount", headerName: "Total Amount", width: 120 },
-    { field: "date", headerName: "Date", width: 120 },
-
+    {
+      field: "_id",
+      headerName: "Order ID",
+      width: 120,
+      renderCell: (params) => (
+        <span className="font-mono text-sm">
+          #{params.row._id.slice(-6)}
+        </span>
+      ),
+    },
+    {
+      field: "name",
+      headerName: "Customer",
+      width: 180,
+      valueGetter: (params) => params.row.name || "N/A",
+    },
+    {
+      field: "email",
+      headerName: "Email",
+      width: 220,
+    },
+    {
+      field: "total",
+      headerName: "Total Amount",
+      width: 130,
+      renderCell: (params) => `KES ${params.row.total || 0}`,
+    },
     {
       field: "status",
       headerName: "Status",
       width: 120,
-      renderCell: (params) => {
-        return (
-          <>
-            {params.row.status === "Pending" ? (
-              <FaClock className="text-yellow-500 text-[25px] cursor-pointer mt-2" />
-            ) : (
-              <FaCheckDouble className="text-green-500 text-[25px] cursor-pointer mt-2" />
-            )}
-          </>
-        );
-      },
+      renderCell: (params) => (
+        <>
+          {params.row.status === 0 ? (
+            <FaClock className="text-yellow-500 text-[22px]" />
+          ) : (
+            <FaCheckDouble className="text-green-500 text-[22px]" />
+          )}
+        </>
+      ),
     },
-
     {
-      field: "Deliver",
+      field: "deliver",
       headerName: "Mark as Delivered",
-      width: 150,
-      renderCell: (params) => {
-        return (
-          <>
-            {params.row.status === "Pending" ? (
-              <FaRegCheckCircle
-                className="text-[25px] cursor-pointer mt-2"
-                onClick={() => handleUpdateOrder(params.row._id)}
-              />
-            ) : (
-              ""
-            )}
-          </>
-        );
-      },
-    }
-
+      width: 160,
+      renderCell: (params) =>
+        params.row.status === 0 ? (
+          <FaRegCheckCircle
+            className="text-[22px] cursor-pointer text-green-600"
+            onClick={() => handleUpdateOrder(params.row._id)}
+          />
+        ) : (
+          <span className="text-gray-400 text-sm">Completed</span>
+        ),
+    },
   ];
 
-  // Dummy function to avoid errors
-  const handleUpdateOrder = (id) => {
-    console.log("Mark order as delivered:", id);
-  };
-
+  /* ================= UI ================= */
   return (
     <div className="p-5 w-[79vw]">
       <div className="flex items-center justify-between m-[30px]">
-        <h1 className="m-[20px] text-[20px]">All Orders</h1>
+        <h1 className="text-[20px] font-semibold">All Orders</h1>
       </div>
-      <div className='m-[30px]'>
-        <DataGrid rows={dataOrders} checkboxSelection columns={dataColumn} getRowId={(row) => row._id} />
+
+      <div className="m-[30px] bg-white rounded-lg shadow">
+        <DataGrid
+          rows={orders}
+          columns={dataColumn}
+          getRowId={(row) => row._id}
+          checkboxSelection
+          loading={loading}
+          autoHeight
+          disableRowSelectionOnClick
+          pageSizeOptions={[10, 20, 30]}
+        />
       </div>
     </div>
   );
-}
+};
 
 export default Orders;
