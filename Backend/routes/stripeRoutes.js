@@ -6,42 +6,45 @@ import Order from "../models/orderModel.js";
 dotenv.config();
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_KEY);
+
 let cart;
 let name;
 let email;
 let userId;
 
 router.post("/create-checkout-session", async (req, res) => {
-  const customer = await stripe.customers.create({
-    metadata: {
-      userId: req.body.userId
-    },
-  });
-
-  userId = req.body.userId;
-  email = req.body.email;
-  name = req.body.name;
-  cart = req.body.cart;
-
-  const line_items = req.body.cart.products.map((product) => {
-    return {
-      price_data: {
-        currency: "usd",
-        product_data: {
-          name: product.title,
-          images: [product.img],
-          description: product.desc,
-          metadata: {
-            id: product._id,
-          },
-        },
-        unit_amount: product.price * 100,
-      },
-      quantity: product.quantity,
-    };
-  });
-
   try {
+    const customer = await stripe.customers.create({
+      metadata: {
+        userId: req.body.userId
+      },
+    });
+
+    // assign globals
+    userId = req.body.userId;
+    email = req.body.email;
+    name = req.body.name;
+    cart = req.body.cart;
+
+    // map products to line_items for Stripe
+    const line_items = req.body.cart.products.map((product) => {
+      return {
+        price_data: {
+          currency: "usd",
+          product_data: {
+            name: product.title,
+            images: product.img ? [String(product.img)] : [], // ensure images array
+            description: product.desc || "", // fallback description
+            metadata: {
+              id: product._id,
+            },
+          },
+          unit_amount: Math.round(product.price * 100), // ensure integer in cents
+        },
+        quantity: product.quantity || 1, // fallback quantity
+      };
+    });
+
     const session = await stripe.checkout.sessions.create({
       customer: customer.id,
       line_items,
@@ -52,6 +55,7 @@ router.post("/create-checkout-session", async (req, res) => {
 
     res.send({ url: session.url });
   } catch (error) {
+    console.error("Checkout error:", error);
     res.status(500).send({ error: error.message });
   }
 });
@@ -76,7 +80,7 @@ router.post(
           sig,
           endpointSecret
         );
-        console.log("webhook verified ");
+        console.log("webhook verified");
       } catch (err) {
         console.log("webhook error", err.message);
         res.status(400).send(`Webhook Error: ${err.message}`);
@@ -90,7 +94,7 @@ router.post(
       eventType = req.body.type;
     }
 
-    // Handle the event
+    // Handle checkout completion
     if (eventType === "checkout.session.completed") {
       if (data.customer) {
         stripe.customers
@@ -121,7 +125,6 @@ router.post(
       }
     }
 
-    // Return a 200 response to acknowledge receipt of the event
     res.send().end();
   }
 );

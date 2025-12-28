@@ -8,7 +8,7 @@ import { userRequest } from "../requestMethod";
 
 const Cart = () => {
   const cart = useSelector((state) => state.cart);
-  // const user = useSelector((state) => state.user); // ✅ get user from Redux
+  const user = useSelector((state) => state.user)
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -43,19 +43,26 @@ const Cart = () => {
   const deliveryFee = cart.products.length > 0 ? 150 : 0;
   const total = subtotal + deliveryFee;
 
+  // 💳 Checkout
   const handlePaymentCheckout = async () => {
+    if (!user.currentUser) {
+      toast.error("You need to login to proceed with checkout", { position: "top-right", autoClose: 3000 });
+      navigate("/login");
+      return;
+    }
     try {
       const res = await userRequest.post("/stripe/create-checkout-session", {
         cart,
-        userId: "1234567",  // ✅ fixed reference
-        email: "allanlucky@gmail.com",  // ✅ fixed reference
-        name: "Allan",    // ✅ fixed reference
+        userId: user.currentUser._id,
+        email: user.currentUser.email,
+        name: user.currentUser.name,
       });
       if (res.data.url) {
         window.location.href = res.data.url;
       }
     } catch (error) {
-      console.log(error);
+      console.error("Checkout error:", error);
+      toast.error("Checkout failed. Please try again.", { position: "top-right", autoClose: 3000 });
     }
   };
 
