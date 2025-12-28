@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { login } from "../redux/apiCall"; // <-- example action creator
-import { toast } from "react-toastify";
+import { login } from "../redux/apiCall"; 
+import { toast, ToastContainer } from "react-toastify";
 import { useSelector, useDispatch } from "react-redux";
 
 const Login = () => {
@@ -12,28 +12,45 @@ const Login = () => {
   const user = useSelector((state) => state.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  console.log(user.currentUser)
+
+  useEffect(() => {
+    // Show success toast when user is logged in
+    if (user.currentUser) {
+      toast.success("User logged in successfully!");
+      navigate("/"); // redirect to home
+    }
+  }, [user.currentUser, navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-   
+    setLoading(true);
+
     try {
-       setLoading(true);
-       login(dispatch,{email, password});
-       navigate("/")
-       setLoading(false);
-      
+      // Await login so Redux state updates before showing toast
+      await login(dispatch, { email, password });
     } catch (error) {
-          if (error.response && error.response.data.message) {
-            toast.error(error.response.data.message);
-          } else {
-            toast.error("An unexpected error occurred, please try again");
-          }
-        }
+      toast.error(
+        error.response?.data?.message || "An unexpected error occurred, please try again"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4 py-10">
+      {/* Toast container */}
+      <ToastContainer 
+        position="top-right" 
+        autoClose={3000} 
+        hideProgressBar={false} 
+        newestOnTop={false} 
+        closeOnClick 
+        rtl={false} 
+        pauseOnFocusLoss 
+        draggable 
+        pauseOnHover 
+      />
       <div className="flex flex-col md:flex-row bg-white shadow-xl rounded-lg overflow-hidden max-w-[900px] w-full">
         {/* LOGIN IMAGE */}
         <div className="w-full md:w-1/2 hidden md:flex items-center justify-center bg-gray-50">
@@ -111,3 +128,4 @@ const Login = () => {
 };
 
 export default Login;
+

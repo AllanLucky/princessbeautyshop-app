@@ -8,6 +8,7 @@ import { userRequest } from "../requestMethod";
 
 const Cart = () => {
   const cart = useSelector((state) => state.cart);
+  const user = useSelector((state) => state.user)
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -44,12 +45,17 @@ const Cart = () => {
 
   // 💳 Checkout
   const handlePaymentCheckout = async () => {
+    if (!user.currentUser) {
+      toast.error("You need to login to proceed with checkout", { position: "top-right", autoClose: 3000 });
+      navigate("/login");
+      return;
+    }
     try {
       const res = await userRequest.post("/stripe/create-checkout-session", {
         cart,
-        userId: "1234567",              // ✅ placeholder userId
-        email: "allanlucky@gmail.com",  // ✅ placeholder email
-        name: "Allan",                  // ✅ placeholder name
+        userId: user.currentUser._id,
+        email: user.currentUser.email,
+        name: user.currentUser.name,
       });
       if (res.data.url) {
         window.location.href = res.data.url;
