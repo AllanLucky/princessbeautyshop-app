@@ -1,38 +1,17 @@
 import express from "express";
-import {
-  createOrder,
-  updateOrder,
-  deleteOrder,
-  getUserOrders,
-  getAllOrders,
-} from "../controllers/orderController.js";
+const router = express.Router();
+import {getAllOrders, getUserOrder, deleteOrder, createOrder, updateOrder} from "../controllers/orderController.js";
 import protect from "../middlewares/authMiddleware.js";
 
-const router = express.Router();
-
-// @route   POST /api/orders
-// @desc    Create a new order
-// @access  Private/User
-router.post("/", protect, createOrder);
-
-// @route   PUT /api/orders/:id
-// @desc    Update an order
-// @access  Private/Admin
-router.put("/:id", protect, updateOrder);
-
-// @route   DELETE /api/orders/:id
-// @desc    Delete an order
-// @access  Private/Admin
-router.delete("/:id", protect, deleteOrder);
-
-// @route   GET /api/orders/user/:userId
-// @desc    Get orders for a specific user
-// @access  Private/User
-router.get("/user/:userId", protect, getUserOrders);
-
-// @route   GET /api/orders
-// @desc    Get all orders
-// @access  Private/Admin
-router.get("/", getAllOrders);
+// CREATE ORDER ROUTE
+router.post("/", createOrder);
+// UPDATE ORDER ROUTE
+router.put("/:id", updateOrder);
+// GET ALL ORDERS ROUTE
+router.get("/",getAllOrders);
+// DELETE ORDER ROUTE
+router.delete("/:id", deleteOrder);
+// GET USER'S ORDER ROUTE
+router.get("/find/:id", getUserOrder)
 
 export default router;
