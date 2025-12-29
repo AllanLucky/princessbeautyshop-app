@@ -1,5 +1,8 @@
 import { FaCheckCircle, FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
 import { Link } from "react-router-dom"
+import { useEffect, useState } from "react";
+import {userRequest} from "../requestMethod";
+import {useSelector} from "react-redux"
 
 
 // Star Rating Component
@@ -19,6 +22,26 @@ const StarRating = ({ rating, maxRating = 5 }) => {
 
 
 const Orders = () => {
+  const user = useSelector((state)=>state.user);
+  const [orders, setOrders] = useState([]);
+  const [ratinf, setRating] = useState(0);
+  const [comments, setComments] = useState("");
+
+  useEffect(()=>{
+    const getUsersOrder = async () =>{
+      try{
+        const response = await userRequest.get(
+          `/orders/${user.currentUser_id}`
+        );
+        setOrders(response.data)
+      }catch(error){
+        console.log(error)
+      }
+    }
+    getUsersOrder();
+  },[user])
+
+  console.log(Orders);
    return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-xl p-6 space-y-6">
@@ -31,8 +54,9 @@ const Orders = () => {
         </div>
 
         {/* Order Items */}
-        <div className="bg-gray-50 p-4 rounded-xl shadow-sm space-y-4">
-          <h2 className="text-2xl font-extrabold mb-4">Order #1</h2>
+        {orders.map((order, index)=>{
+          <div className="bg-gray-50 p-4 rounded-xl shadow-sm space-y-4" key={index}>
+          <h2 className="text-2xl font-extrabold mb-4">Order #{index + 1}</h2>
 
           <div className="flex flex-col md:flex-row md:items-center gap-4 border-b pb-4">
             {/* Product Image */}
@@ -74,6 +98,7 @@ const Orders = () => {
           </div>
         </div>
 
+        })}
         {/* Shipping Information */}
         <div className="bg-gray-50 p-4 rounded-xl shadow-sm space-y-1">
           <h3 className="text-xl font-semibold mb-2">Shipping Information</h3>
