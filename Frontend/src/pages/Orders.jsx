@@ -25,24 +25,21 @@ const Orders = () => {
   const [rating, setRating] = useState(0);
   const [comments, setComments] = useState("");
 
-  useEffect(() => {
-    const getUserOrder = async () => {
-      try {
+  useEffect(()=>{
+    const getUserOrder = async () =>{
+      try{
         const res = await userRequest.get(
           `/orders/find/${user.currentUser._id}`
         );
         setOrders(res.data);
-      } catch (error) {
-        console.log(error);
+      }catch(error){
+        console.log(error)
       }
-    };
-
-    if (user.currentUser) {
-      getUserOrder();
     }
-  }, [user]);
+    getUserOrder();
+  },[user]);
 
-  console.log(orders);
+
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
