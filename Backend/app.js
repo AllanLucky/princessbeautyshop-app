@@ -19,11 +19,18 @@ app.use(express.json());
 // Parse cookies
 app.use(cookieParser());
 
-// Enable CORS with credentials
+// Enable CORS with multiple origins and credentials
+const allowedOrigins = ["http://localhost:5173", "http://localhost:5174"];
 app.use(
   cors({
-    origin: "http://localhost:5174", // frontend URL
-    credentials: true,               // allow cookies to be sent
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true, // allow cookies to be sent
   })
 );
 
