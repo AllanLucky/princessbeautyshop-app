@@ -14,10 +14,15 @@ const Login = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Show success toast when user is logged in
     if (user.currentUser) {
       toast.success("User logged in successfully!");
-      navigate("/"); // redirect to home
+      
+      // Redirect based on role
+      if (user.currentUser.role === "admin") {
+        navigate("/admin-dashboard"); // admin dashboard route
+      } else {
+        navigate("/"); // regular user home page
+      }
     }
   }, [user.currentUser, navigate]);
 
@@ -26,7 +31,6 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // Await login so Redux state updates before showing toast
       await login(dispatch, { email, password });
     } catch (error) {
       toast.error(
@@ -39,7 +43,6 @@ const Login = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4 py-10">
-      {/* Toast container */}
       <ToastContainer 
         position="top-right" 
         autoClose={3000} 
@@ -52,7 +55,6 @@ const Login = () => {
         pauseOnHover 
       />
       <div className="flex flex-col md:flex-row bg-white shadow-xl rounded-lg overflow-hidden max-w-[900px] w-full">
-        {/* LOGIN IMAGE */}
         <div className="w-full md:w-1/2 hidden md:flex items-center justify-center bg-gray-50">
           <img
             src="/lotion1.jpg"
@@ -61,14 +63,12 @@ const Login = () => {
           />
         </div>
 
-        {/* LOGIN FORM */}
         <div className="p-8 md:p-12 w-full md:w-1/2">
           <h2 className="text-3xl font-bold text-gray-700 mb-8 text-center md:text-left">
             Login
           </h2>
 
           <form className="space-y-6" onSubmit={handleLogin}>
-            {/* Email */}
             <div>
               <label className="block text-gray-600 mb-1">Email</label>
               <input
@@ -80,7 +80,6 @@ const Login = () => {
               />
             </div>
 
-            {/* Password */}
             <div>
               <label className="block text-gray-600 mb-1">Password</label>
               <input
@@ -92,19 +91,16 @@ const Login = () => {
               />
             </div>
 
-            {/* Remember + Forgot */}
             <div className="flex justify-between items-center text-sm">
               <label className="flex items-center gap-2">
                 <input type="checkbox" className="accent-[#d55fbb]" />
                 Remember me
               </label>
-
               <Link to="/forgot-password" className="text-[#d55fbb] hover:underline">
                 Forgot Password?
               </Link>
             </div>
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
@@ -113,7 +109,6 @@ const Login = () => {
               {loading ? "Logging in..." : "Login"}
             </button>
 
-            {/* Register */}
             <div className="text-sm text-gray-600 text-center">
               Don't have an account?
               <Link to="/create-account" className="text-[#d55fbb] hover:underline ml-1">
@@ -128,4 +123,3 @@ const Login = () => {
 };
 
 export default Login;
-
