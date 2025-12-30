@@ -1,48 +1,63 @@
-import React, { useEffect, useState } from 'react';
-import { FaStar, FaStarHalfAlt, FaRegStar, FaMinus, FaPlus } from 'react-icons/fa';
-import { useLocation } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { userRequest } from "../requestMethod";
 import { useDispatch, useSelector } from "react-redux";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { addProduct } from "../redux/cartRedux";
+import { FaPlus, FaMinus, FaStar } from "react-icons/fa";
 
-// ⭐ Star Rating Component
-const StarRating = ({ rating, maxRating = 5 }) => {
-  const stars = [];
-  for (let i = 1; i <= maxRating; i++) {
-    if (i <= Math.floor(rating)) {
-      stars.push(<FaStar key={i} className="text-yellow-400" />);
-    } else if (i === Math.ceil(rating) && rating % 1 !== 0) {
-      stars.push(<FaStarHalfAlt key={i} className="text-yellow-400" />);
-    } else {
-      stars.push(<FaRegStar key={i} className="text-yellow-400" />);
-    }
-  }
-  return <div className="flex space-x-1 mt-2">{stars}</div>;
+// Interactive Star Rating Component
+const StarRating = ({ rating, onRatingChange, maxRating = 5 }) => {
+  const [hover, setHover] = useState(0);
+
+  return (
+    <div className="flex space-x-1 mt-1">
+      {[...Array(maxRating)].map((_, i) => {
+        const starValue = i + 1;
+        return (
+          <FaStar
+            key={i}
+            size={25}
+            className={`cursor-pointer transition-colors ${
+              starValue <= (hover || rating) ? "text-yellow-400" : "text-gray-300"
+            }`}
+            onClick={() => onRatingChange && onRatingChange(starValue)}
+            onMouseEnter={() => setHover(starValue)}
+            onMouseLeave={() => setHover(0)}
+          />
+        );
+      })}
+    </div>
+  );
 };
 
 const Product = () => {
   const location = useLocation();
   const id = location.pathname.split("/")[2];
+
   const [product, setProduct] = useState({});
   const [quantity, setQuantity] = useState(1);
+  const [reviews, setReviews] = useState([]);
+
   const dispatch = useDispatch();
   const cart = useSelector((state) => state.cart);
 
-  // 🔄 Quantity Handler
+  // Increment & Decrement
   const handleQuantity = (action) => {
-    setQuantity((prev) =>
-      action === "dec" ? (prev === 1 ? 1 : prev - 1) : prev + 1
-    );
+    setQuantity((prev) => {
+      if (action === "dec") return prev > 1 ? prev - 1 : 1;
+      if (action === "inc") return prev + 1;
+      return prev;
+    });
   };
 
-  // 📦 Fetch Product
   useEffect(() => {
     const getProduct = async () => {
       try {
         const response = await userRequest.get("/products/find/" + id);
         setProduct(response.data);
+        setReviews(response.data.ratings || []);
       } catch (error) {
         console.log(error);
       }
@@ -50,7 +65,6 @@ const Product = () => {
     getProduct();
   }, [id]);
 
-  // 💰 Price Calculation
   const handlePrice = (
     originalPrice,
     discountedPrice,
@@ -58,13 +72,9 @@ const Product = () => {
     minimumQuantity,
     quantity
   ) => {
-    if (quantity > minimumQuantity && wholesalePrice) {
-      return wholesalePrice;
-    } else if (discountedPrice) {
-      return discountedPrice;
-    } else {
-      return originalPrice;
-    }
+    if (quantity > minimumQuantity && wholesalePrice) return wholesalePrice;
+    if (discountedPrice) return discountedPrice;
+    return originalPrice;
   };
 
   const handleAddToCart = () => {
@@ -76,7 +86,7 @@ const Product = () => {
       quantity
     );
 
-    dispatch(addProduct({ ...product, quantity, price, email: "allanlucky2gmail.com" }));
+    dispatch(addProduct({ ...product, quantity, price }));
 
     toast.success("Product has been added to basket successfully", {
       position: "top-right",
@@ -105,10 +115,12 @@ const Product = () => {
           {product.title}
         </h2>
 
-        <span className="text-gray-700 text-sm sm:text-base mb-4">{product.desc}</span>
+        <span className="text-gray-700 text-sm sm:text-base mb-4">
+          {product.desc}
+        </span>
 
-        {/* Price + Rating */}
-        <div className="flex flex-wrap items-center gap-4 mb-4">
+        {/* PRICE + RATING */}
+        <div className="flex items-center gap-4 mb-4">
           <h2 className="font-semibold text-lg sm:text-xl text-red-700">
             KES{" "}
             {handlePrice(
@@ -119,60 +131,67 @@ const Product = () => {
               quantity
             ) * quantity}
           </h2>
-          <StarRating rating={4.5} />
+
+          {/* ✅ Render average rating */}
+          <StarRating
+            rating={
+              reviews.length
+                ? reviews.reduce((acc, r) => acc + r.star, 0) / reviews.length
+                : 0
+            }
+          />
         </div>
 
-        {/* What's in the box */}
-        <div className="border-2 border-gray-300 rounded-lg shadow-md mb-4 p-4">
-          <h3 className="uppercase font-semibold text-gray-700 mb-2 text-base sm:text-lg">
-            What's in the box
-          </h3>
-          <hr className="mb-2" />
-          <span className="text-gray-600 text-sm sm:text-base">{product.title}</span>
-        </div>
-
-        {/* Wholesale Info */}
-        <div className="inline-flex items-center bg-[#ef93db] text-white font-semibold text-xs sm:text-sm p-2 rounded-full shadow-md mb-4">
-          Wholesales Available : KES{product.wholesalePrice} as from {product.minimumQuantity} items
-        </div>
-
-        {/* Quantity Selector */}
+        {/* QUANTITY CONTROLS */}
         <div className="flex items-center gap-4 mb-6">
-          <FaMinus
-            className="bg-[#ef93db] text-white cursor-pointer p-2 rounded-full text-xl sm:text-2xl"
+          <button
             onClick={() => handleQuantity("dec")}
-          />
-          <span className="text-base sm:text-lg font-semibold">{quantity}</span>
-          <FaPlus
-            className="bg-[#ef93db] text-white cursor-pointer p-2 rounded-full text-xl sm:text-2xl"
+            className="p-2 bg-pink-600 text-white rounded-full hover:bg-pink-700 transition"
+          >
+            <FaMinus />
+          </button>
+
+          <span className="text-lg font-semibold">{quantity}</span>
+
+          <button
             onClick={() => handleQuantity("inc")}
-          />
+            className="p-2 bg-pink-600 text-white rounded-full hover:bg-pink-700 transition"
+          >
+            <FaPlus />
+          </button>
         </div>
 
-        {/* Buttons */}
+        {/* ACTION BUTTONS */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <button
-            className="flex-1 px-6 py-3 bg-pink-600 text-white font-semibold rounded-lg hover:bg-pink-700 transition duration-300"
             onClick={handleAddToCart}
+            className="flex-1 px-6 py-3 bg-pink-600 text-white font-semibold rounded-lg hover:bg-pink-700 transition"
           >
             Add to Cart
           </button>
-          <button className="flex-1 px-6 py-3 bg-pink-600 text-white font-semibold rounded-lg hover:bg-pink-700 transition duration-300">
+
+          <button className="flex-1 px-6 py-3 bg-pink-600 text-white font-semibold rounded-lg hover:bg-pink-700 transition">
             Buy Now
           </button>
         </div>
 
-        <hr className="my-6" />
-
-        {/* Reviews */}
-        <div className="flex flex-col gap-4">
+        {/* REVIEWS */}
+        <div className="flex flex-col gap-4 mt-4">
           <h3 className="font-semibold text-base sm:text-lg">Reviews</h3>
-          {["Mzungu Shehe", "Stantah Kazungu", "Stewart Junior"].map((name, index) => (
-            <div key={index} className="flex items-center gap-4">
-              <StarRating rating={4.5} />
-              <span className="font-semibold text-sm sm:text-base">{name}</span>
-            </div>
-          ))}
+
+          {reviews.length ? (
+            reviews.map((rev, index) => (
+              <div key={index} className="flex items-center gap-3">
+                <StarRating rating={rev.star} />
+                <span className="font-semibold text-sm">{rev.name}</span>
+                <span className="text-gray-600 text-sm">
+                  – {rev.comment}
+                </span>
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-500 text-sm">No reviews yet</p>
+          )}
         </div>
       </div>
     </div>
