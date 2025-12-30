@@ -1,26 +1,28 @@
+import express from "express";
 import {
-  ratingProduct,
-  getALLproducts,
-  getProduct,
   createProduct,
   updateProduct,
   deleteProduct,
+  getProduct,
+  getALLproducts,
+  ratingProduct,
 } from "../controllers/productController.js";
-import express from "express";
+import { protect, adminOnly } from "../middlewares/authMiddleware.js";
+
+
 const router = express.Router();
 
-// RATING PRODUCT ROUTE
-router.put("/rating/:id", ratingProduct);
-// GET ALL PRODUCTS
-router.get("/", getALLproducts);
-// GET ONE PRODUCT
-router.get("/find/:id", getProduct);
-//CREATE PRODUCT
-router.post("/", createProduct);
-// UPDATE PRODUCT
-router.put("/:id", updateProduct);
+// Admin-only routes
+router.post("/", protect, adminOnly, createProduct);
+router.put("/:id", protect, adminOnly, updateProduct);
+router.delete("/:id", protect, adminOnly, deleteProduct);
 
-//DELETE PRODUCT
-router.delete("/:id", deleteProduct);
+// Public routes
+router.get("/find/:id", getProduct); // <-- single product by ID
+router.get("/", getALLproducts);
+
+// Logged-in users can rate
+router.post("/rating/:id", protect, ratingProduct);
 
 export default router;
+
