@@ -18,9 +18,19 @@ const errorHandler = (err, req, res, next) => {
   }
 
   // Mongoose duplicate key
+  if (err.code && err.code === 11000) {
+    statusCode = 400;
+    message = `Duplicate field value entered: ${JSON.stringify(err.keyValue)}`;
+  }
+
+  // Mongoose validation error
+  if (err.name === 'ValidationError') {
+    statusCode = 400;
+    message = Object.values(err.errors).map(val => val.message).join(', ');
+  }
 
   res.status(statusCode).json({
-    message: message,
+    message,
     stack: process.env.NODE_ENV === "production" ? null : err.stack,
   });
 }
