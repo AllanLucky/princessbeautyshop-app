@@ -11,18 +11,21 @@ import cors from "cors";
 
 const app = express();
 
-
 // MIDDLEWARE
-
 
 // Parse JSON body
 app.use(express.json());
 
-// Enable CORS
-app.use(cors());
-
 // Parse cookies
 app.use(cookieParser());
+
+// Enable CORS with credentials
+app.use(
+  cors({
+    origin: "http://localhost:5174", // frontend URL
+    credentials: true,               // allow cookies to be sent
+  })
+);
 
 // ROUTES
 app.use("/api/v1/auth", authRoutes);
@@ -31,7 +34,6 @@ app.use("/api/v1/banners", bannerRoute);
 app.use("/api/v1/users", usersRoute);
 app.use("/api/v1/orders", orderRoute);
 app.use("/api/v1/stripe", stripeRoute);
-
 
 // ERROR HANDLING MIDDLEWARE
 app.use(notFound);
