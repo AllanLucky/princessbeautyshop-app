@@ -16,12 +16,14 @@ const Login = () => {
   useEffect(() => {
     if (user.currentUser) {
       toast.success("User logged in successfully!");
-      
+
       // Redirect based on role
       if (user.currentUser.role === "admin") {
-        navigate("/admin-dashboard"); // admin dashboard route
+        // Admin goes to admin frontend (port 5173)
+        window.location.href = "http://localhost:5173/admin-dashboard";
       } else {
-        navigate("/"); // regular user home page
+        // Regular user goes to main frontend (port 5174)
+        navigate("/");
       }
     }
   }, [user.currentUser, navigate]);
