@@ -14,7 +14,7 @@ import Settings from "./pages/Settings";
 import Backups from "./pages/Backups";
 import Charts from "./pages/Charts";
 import Myaccounts from "./pages/Myaccounts";
-import Logout from "./pages/Logout";
+
 
 // Layout for admin dashboard
 const Layout = () => {
@@ -57,7 +57,6 @@ const router = createBrowserRouter([
       { path: "/backups", element: <Backups /> },
       { path: "/charts", element: <Charts /> },
       { path: "/all-logs", element: <Backups /> },
-      { path: "/logout", element: <Logout /> },
     ],
   },
   {
