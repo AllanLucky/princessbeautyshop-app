@@ -3,7 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 const adminSlice = createSlice({
   name: "admin",
   initialState: {
-    currentAdmin: null,
+    currentAdmin: JSON.parse(localStorage.getItem("admin")) || null,
     isFetching: false,
     error: false,
   },
@@ -15,8 +15,9 @@ const adminSlice = createSlice({
     loginSuccess: (state, action) => {
       state.isFetching = false;
       state.currentAdmin = action.payload;
+      state.error = false;
     },
-    loginFailure: (state) => {   // ✅ This is the function you need
+    loginFailure: (state) => {
       state.isFetching = false;
       state.error = true;
     },
@@ -24,9 +25,11 @@ const adminSlice = createSlice({
       state.currentAdmin = null;
       state.isFetching = false;
       state.error = false;
+      localStorage.removeItem("admin");
+      localStorage.removeItem("access_token");
     },
   },
 });
 
-export const { loginStart, loginSuccess, loginFailure, logOut } = adminSlice.actions; // ✅ Named exports
+export const { loginStart, loginSuccess, loginFailure, logOut } = adminSlice.actions;
 export default adminSlice.reducer;
