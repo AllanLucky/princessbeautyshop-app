@@ -5,33 +5,29 @@ import ShoppingBasketIcon from "@mui/icons-material/ShoppingBasket";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logOut } from "../redux/userRedux";
+import { userRequest } from "../requestMethod";
 
 const Navbar = () => {
   const [openSearch, setOpenSearch] = useState(false);
   const [search, setSearch] = useState("");
   const [openDropdown, setOpenDropdown] = useState(false);
 
-  const cart = useSelector((state) => state.cart);
-  const user = useSelector((state) => state.user);
+  const { cart, user } = useSelector((state) => state);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
 
-  /* 🔴 REDIRECT ADMIN AWAY FROM FRONTEND */
-  useEffect(() => {
-    if (
-      user?.currentUser &&
-      (user.currentUser.isAdmin === true ||
-        user.currentUser.role === "admin")
-    ) {
-      // redirect to admin dashboard (Vite admin on 5173)
-      window.location.href = "http://localhost:5173";
+  /* ✅ Proper logout: backend + redux */
+  const handleLogout = async () => {
+    try {
+      await userRequest.post("/auth/logout");
+    } catch (err) {
+      console.error(err);
+    } finally {
+      dispatch(logOut());
+      navigate("/login");
+      setOpenDropdown(false);
     }
-  }, [user]);
-
-  const handleLogout = () => {
-    dispatch(logOut());
-    navigate("/login");
   };
 
   /* Close dropdown when clicking outside */
@@ -85,43 +81,47 @@ const Navbar = () => {
             </Badge>
           </Link>
 
-          {/* 👇 SHOW ONLY NORMAL USERS */}
+          {/* Auth Section */}
           {!user.currentUser ? (
             <Link to="/login">
               <div className="flex items-center gap-2 border px-3 py-2 rounded-lg">
-                <FaUser />
-                <span className="hidden md:block">Login</span>
+                <FaUser className="text-pink-500 text-[12px]" />
+                <span className="hidden md:block text-pink-500 text-xl">
+                  Login
+                </span>
               </div>
             </Link>
           ) : (
-            user.currentUser.role !== "admin" &&
-            user.currentUser.isAdmin !== true && (
-              <div ref={dropdownRef} className="relative">
-                <button
-                  onClick={() => setOpenDropdown(!openDropdown)}
-                  className="flex items-center gap-2 border px-3 py-2 rounded-lg"
-                >
-                  <FaUser />
-                  <span className="hidden md:block">
-                    {user.currentUser.name}
-                  </span>
-                </button>
+            <div ref={dropdownRef} className="relative">
+              <button
+                onClick={() => setOpenDropdown((prev) => !prev)}
+                className="flex items-center gap-2 border px-3 py-2 rounded-lg"
+              >
+                <FaUser className="text-pink-500 text-xl" />
+                <span className="hidden md:block text-pink-500 font-semibold">
+                  {user.currentUser.name}
+                </span>
+              </button>
 
-                {openDropdown && (
-                  <div className="absolute right-0 mt-2 w-40 bg-white border rounded-lg">
-                    <Link to="/profile" className="block px-4 py-2">
-                      Profile
-                    </Link>
-                    <button
-                      onClick={handleLogout}
-                      className="w-full text-left px-4 py-2"
-                    >
-                      Logout
-                    </button>
-                  </div>
-                )}
-              </div>
-            )
+              {/* Dropdown only opens when user clicks */}
+              {openDropdown && (
+                <div className="absolute right-0 mt-2 w-40 bg-white border rounded-lg shadow-lg z-20">
+                  <Link
+                    to="/profile"
+                    className="block px-4 py-2 hover:bg-gray-100"
+                    onClick={() => setOpenDropdown(false)}
+                  >
+                    Profile
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-100"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>
