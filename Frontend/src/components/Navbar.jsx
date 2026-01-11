@@ -1,11 +1,10 @@
-import { useState, useRef, useEffect } from "react";
-import { FaSearch, FaUser } from "react-icons/fa";
-import Badge from "@mui/material/Badge";
-import ShoppingBasketIcon from "@mui/icons-material/ShoppingBasket";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { logOut } from "../redux/userRedux";
-import { userRequest } from "../requestMethod";
+import Badge from "@mui/material/Badge";
+import ShoppingBasketIcon from "@mui/icons-material/ShoppingBasket";
+import { FaSearch, FaUser } from "react-icons/fa";
+import { logoutUser } from "../redux/apiCall";
 
 const Navbar = () => {
   const [openSearch, setOpenSearch] = useState(false);
@@ -17,20 +16,14 @@ const Navbar = () => {
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
 
-  /* ✅ Proper logout: backend + redux */
-  const handleLogout = async () => {
-    try {
-      await userRequest.post("/auth/logout");
-    } catch (err) {
-      console.error(err);
-    } finally {
-      dispatch(logOut());
-      navigate("/login");
-      setOpenDropdown(false);
-    }
+  // Logout handler
+  const handleLogout = () => {
+    logoutUser(dispatch);
+    setOpenDropdown(false);
+    navigate("/login");
   };
 
-  /* Close dropdown when clicking outside */
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -39,8 +32,7 @@ const Navbar = () => {
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   return (
@@ -48,11 +40,7 @@ const Navbar = () => {
       <div className="flex items-center justify-between h-[90px] shadow-xl px-6 md:px-12 relative z-10">
         {/* Logo */}
         <Link to="/" className="flex items-center">
-          <img
-            src="/blisslogo1.png"
-            alt="Bliss Store Logo"
-            className="h-[70px] w-auto object-contain"
-          />
+          <img src="/blisslogo1.png" alt="Logo" className="h-[70px] w-auto object-contain" />
         </Link>
 
         {/* Search Desktop */}
@@ -68,7 +56,7 @@ const Navbar = () => {
           </Link>
         </div>
 
-        {/* Right Side */}
+        {/* Right Section */}
         <div className="flex items-center gap-4">
           <FaSearch
             className="text-[22px] text-pink-500 md:hidden"
@@ -81,14 +69,11 @@ const Navbar = () => {
             </Badge>
           </Link>
 
-          {/* Auth Section */}
           {!user.currentUser ? (
             <Link to="/login">
               <div className="flex items-center gap-2 border px-3 py-2 rounded-lg">
                 <FaUser className="text-pink-500 text-[12px]" />
-                <span className="hidden md:block text-pink-500 text-xl">
-                  Login
-                </span>
+                <span className="hidden md:block text-pink-500 text-xl">Login</span>
               </div>
             </Link>
           ) : (
@@ -103,7 +88,6 @@ const Navbar = () => {
                 </span>
               </button>
 
-              {/* Dropdown only opens when user clicks */}
               {openDropdown && (
                 <div className="absolute right-0 mt-2 w-40 bg-white border rounded-lg shadow-lg z-20">
                   <Link

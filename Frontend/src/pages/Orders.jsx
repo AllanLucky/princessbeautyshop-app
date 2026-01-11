@@ -31,11 +31,7 @@ const StarRating = ({ rating, onRatingChange, maxRating = 5 }) => {
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
-  const handleUpdateOrder = async(id) =>{
-    try{
-      await
-    }
-  }
+
  
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
