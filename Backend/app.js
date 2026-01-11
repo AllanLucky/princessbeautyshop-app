@@ -20,10 +20,21 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Enable CORS
-app.use(cors({
-  origin: "http://localhost:5174", // frontend origin
-  credentials: true,              // allow cookies
-}));
+const allowedOrigins = ["http://localhost:5173", "http://localhost:5174"];
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // allow requests with no origin (like mobile apps or Postman)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) === -1) {
+        const msg = `CORS policy: The origin ${origin} is not allowed`;
+        return callback(new Error(msg), false);
+      }
+      return callback(null, true);
+    },
+    credentials: true, // allow cookies and auth headers
+  })
+);
 
 // ROUTES
 app.use("/api/v1/auth", authRoutes);
@@ -38,4 +49,3 @@ app.use(notFound);
 app.use(errorHandler);
 
 export default app;
-
