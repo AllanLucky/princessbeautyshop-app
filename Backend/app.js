@@ -19,20 +19,8 @@ app.use(express.json());
 // Parse cookies
 app.use(cookieParser());
 
-// Enable CORS with multiple origins and credentials
-const allowedOrigins = ["http://localhost:5173", "http://localhost:5174"];
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true, // allow cookies to be sent
-  })
-);
+// Enable CORS
+app.use(cors());
 
 // ROUTES
 app.use("/api/v1/auth", authRoutes);
@@ -47,3 +35,4 @@ app.use(notFound);
 app.use(errorHandler);
 
 export default app;
+

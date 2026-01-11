@@ -5,36 +5,30 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// Protect routes — only logged-in users
+/**
+ * Middleware to protect routes — only allow authenticated users
+ */
 const protect = asyncHandler(async (req, res, next) => {
-  let token;
+  let token = req.cookies.jwt; // Get token from cookie
 
-  // ✅ Get token from Authorization header or cookies
-  if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
-    token = req.headers.authorization.split(" ")[1];
-  } else if (req.cookies && req.cookies.jwt) {
-    token = req.cookies.jwt;
-  }
-
-  if (!token) {
+  if (token) {
+    try {
+      const decodedToken = jwt.verify(token, process.env.JWT_SEC);
+      req.user = await User.findById(decodedToken.userId).select("-password");
+      next();
+    } catch (error) {
+      res.status(401);
+      throw new Error("Not authorized, invalid token");
+    }
+  } else {
     res.status(401);
     throw new Error("Not authorized, no token");
   }
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Attach user object to request (exclude password)
-    req.user = await User.findById(decoded.id).select("-password");
-
-    next();
-  } catch (error) {
-    res.status(401);
-    throw new Error("Not authorized, token failed");
-  }
 });
 
-// Admin-only middleware — only allow admins
+/**
+ * Middleware to allow only admins
+ */
 const adminOnly = (req, res, next) => {
   if (req.user && req.user.role === "admin") {
     next();
@@ -44,6 +38,7 @@ const adminOnly = (req, res, next) => {
   }
 };
 
+export default protect;
 export { protect, adminOnly };
 
 
