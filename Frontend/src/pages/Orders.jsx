@@ -30,29 +30,33 @@ const StarRating = ({ rating, onRatingChange, maxRating = 5 }) => {
 };
 
 const Orders = () => {
-  const user = useSelector((state) => state.user);
+  const currentUser = useSelector((state) => state.user.currentUser);
   const [orders, setOrders] = useState([]);
   const [ratings, setRatings] = useState({}); // { productId: rating }
   const [comments, setComments] = useState({}); // { productId: comment }
 
+  // Fetch current user's orders
   useEffect(() => {
-    const getUserOrder = async () => {
+    if (!currentUser) return; // wait for user to load
+    const getUserOrders = async () => {
       try {
-        const res = await userRequest.get(`/orders/find/${user.currentUser._id}`);
+        const res = await userRequest.get(`/orders/find/${currentUser._id}`);
         setOrders(res.data);
       } catch (error) {
         console.log(error);
       }
     };
-    getUserOrder();
-  }, [user]);
+    getUserOrders();
+  }, [currentUser]);
 
   const handleRatingSubmit = async (productId) => {
+    if (!currentUser) return;
+
     try {
       const singleRating = {
         star: ratings[productId],
-        name: user.currentUser.name,
-        postedBy: user.currentUser._id,
+        name: currentUser.name,
+        postedBy: currentUser._id,
         comment: comments[productId] || "",
       };
       await userRequest.put(`/products/rating/${productId}`, singleRating);
@@ -64,6 +68,8 @@ const Orders = () => {
       console.log(error);
     }
   };
+
+  if (!currentUser) return <p>Loading user...</p>;
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
@@ -147,9 +153,8 @@ const Orders = () => {
         {/* Shipping Info */}
         <div className="bg-gray-50 p-4 rounded-xl shadow-sm space-y-2">
           <h3 className="text-xl font-semibold mb-2 text-gray-800">Shipping Information</h3>
-          <p className="text-gray-600">Name: Allan Lucky</p>
-          <p className="text-gray-600">Email: luckytsori8@gmail.com</p>
-          <p className="text-gray-600">Phone: +25488425000</p>
+          <p className="text-gray-600">Name: {currentUser.name}</p>
+          <p className="text-gray-600">Email: {currentUser.email}</p>
         </div>
 
         {/* Payment Method */}
