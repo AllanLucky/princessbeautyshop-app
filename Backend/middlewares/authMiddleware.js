@@ -22,7 +22,7 @@ const protect = asyncHandler(async (req, res, next) => {
     const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
 
     // Attach user object to request (exclude password)
-    req.user = await User.findById(decodedToken.id).select("-password");
+    req.user = await User.findById(decodedToken.userId).select("-password");
 
     next();
   } catch (error) {
@@ -42,3 +42,4 @@ const adminOnly = (req, res, next) => {
 };
 
 export { protect, adminOnly };
+
