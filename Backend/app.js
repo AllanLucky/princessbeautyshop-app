@@ -20,7 +20,10 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Enable CORS
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:5174", // frontend origin
+  credentials: true,              // allow cookies
+}));
 
 // ROUTES
 app.use("/api/v1/auth", authRoutes);
