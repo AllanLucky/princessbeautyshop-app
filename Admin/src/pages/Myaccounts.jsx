@@ -2,7 +2,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { updateAdminCredentials } from "../redux/adminApiCalls"; // ✅ uses userRequest internally
+import { updateAdminCredentials } from "../redux/adminApiCalls"; 
 
 const Myaccounts = () => {
   const dispatch = useDispatch();
