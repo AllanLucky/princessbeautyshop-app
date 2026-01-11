@@ -1,12 +1,28 @@
 import { Menu, Popover, Transition } from "@headlessui/react";
-import { HiOutlineBell, HiOutlineChatAlt, HiOutlineSearch, HiOutlineMenu } from "react-icons/hi";
+import {
+  HiOutlineBell,
+  HiOutlineChatAlt,
+  HiOutlineSearch,
+  HiOutlineMenu,
+} from "react-icons/hi";
 import { Fragment, useState } from "react";
 import classNames from "classnames";
 import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { logOut } from "../redux/adminRedux";
 
 const Headers = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // ✅ Get admin info from Redux safely
+  const admin = useSelector((state) => state.admin.currentAdmin);
+
+  const handleLogout = () => {
+    dispatch(logOut());
+    navigate("/login"); // redirect after logout
+  };
 
   return (
     <div className="flex justify-between items-center bg-pink-400 h-16 px-4 md:px-6 border-b border-gray-200 shadow-sm">
@@ -19,11 +35,10 @@ const Headers = () => {
           <HiOutlineMenu fontSize={24} />
         </button>
 
-        {/* Logo image */}
         <img
-          src="/blisslogo1.png"   // replace with your logo path
+          src="/blisslogo1.png"
           alt="Princess Beauty Shop Logo"
-         className="h-16 w-auto object-contain cursor-pointer"
+          className="h-16 w-auto object-contain cursor-pointer"
           onClick={() => navigate("/dashboard")}
         />
       </div>
@@ -55,75 +70,40 @@ const Headers = () => {
         {/* Chat */}
         <Popover className="relative">
           {({ open }) => (
-            <>
-              <Popover.Button
-                className={classNames(
-                  "inline-flex items-center text-gray-700 p-1.5 rounded-sm hover:bg-gray-100",
-                  open && "bg-gray-100"
-                )}
-              >
-                <HiOutlineChatAlt fontSize={24} />
-              </Popover.Button>
-              <Transition
-                as={Fragment}
-                enter="transition ease-out duration-200"
-                enterFrom="opacity-0 translate-y-1"
-                enterTo="opacity-100 translate-y-0"
-                leave="transition ease-in duration-150"
-                leaveFrom="opacity-100 translate-y-0"
-                leaveTo="opacity-0 translate-y-1"
-              >
-                <Popover.Panel className="absolute right-0 z-10 mt-2.5 w-80">
-                  <div className="bg-white rounded-sm shadow-md ring-1 ring-black ring-opacity-5 px-2 py-2.5">
-                    <strong className="text-gray-700 font-medium">Messages</strong>
-                    <div className="mt-2 py-1 text-sm">This is the chat panel</div>
-                  </div>
-                </Popover.Panel>
-              </Transition>
-            </>
+            <Popover.Button
+              className={classNames(
+                "inline-flex items-center text-gray-700 p-1.5 rounded-sm hover:bg-gray-100",
+                open && "bg-gray-100"
+              )}
+            >
+              <HiOutlineChatAlt fontSize={24} />
+            </Popover.Button>
           )}
         </Popover>
 
         {/* Notifications */}
         <Popover className="relative">
           {({ open }) => (
-            <>
-              <Popover.Button
-                className={classNames(
-                  "inline-flex items-center text-gray-700 p-1.5 rounded-sm hover:bg-gray-100",
-                  open && "bg-gray-100"
-                )}
-              >
-                <HiOutlineBell fontSize={24} />
-              </Popover.Button>
-              <Transition
-                as={Fragment}
-                enter="transition ease-out duration-200"
-                enterFrom="opacity-0 translate-y-1"
-                enterTo="opacity-100 translate-y-0"
-                leave="transition ease-in duration-150"
-                leaveFrom="opacity-100 translate-y-0"
-                leaveTo="opacity-0 translate-y-1"
-              >
-                <Popover.Panel className="absolute right-0 z-10 mt-2.5 w-80">
-                  <div className="bg-white rounded-sm shadow-md ring-1 ring-black ring-opacity-5 px-2 py-2.5">
-                    <strong className="text-gray-700 font-medium">Notifications</strong>
-                    <div className="mt-2 py-1 text-sm">This is the notification panel</div>
-                  </div>
-                </Popover.Panel>
-              </Transition>
-            </>
+            <Popover.Button
+              className={classNames(
+                "inline-flex items-center text-gray-700 p-1.5 rounded-sm hover:bg-gray-100",
+                open && "bg-gray-100"
+              )}
+            >
+              <HiOutlineBell fontSize={24} />
+            </Popover.Button>
           )}
         </Popover>
 
         {/* User menu */}
         <Menu as="div" className="relative inline-block text-left">
-          <div>
-            <Menu.Button className="ml-2 inline-flex rounded-full focus:outline-none focus:ring-2 focus:ring-neutral-400">
-              <span className="sr-only">Open user menu</span>
-              <div className="h-10 w-10 rounded-full bg-sky-500 bg-cover bg-center" />
-            </Menu.Button>
-          </div>
+          <Menu.Button className="ml-2 inline-flex items-center rounded-full focus:outline-none focus:ring-2 focus:ring-neutral-400">
+            <span className="sr-only">Open user menu</span>
+            <div className="h-10 w-10 rounded-full bg-sky-500 flex items-center justify-center text-white font-semibold">
+              {admin?.name ? admin.name.charAt(0).toUpperCase() : "A"}
+            </div>
+          </Menu.Button>
+
           <Transition
             as={Fragment}
             enter="transition ease-out duration-100"
@@ -142,7 +122,7 @@ const Headers = () => {
                       active ? "bg-gray-100" : ""
                     } cursor-pointer`}
                   >
-                    Profile
+                    {admin?.name || "Profile"}
                   </div>
                 )}
               </Menu.Item>
@@ -161,7 +141,7 @@ const Headers = () => {
               <Menu.Item>
                 {({ active }) => (
                   <div
-                    onClick={() => navigate("/logout")}
+                    onClick={handleLogout}
                     className={`group flex w-full items-center px-2 py-2 text-sm text-red-500 rounded-sm ${
                       active ? "bg-gray-100" : ""
                     } cursor-pointer`}
@@ -179,3 +159,4 @@ const Headers = () => {
 };
 
 export default Headers;
+

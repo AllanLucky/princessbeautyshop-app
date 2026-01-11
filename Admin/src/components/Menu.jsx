@@ -4,7 +4,7 @@ const Menu = () => {
   return (
     <div className="h-[120vh] w-[250px] bg-gray-50 p-[20px] shadow-lg">
       <ul className="flex flex-col items-start justify-start mt-[20px] pl-[20px]">
-        <Link to="/dashboard">
+        <Link to="/admin-dashboard">
         <li className="flex items-center text-[20px] cursor-ponter mt-[20px] transition-colors duration-100">
           <FaHome className="mr-[15px] text-[#ef93db]" /> 
           Home

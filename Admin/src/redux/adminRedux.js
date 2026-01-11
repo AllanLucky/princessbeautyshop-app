@@ -1,9 +1,9 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const userSlice = createSlice({
-  name: "user",
+const adminSlice = createSlice({
+  name: "admin",
   initialState: {
-    currentUser: null,
+    currentAdmin: null,
     isFetching: false,
     error: false,
   },
@@ -14,20 +14,19 @@ const userSlice = createSlice({
     },
     loginSuccess: (state, action) => {
       state.isFetching = false;
-      state.currentUser = action.payload;
-      state.error = false;
+      state.currentAdmin = action.payload;
     },
-    loginFailure: (state) => {
+    loginFailure: (state) => {   // ✅ This is the function you need
       state.isFetching = false;
       state.error = true;
     },
-    logout: (state) => {
-      state.currentUser = null;
+    logOut: (state) => {
+      state.currentAdmin = null;
       state.isFetching = false;
       state.error = false;
     },
   },
 });
 
-export const { loginStart, loginSuccess, loginFailure, logout } = userSlice.actions;
-export default userSlice.reducer;
+export const { loginStart, loginSuccess, loginFailure, logOut } = adminSlice.actions; // ✅ Named exports
+export default adminSlice.reducer;
