@@ -12,24 +12,26 @@ const adminSlice = createSlice({
       state.isFetching = true;
       state.error = false;
     },
+
     loginSuccess: (state, action) => {
       state.isFetching = false;
       state.currentAdmin = action.payload;
       state.error = false;
     },
+
     loginFailure: (state) => {
       state.isFetching = false;
       state.error = true;
     },
-    logOut: (state) => {
+
+    logout: (state) => {
       state.currentAdmin = null;
       state.isFetching = false;
       state.error = false;
-      localStorage.removeItem("admin");
-      localStorage.removeItem("access_token");
+      localStorage.removeItem("admin"); // 🔥 only this is needed
     },
   },
 });
 
-export const { loginStart, loginSuccess, loginFailure, logOut } = adminSlice.actions;
+export const { loginStart, loginSuccess, loginFailure, logout } = adminSlice.actions;
 export default adminSlice.reducer;

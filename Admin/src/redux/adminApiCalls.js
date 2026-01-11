@@ -1,23 +1,27 @@
 import { loginStart, loginSuccess, loginFailure } from "./adminRedux";
-import { publicRequest } from "./requestMethods";
+import { userRequest } from "../requestMethods";
 
 // Login Admin
 export const loginAdmin = async (dispatch, adminCredentials) => {
   dispatch(loginStart());
-  try {
-    const res = await publicRequest.post("/auth/login", adminCredentials);
 
-    // Only allow admin
+  try {
+    const res = await userRequest.post("/auth/login", adminCredentials);
+
+    // Ensure admin role
     if (res.data.role !== "admin") {
       dispatch(loginFailure());
       return { error: "Access denied. Admin only." };
     }
 
-    dispatch(loginSuccess(res.data));
-    localStorage.setItem("admin", JSON.stringify(res.data));
-    if (res.data.access_token) {
-      localStorage.setItem("access_token", res.data.access_token);
-    }
+    // Store admin with token inside
+    const adminData = {
+      ...res.data,
+      access_token: res.data.access_token,
+    };
+
+    dispatch(loginSuccess(adminData));
+    localStorage.setItem("admin", JSON.stringify(adminData));
 
     return { success: true };
   } catch (err) {
@@ -26,18 +30,17 @@ export const loginAdmin = async (dispatch, adminCredentials) => {
   }
 };
 
-// Update Admin Credentials (Email & Password)
-export const updateAdminCredentials = async (dispatch, adminId, credentials) => {
-  try {
-    // Make API call to update credentials
-    const res = await publicRequest.put(`/admin/${adminId}`, credentials);
 
-    // Update Redux and localStorage with new credentials
-    dispatch(loginSuccess(res.data));
-    localStorage.setItem("admin", JSON.stringify(res.data));
+// Update Admin Credentials
+export const updateAdminCredentials = async (dispatch, adminId, updatedData) => {
+  try {
+    const res = await userRequest.put(`/users/${adminId}`, updatedData);
 
     return { success: true, data: res.data };
   } catch (err) {
-    return { success: false, error: err.response?.data?.message || "Update failed" };
+    return { 
+      success: false, 
+      error: err.response?.data?.message || "Update failed" 
+    };
   }
 };

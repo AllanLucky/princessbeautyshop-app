@@ -2,7 +2,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { updateAdminCredentials } from "../redux/adminApiCalls";
+import { updateAdminCredentials } from "../redux/adminApiCalls"; // ✅ uses userRequest internally
 
 const Myaccounts = () => {
   const dispatch = useDispatch();
@@ -19,15 +19,23 @@ const Myaccounts = () => {
     }
 
     setLoading(true);
-    const { success, error } = await updateAdminCredentials(dispatch, admin.id, { email, password });
 
-    if (success) {
-      toast.success("Credentials updated successfully!");
-      setPassword("");
-    } else {
-      toast.error(error);
+    try {
+      // Pass admin ID and updated credentials
+      const { success, error } = await updateAdminCredentials(dispatch, admin.id, { email, password });
+
+      if (success) {
+        toast.success("Credentials updated successfully!");
+        setPassword(""); // clear password after update
+      } else {
+        toast.error(error);
+      }
+    } catch (err) {
+      toast.error("Something went wrong. Please try again.");
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   if (!admin) {
@@ -46,21 +54,50 @@ const Myaccounts = () => {
         <div className="space-y-4">
           <div>
             <label className="block text-gray-700 font-medium mb-1">Full Name</label>
-            <input type="text" value={admin.name} disabled className="w-full border border-gray-300 rounded px-3 py-2 bg-gray-100"/>
+            <input
+              type="text"
+              value={admin.name}
+              disabled
+              className="w-full border border-gray-300 rounded px-3 py-2 bg-gray-100"
+            />
           </div>
+
           <div>
             <label className="block text-gray-700 font-medium mb-1">Email</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2"/>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full border border-gray-300 rounded px-3 py-2"
+            />
           </div>
+
           <div>
             <label className="block text-gray-700 font-medium mb-1">New Password</label>
-            <input type="password" placeholder="Enter new password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2"/>
+            <input
+              type="password"
+              placeholder="Enter new password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full border border-gray-300 rounded px-3 py-2"
+            />
           </div>
+
           <div>
             <label className="block text-gray-700 font-medium mb-1">Role</label>
-            <input type="text" value="ADMIN" disabled className="w-full border border-gray-300 rounded px-3 py-2 bg-gray-100"/>
+            <input
+              type="text"
+              value="ADMIN"
+              disabled
+              className="w-full border border-gray-300 rounded px-3 py-2 bg-gray-100"
+            />
           </div>
-          <button onClick={handleUpdate} disabled={loading} className="mt-4 w-full py-3 bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-500 text-white rounded-xl font-semibold transition-all duration-300 hover:scale-[1.02] shadow-lg disabled:opacity-50">
+
+          <button
+            onClick={handleUpdate}
+            disabled={loading}
+            className="mt-4 w-full py-3 bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-500 text-white rounded-xl font-semibold transition-all duration-300 hover:scale-[1.02] shadow-lg disabled:opacity-50"
+          >
             {loading ? "Updating..." : "Save Changes"}
           </button>
         </div>
@@ -70,5 +107,3 @@ const Myaccounts = () => {
 };
 
 export default Myaccounts;
-
-

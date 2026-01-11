@@ -2,12 +2,18 @@ import {FaHome, FaUser, FaBox, FaClipboardList, FaElementor, FaCog,FaHdd,FaChart
 import {Link} from "react-router-dom";
 const Menu = () => {
   return (
-    <div className="h-[120vh] w-[250px] bg-gray-50 p-[20px] shadow-lg">
+    <div className="h-[62vw] w-[250px] bg-gray-50 p-[20px] shadow-lg">
       <ul className="flex flex-col items-start justify-start mt-[20px] pl-[20px]">
         <Link to="/admin-dashboard">
         <li className="flex items-center text-[20px] cursor-ponter mt-[20px] transition-colors duration-100">
           <FaHome className="mr-[15px] text-[#ef93db]" /> 
           Home
+        </li>
+        </Link>
+        <Link to="/profile">
+         <li className="flex items-center text-[20px] cursor-ponter mt-[20px] transition-colors duration-100">
+          <FaUsers className="mr-[15px] text-[#ef93db]" />
+          Profile
         </li>
         </Link>
         <hr className="w-full my-[20px] border-gray-300"/>
@@ -62,12 +68,12 @@ const Menu = () => {
           All logs
         </li>
        </Link>
-        {/* <Link to="/logout">
+        <Link to="/logout">
         <li className="flex items-center text-[20px] cursor-ponter mt-[20px] transition-colors    duration-100">
           <FaSignOutAlt className="mr-[15px] text-[#ef93db]" />
           Logout
         </li>
-        </Link> */}
+        </Link>
       </ul>
     </div>
   )

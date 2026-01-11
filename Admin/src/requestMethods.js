@@ -2,13 +2,14 @@ import axios from "axios";
 
 const BASE_URL = "http://localhost:8000/api/v1";
 
-// Requests that need authentication (cookies / JWT)
+const admin = JSON.parse(localStorage.getItem("admin"));
+const token = admin?.access_token;
+
 export const userRequest = axios.create({
   baseURL: BASE_URL,
-  withCredentials: true, // include cookies
+  withCredentials: true,
+  headers: {
+    Authorization: token ? `Bearer ${token}` : "",
+  },
 });
 
-// Requests that don’t need authentication
-export const publicRequest = axios.create({
-  baseURL: BASE_URL,
-});
