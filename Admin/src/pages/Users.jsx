@@ -1,82 +1,93 @@
 import { DataGrid } from "@mui/x-data-grid";
 import { Link } from "react-router-dom";
-import { FaTrash } from "react-icons/fa";
+import { useEffect, useState } from "react";
 import { userRequest } from "../requestMethods";
-import { useEffect, useState } from 'react';
 
 const Users = () => {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-    const [users, setUsers] = useState([]);
-  
+  // 👇 REQUIRED for pagination selector
+  const [paginationModel, setPaginationModel] = useState({
+    page: 0,
+    pageSize: 10,
+  });
+
   useEffect(() => {
     const getUsers = async () => {
       try {
-        const response = await userRequest.get("/users");
-        setUsers(response.data.users);
-      } catch(error) {
-        console.log(error);
+        setLoading(true);
+        const res = await userRequest.get("/users");
+
+        // backend sends { success, users }
+        setUsers(res.data.users);
+      } catch (error) {
+        console.error("Failed to fetch users:", error.response?.data || error);
+      } finally {
+        setLoading(false);
       }
-    }
+    };
+
     getUsers();
-  }, [])
+  }, []);
 
+  const userColumns = [
+    { field: "_id", headerName: "ID", width: 220 },
 
-
-
-
-const userColumns = [
-  { field: "_id", headerName: "ID", width: 90 },
-
-  {
-    field: "user",
-    headerName: "User",
-    width: 250,
-    renderCell: (params) => {
-      return (
-        <div className="flex items-center">
+    {
+      field: "name",
+      headerName: "User",
+      width: 250,
+      renderCell: (params) => (
+        <div className="flex items-center gap-2">
           <img
-            src={params.row.avatar}
-            alt=""
-            className="h-8 w-8 rounded-full object-cover mr-2"
+            src={params.row.avatar || "/avatar.png"}
+            className="h-8 w-8 rounded-full object-cover"
           />
           <span>{params.row.name}</span>
         </div>
-      );
+      ),
     },
-  },
 
-  { field: "email", headerName: "Email", width: 200 },
-  { field: "role", headerName: "Role", width: 120 },
-  { field: "active", headerName: "Active", width: 120 },
+    { field: "email", headerName: "Email", width: 250 },
+    { field: "role", headerName: "Role", width: 120 },
+    { field: "isActive", headerName: "Active", width: 120 },
 
-  {
-    field: "edit",
-    headerName: "Edit",
-    width: 100,
-    renderCell: (params) => {
-      return (
+    {
+      field: "edit",
+      headerName: "Edit",
+      width: 120,
+      renderCell: (params) => (
         <Link to={`/user/${params.row._id}`}>
-          <button className="bg-gray-400 text-white cursor-pointer w-[70px]">
+          <button className="bg-gray-500 px-3 py-1 text-white rounded">
             Edit
           </button>
         </Link>
-      );
+      ),
     },
-  },
-
-];
+  ];
 
   return (
-     <div className="p-5 w-[79vw]">
-      <div className="flex items-center justify-between m-[30px]">
-        <h1 className="m-[20px] text-[20px]">All Users</h1>
-      </div>
-      {/* CREATING TABLE TO DISPLAY PRODUCTS */}
-      <div className='m-[15px]'>
-          <DataGrid rows={users} checkboxSelection columns={userColumns} getRowId={(row) => row._id} />
-      </div>
-    </div>
-  )
-}
+    <div className="p-5 w-[79vw]">
+      <h1 className="text-xl mb-4">All Users</h1>
 
-export default Users
+      <DataGrid
+        rows={users}
+        columns={userColumns}
+        getRowId={(row) => row._id}
+        loading={loading}
+        autoHeight
+
+        pagination
+        paginationModel={paginationModel}
+        onPaginationModelChange={setPaginationModel}
+        pageSizeOptions={[5, 10, 20, 50]}
+
+        disableRowSelectionOnClick
+      />
+    </div>
+  );
+};
+
+export default Users;
+

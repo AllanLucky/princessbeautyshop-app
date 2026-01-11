@@ -9,19 +9,18 @@ import { Fragment, useState } from "react";
 import classNames from "classnames";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { logOut } from "../redux/adminRedux";
+import { logout } from "../redux/adminRedux"; // ✅ updated import
 
 const Headers = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // ✅ Get admin info from Redux safely
   const admin = useSelector((state) => state.admin.currentAdmin);
 
   const handleLogout = () => {
-    dispatch(logOut());
-    navigate("/login"); // redirect after logout
+    dispatch(logout()); // ✅ now matches adminRedux
+    navigate("/login");
   };
 
   return (
@@ -159,4 +158,3 @@ const Headers = () => {
 };
 
 export default Headers;
-
