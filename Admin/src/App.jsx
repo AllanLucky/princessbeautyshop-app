@@ -1,4 +1,6 @@
-import { createBrowserRouter, RouterProvider, Outlet } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, Outlet, Navigate } from "react-router-dom";
+
+// Components
 import Menu from "./components/Menu";
 import Headers from "./components/Headers";
 
@@ -14,9 +16,12 @@ import Settings from "./pages/Settings";
 import Backups from "./pages/Backups";
 import Charts from "./pages/Charts";
 import Myaccounts from "./pages/Myaccounts";
+import Login from "./pages/Login";
 
+// Import your custom ProtectedRoute
+import ProtectedRoute from "./components/ProtectedRoute";
 
-// Layout for admin dashboard
+// --- Admin Layout ---
 const Layout = () => {
   return (
     <div className="min-h-screen flex flex-col">
@@ -39,13 +44,23 @@ const Layout = () => {
   );
 };
 
-// Routes definition
+// --- Routes ---
 const router = createBrowserRouter([
+  // Public route
+  {
+    path: "/login",
+    element: <Login />,
+  },
+  // Protected admin routes
   {
     path: "/",
-    element: <Layout />,
+    element: (
+      <ProtectedRoute>
+        <Layout />
+      </ProtectedRoute>
+    ),
     children: [
-      { path: "/admin-dashboard", element: <Home /> }, // fixed route
+      { path: "/admin-dashboard", element: <Home /> },
       { path: "/profile", element: <Myaccounts /> },
       { path: "/users", element: <Users /> },
       { path: "/products", element: <Products /> },
@@ -59,6 +74,7 @@ const router = createBrowserRouter([
       { path: "/all-logs", element: <Backups /> },
     ],
   },
+  // 404 fallback
   {
     path: "*",
     element: (
@@ -70,9 +86,11 @@ const router = createBrowserRouter([
   },
 ]);
 
+// --- App Component ---
 const App = () => {
   return <RouterProvider router={router} />;
 };
 
 export default App;
+
 

@@ -10,12 +10,6 @@ const Menu = () => {
           Home
         </li>
         </Link>
-        <Link to="/profile">
-         <li className="flex items-center text-[20px] cursor-ponter mt-[20px] transition-colors duration-100">
-          <FaUser className="mr-[15px] text-[#ef93db]" />
-          Profile
-        </li>
-        </Link>
         <hr className="w-full my-[20px] border-gray-300"/>
         
          <Link to="/users">

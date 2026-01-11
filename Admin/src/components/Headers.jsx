@@ -39,7 +39,7 @@ const Headers = () => {
           src="/blisslogo1.png"
           alt="Princess Beauty Shop Logo"
           className="h-16 w-auto object-contain cursor-pointer"
-          onClick={() => navigate("/dashboard")}
+          onClick={() => navigate("/admin-dashboard")}
         />
       </div>
 
@@ -99,7 +99,7 @@ const Headers = () => {
         <Menu as="div" className="relative inline-block text-left">
           <Menu.Button className="ml-2 inline-flex items-center rounded-full focus:outline-none focus:ring-2 focus:ring-neutral-400">
             <span className="sr-only">Open user menu</span>
-            <div className="h-10 w-10 rounded-full bg-sky-500 flex items-center justify-center text-white font-semibold">
+            <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center text-gray-400 font-semibold">
               {admin?.name ? admin.name.charAt(0).toUpperCase() : "A"}
             </div>
           </Menu.Button>
@@ -129,12 +129,12 @@ const Headers = () => {
               <Menu.Item>
                 {({ active }) => (
                   <div
-                    onClick={() => navigate("/settings")}
+                    onClick={() => navigate("/profile")}
                     className={`group flex w-full items-center px-2 py-2 text-sm text-gray-700 rounded-sm ${
                       active ? "bg-gray-100" : ""
                     } cursor-pointer`}
                   >
-                    Settings
+                    Account
                   </div>
                 )}
               </Menu.Item>
