@@ -9,16 +9,11 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { currentUser, isFetching, error } = useSelector(
-    (state) => state.user
-  );
+  const { currentUser, isFetching, error } = useSelector((state) => state.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  /**
-   * Redirect user after successful login
-   * Backend + Redux is the source of truth
-   */
+  // Redirect after successful login
   useEffect(() => {
     if (currentUser) {
       toast.success("Login successful!");
@@ -26,26 +21,18 @@ const Login = () => {
     }
   }, [currentUser, navigate]);
 
-  /**
-   * Handle login submit
-   */
   const handleLogin = async (e) => {
     e.preventDefault();
-
     if (!email || !password) {
       toast.error("Email and password are required");
       return;
     }
 
     setLoading(true);
-
     try {
       await login(dispatch, { email, password });
     } catch (err) {
-      toast.error(
-        err.response?.data?.message ||
-          "Something went wrong. Please try again."
-      );
+      toast.error(err.response?.data?.message || "Something went wrong.");
     } finally {
       setLoading(false);
     }
@@ -54,7 +41,6 @@ const Login = () => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4 py-10">
       <ToastContainer position="top-right" autoClose={3000} />
-
       <div className="flex flex-col md:flex-row bg-white shadow-xl rounded-lg overflow-hidden max-w-[900px] w-full">
         {/* Left Image */}
         <div className="hidden md:flex md:w-1/2 items-center justify-center bg-gray-50">
@@ -67,9 +53,7 @@ const Login = () => {
 
         {/* Form */}
         <div className="p-8 md:p-12 w-full md:w-1/2">
-          <h2 className="text-3xl font-bold text-gray-700 mb-8">
-            Login
-          </h2>
+          <h2 className="text-3xl font-bold text-gray-700 mb-8">Login</h2>
 
           <form className="space-y-6" onSubmit={handleLogin}>
             <div>
@@ -99,10 +83,7 @@ const Login = () => {
                 <input type="checkbox" className="accent-[#d55fbb]" />
                 Remember me
               </label>
-              <Link
-                to="/forgot-password"
-                className="text-[#d55fbb] hover:underline"
-              >
+              <Link to="/forgot-password" className="text-[#d55fbb] hover:underline">
                 Forgot Password?
               </Link>
             </div>
@@ -123,10 +104,7 @@ const Login = () => {
 
             <div className="text-sm text-gray-600 text-center">
               Don&apos;t have an account?
-              <Link
-                to="/create-account"
-                className="text-[#d55fbb] hover:underline ml-1"
-              >
+              <Link to="/create-account" className="text-[#d55fbb] hover:underline ml-1">
                 Sign Up
               </Link>
             </div>

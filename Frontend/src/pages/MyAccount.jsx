@@ -1,11 +1,10 @@
-
 import { useSelector, useDispatch } from "react-redux";
 import { toast, ToastContainer } from "react-toastify";           
 import "react-toastify/dist/ReactToastify.css";  
-import { logOut } from "../redux/userRedux";
+import { logout } from "../redux/userRedux";
 import { useNavigate } from "react-router-dom";
 
-import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaLock, FaSignOutAlt, FaSave } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaLock, FaSignOutAlt, FaSave } from 'react-icons/fa';
 
 const Myaccount = () => {
   const user = useSelector((state) => state.user);
@@ -13,12 +12,12 @@ const Myaccount = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    dispatch(logOut());
+    dispatch(logout());
     toast.success("Logged out successfully!");
     // Delay navigation slightly to allow toast to display
     setTimeout(() => {
       navigate("/login");
-    }, 500); // 0.5 second delay
+    }, 500);
   };
 
   return (
