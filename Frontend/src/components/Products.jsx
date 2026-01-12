@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Product from "./Product";
 import { userRequest } from "../requestMethod";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 
 const Products = ({ sort, query }) => {
   const [products, setProducts] = useState([]);
@@ -10,7 +10,7 @@ const Products = ({ sort, query }) => {
 
   // Get category from query string
   const params = new URLSearchParams(location.search);
-  const category = params.get("category"); // e.g., "Serum"
+  const category = params.get("category");
 
   // Fetch products from backend
   useEffect(() => {
@@ -60,19 +60,20 @@ const Products = ({ sort, query }) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       {filteredProducts.map((product) => (
-        <Product
-          key={product._id}
-          id={product._id}
-          name={product.title}
-          description={
-            product.desc && product.desc.length > 80
-              ? product.desc.substring(0, 80) + "..."
-              : product.desc
-          }
-          price={product.discountedPrice || product.originalPrice || "N/A"}
-          image={Array.isArray(product.img) ? product.img[0] : product.img}
-          rating={product.ratings?.length ? product.ratings[0].star : 0}
-        />
+        <Link key={product._id} to={`/product/${product._id}`}>
+          <Product
+            id={product._id}
+            name={product.title}
+            description={
+              product.desc && product.desc.length > 80
+                ? product.desc.substring(0, 80) + "..."
+                : product.desc
+            }
+            price={product.discountedPrice || product.originalPrice || "N/A"}
+            image={Array.isArray(product.img) ? product.img[0] : product.img}
+            rating={product.ratings?.length ? product.ratings[0].star : 0}
+          />
+        </Link>
       ))}
     </div>
   );
