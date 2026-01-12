@@ -43,7 +43,7 @@ app.use("/api/v1/products", productRoute);
 app.use("/api/v1/banners", bannerRoute);
 app.use("/api/v1/users", usersRoute);
 app.use("/api/v1/orders", orderRoute);
-app.use("/api/categories", categoryRoutes);
+app.use("/api/v1/categories", categoryRoutes);
 app.use("/api/v1/stripe", stripeRoute);
 
 // ERROR HANDLING MIDDLEWARE
