@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { FaUpload } from "react-icons/fa";
 import { Link, useLocation } from "react-router-dom";
 import { userRequest } from "../requestMethods";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Product = () => {
   const location = useLocation();
@@ -44,6 +46,7 @@ const Product = () => {
         const data = new FormData();
         data.append("file", selectedImage);
         data.append("upload_preset", "uploads");
+
         const uploadRes = await fetch(
           "https://api.cloudinary.com/v1_1/dkdx7xytz/image/upload",
           { method: "POST", body: data }
@@ -53,14 +56,32 @@ const Product = () => {
       }
 
       await userRequest.put(`/products/${id}`, { ...inputs, img: imgUrl });
-      alert("Product updated successfully!");
+
+      // Show success toast
+      toast.success("Product updated successfully!", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+
+      // Optionally reset inputs
+      setInputs({});
+      setSelectedImage(null);
     } catch (error) {
       console.error(error);
+      toast.error("Failed to update product!", {
+        position: "top-right",
+        autoClose: 3000,
+      });
     }
   };
 
   return (
     <div className="p-5 w-[79vw]">
+      <ToastContainer />
       <div className="flex items-center justify-between mb-5">
         <h3 className="text-3xl font-semibold">Product</h3>
         <Link to="/newproduct">
@@ -75,8 +96,8 @@ const Product = () => {
         {/* CHART */}
         <div className="flex-1">
           <LineChart
-            xAxis={[{ data: [1, 2, 3, 4, 5, 6] }]} // replace with dynamic labels if you have
-            series={[{ data: [2, 5, 3, 7, 4, 6] }]} // replace with actual sales
+            xAxis={[{ data: [1, 2, 3, 4, 5, 6] }]}
+            series={[{ data: [2, 5, 3, 7, 4, 6] }]}
             height={300}
             margin={{ left: 30, right: 30, top: 30, bottom: 30 }}
             grid={{ vertical: true, horizontal: true }}
@@ -121,6 +142,7 @@ const Product = () => {
               placeholder={product.title}
               onChange={handleChange}
               className="w-full p-2 border border-gray-300 rounded"
+              value={inputs.title || ""}
             />
             <input
               type="text"
@@ -128,6 +150,7 @@ const Product = () => {
               placeholder={product.desc}
               onChange={handleChange}
               className="w-full p-2 border border-gray-300 rounded"
+              value={inputs.desc || ""}
             />
             <input
               type="number"
@@ -135,6 +158,7 @@ const Product = () => {
               placeholder={product.originalPrice}
               onChange={handleChange}
               className="w-full p-2 border border-gray-300 rounded"
+              value={inputs.originalPrice || ""}
             />
             <input
               type="number"
@@ -142,11 +166,13 @@ const Product = () => {
               placeholder={product.discountedPrice}
               onChange={handleChange}
               className="w-full p-2 border border-gray-300 rounded"
+              value={inputs.discountedPrice || ""}
             />
             <select
               name="inStock"
               className="w-full p-2 border border-gray-300 rounded"
               onChange={handleChange}
+              value={inputs.inStock || product.inStock}
             >
               <option value={true}>Yes</option>
               <option value={false}>No</option>
@@ -156,7 +182,7 @@ const Product = () => {
           {/* RIGHT SIDE */}
           <div className="flex-1 flex flex-col items-center space-y-5">
             <img
-              src={product.img?.[0] || product.img}
+              src={selectedImage ? URL.createObjectURL(selectedImage) : product.img?.[0] || product.img}
               alt=""
               className="h-32 w-32 rounded-full"
             />
@@ -178,3 +204,4 @@ const Product = () => {
 };
 
 export default Product;
+
