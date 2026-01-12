@@ -6,7 +6,7 @@ import { useState } from "react";
 const NewProduct = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [inputs, setInputs] = useState({});
-  const [uploading, setUploading] = useState("Uploading is 0%")
+  const [uploading, setUploading] = useState("Uploading is 0%");
   const [selectedOptions, setSelectedOptions] = useState({
     concern: [],
     skintype: [],
@@ -31,9 +31,10 @@ const NewProduct = () => {
   // Add selected option
   const handleSelectedChange = (e) => {
     const { name, value } = e.target;
+    if (!value) return;
     setSelectedOptions((prev) => ({
       ...prev,
-      [name]: [...prev[name], value]
+      [name]: prev[name].includes(value) ? prev[name] : [...prev[name], value]
     }));
   }
 
@@ -63,10 +64,11 @@ const NewProduct = () => {
       );
 
       const { url } = uploadRes.data;
-      // Sending the data to the server
-      setUploading("Uploaded 100%")
-      await userRequest.post("/products",{img:url,...inputs, ...selectedOptions})
-      console.log("Product uploaded successfully!");
+
+      await userRequest.post("/products", { img: url, ...inputs, ...selectedOptions });
+
+      setUploading("Uploaded 100%");
+      alert("Product uploaded successfully!");
     } catch (error) {
       console.error("Upload failed:", error);
       setUploading("Upload failed!");
@@ -76,134 +78,134 @@ const NewProduct = () => {
   return (
     <div className="p-5 w-[79vw]">
       {/* Header */}
-      <div className="flex items-center justify-center mb-5">
-        <h1 className="text-3xl font-semibold">New Product</h1>
+      <div className="flex items-center justify-center mb-6">
+        <h1 className="text-3xl font-semibold">Add New Product</h1>
       </div>
 
-      <div className="mt-5 bg-white shadow-lg rounded-lg p-5">
-        <form className="flex flex-col md:flex-row rounded-lg">
+      <div className="bg-white shadow-lg rounded-lg p-6">
+        <form className="flex flex-col md:flex-row gap-6">
 
           {/* LEFT SIDE */}
           <div className="flex-1 space-y-5">
 
             {/* Product Image */}
             <div>
-              <label className="font-semibold">Product Image</label>
-              {!selectedImage ? (
-                <div className="border-2 h-[100px] w-[100px] border-[#444] border-solid rounded-md mt-2">
-                  <div className="flex items-center justify-center mt-[40px]">
-                    <label htmlFor='file' className="cursor-pointer">
-                      <FaPlus className="text-[20px]" />
+              <label className="font-semibold mb-2">Product Image</label>
+              <div className="relative">
+                {!selectedImage ? (
+                  <div className="border-2 h-32 w-32 border-gray-400 rounded-md flex items-center justify-center cursor-pointer">
+                    <label htmlFor="file" className="flex flex-col items-center text-gray-600">
+                      <FaPlus className="text-2xl mb-1" />
+                      Select Image
                     </label>
                   </div>
-                </div>
-              ) : (
-                <img
-                  src={URL.createObjectURL(selectedImage)}
-                  alt="Selected"
-                  className="h-[100px] w-[100px] object-cover rounded-md mt-2"
-                />
-              )}
-              <input type="file" id='file' onChange={imageChange} style={{ display: "none" }} />
-              <span className='text-green-500'>{uploading}</span>
+                ) : (
+                  <img
+                    src={URL.createObjectURL(selectedImage)}
+                    alt="Selected"
+                    className="h-32 w-32 object-cover rounded-md border"
+                  />
+                )}
+                <input type="file" id="file" onChange={imageChange} style={{ display: "none" }} />
+              </div>
+              <span className="text-green-500 mt-1">{uploading}</span>
             </div>
 
             {/* Product Name */}
             <div>
-              <label className="block font-semibold mb-4">Product Name</label>
+              <label className="block font-semibold mb-2">Product Name</label>
               <input
                 type="text"
-                name='title'
+                name="title"
                 onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded"
                 placeholder="Product Name"
+                className="w-full border border-gray-300 rounded px-3 py-2"
               />
             </div>
 
             {/* Product Description */}
             <div>
-              <label className="block font-semibold mb-4">Product Description</label>
+              <label className="block font-semibold mb-2">Product Description</label>
               <textarea
-                rows={7}
-                name='desc'
+                name="desc"
                 onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded"
                 placeholder="Product Description"
+                rows={6}
+                className="w-full border border-gray-300 rounded px-3 py-2"
               />
             </div>
 
-            {/* Original Price */}
-            <div>
-              <label className="block font-semibold mb-4">Product Original Price</label>
-              <input
-                type="number"
-                name='originalPrice'
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded"
-                placeholder="KES 20000"
-              />
-            </div>
-
-            {/* Discounted Price */}
-            <div>
-              <label className="block font-semibold mb-4">Product Discounted Price</label>
-              <input
-                type="number"
-                name='discountedPrice'
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded"
-                placeholder="KES 2000"
-              />
+            {/* Price */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block font-semibold mb-2">Original Price (KES)</label>
+                <input
+                  type="number"
+                  name="originalPrice"
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded px-3 py-2"
+                  placeholder="20000"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold mb-2">Discounted Price (KES)</label>
+                <input
+                  type="number"
+                  name="discountedPrice"
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded px-3 py-2"
+                  placeholder="18000"
+                />
+              </div>
             </div>
 
           </div>
 
           {/* RIGHT SIDE */}
-          <div className="flex-1 space-y-5 ml-6">
+          <div className="flex-1 space-y-5">
 
-            {/* Wholesale Price */}
-            <div>
-              <label className="block font-semibold mb-4">Wholesale Price</label>
-              <input
-                type="number"
-                name='wholesalePrice'
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded"
-                placeholder="KES 17000"
-              />
+            {/* Wholesale & Brand */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block font-semibold mb-2">Wholesale Price (KES)</label>
+                <input
+                  type="number"
+                  name="wholesalePrice"
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded px-3 py-2"
+                  placeholder="17000"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold mb-2">Minimum Qty</label>
+                <input
+                  type="number"
+                  name="wholesaleMinimumQuantity"
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded px-3 py-2"
+                  placeholder="10"
+                />
+              </div>
             </div>
 
-            {/* Wholesale Minimum Quantity */}
             <div>
-              <label className="block font-semibold mb-4">Wholesale Minimum Quantity</label>
-              <input
-                type="number"
-                name='wholesaleMinimumQuantity'
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded"
-                placeholder="10"
-              />
-            </div>
-
-            {/* Brand */}
-            <div>
-              <label className="block font-semibold mb-4">Brand</label>
+              <label className="block font-semibold mb-2">Brand</label>
               <input
                 type="text"
-                name='brand'
+                name="brand"
                 onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded"
+                className="w-full border border-gray-300 rounded px-3 py-2"
                 placeholder="Kylie"
               />
             </div>
 
-            {/* Concern */}
+            {/* Select Options */}
             <div>
-              <label className="block font-semibold mb-4">Concern</label>
+              <label className="block font-semibold mb-2">Concern</label>
               <select
-                className="border-2 border-[#444] p-2 border-solid w-full rounded"
-                onChange={handleSelectedChange}
                 name="concern"
+                onChange={handleSelectedChange}
+                className="w-full border border-gray-300 rounded px-3 py-2"
               >
                 <option value="">Select concern</option>
                 <option value="acne">Acne</option>
@@ -213,26 +215,25 @@ const NewProduct = () => {
                 <option value="aging">Aging</option>
                 <option value="sensitive-skin">Sensitive Skin</option>
               </select>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {selectedOptions.concern.map((option) => (
+                  <span key={option} className="flex items-center bg-gray-200 px-2 py-1 rounded">
+                    {option}
+                    <FaTrash
+                      className="ml-1 text-red-500 cursor-pointer"
+                      onClick={() => handleRemoveOption("concern", option)}
+                    />
+                  </span>
+                ))}
+              </div>
             </div>
 
-            {/* Selected Concerns */}
-            <div className='mt-2'>
-              {selectedOptions.concern.map((option) => (
-                <div key={option} className='flex items-center space-x-2'>
-                  <span>{option}</span>
-                  <FaTrash
-                    className='cursor-pointer text-red-500'
-                    onClick={() => handleRemoveOption("concern", option)}
-                  />
-                </div>
-              ))}
-            </div>
-
-            {/* Skin Type */}
             <div>
-              <label className="block font-semibold mb-4">Skin Type</label>
+              <label className="block font-semibold mb-2">Skin Type</label>
               <select
-                className="border-2 border-[#444] p-2 border-solid w-full rounded"
+                name="skintype"
+                onChange={handleSelectedChange}
+                className="w-full border border-gray-300 rounded px-3 py-2"
               >
                 <option value="">Select skin type</option>
                 <option value="all">All</option>
@@ -241,13 +242,25 @@ const NewProduct = () => {
                 <option value="sensitive">Sensitive</option>
                 <option value="normal">Normal</option>
               </select>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {selectedOptions.skintype.map((option) => (
+                  <span key={option} className="flex items-center bg-gray-200 px-2 py-1 rounded">
+                    {option}
+                    <FaTrash
+                      className="ml-1 text-red-500 cursor-pointer"
+                      onClick={() => handleRemoveOption("skintype", option)}
+                    />
+                  </span>
+                ))}
+              </div>
             </div>
 
-            {/* Category */}
             <div>
-              <label className="block font-semibold mb-4">Category</label>
+              <label className="block font-semibold mb-2">Category</label>
               <select
-                className="border-2 border-[#444] p-2 border-solid w-full rounded"
+                name="categories"
+                onChange={handleSelectedChange}
+                className="w-full border border-gray-300 rounded px-3 py-2"
               >
                 <option value="">Select category</option>
                 <option value="foundations">Foundations</option>
@@ -255,13 +268,23 @@ const NewProduct = () => {
                 <option value="toner">Toner</option>
                 <option value="lotions">Lotions</option>
               </select>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {selectedOptions.categories.map((option) => (
+                  <span key={option} className="flex items-center bg-gray-200 px-2 py-1 rounded">
+                    {option}
+                    <FaTrash
+                      className="ml-1 text-red-500 cursor-pointer"
+                      onClick={() => handleRemoveOption("categories", option)}
+                    />
+                  </span>
+                ))}
+              </div>
             </div>
 
-            {/* Create Button */}
             <button
               type="button"
               onClick={handleUpload}
-              className="bg-slate-500 text-white py-2 px-4 rounded-lg"
+              className="w-full py-3 mt-4 bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-500 text-white font-semibold rounded-xl hover:scale-[1.02] transition-all shadow-lg"
             >
               Create Product
             </button>
@@ -271,6 +294,6 @@ const NewProduct = () => {
       </div>
     </div>
   );
-};
+}
 
 export default NewProduct;

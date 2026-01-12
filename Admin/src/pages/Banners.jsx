@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FaPlus } from "react-icons/fa";
+import { FaPlus, FaTrash } from "react-icons/fa";
 import { userRequest } from "../requestMethods";
 import axios from "axios";
 
@@ -20,7 +20,7 @@ const Banners = () => {
   // Upload and create banner
   const handleUpload = async (e) => {
     e.preventDefault();
-    if (!selectedImage) return;
+    if (!selectedImage || !title || !subtitle) return;
 
     const data = new FormData();
     data.append("file", selectedImage);
@@ -44,7 +44,14 @@ const Banners = () => {
         subtitle: subtitle,
       });
 
-      console.log("Banner uploaded successfully!");
+      // Refresh banners
+      const response = await userRequest.get("/banners");
+      setBanners(response.data);
+
+      // Reset form
+      setSelectedImage(null);
+      setTitle("");
+      setSubtitle("");
     } catch (error) {
       console.error("Upload failed:", error);
       setUploading("Upload failed!");
@@ -53,56 +60,60 @@ const Banners = () => {
 
   useEffect(() => {
     const getBanners = async () => {
-      setLoading(true); // ✅ start loading
+      setLoading(true);
       try {
         const response = await userRequest.get("/banners");
         setBanners(response.data);
       } catch (error) {
-        console.log(error);
+        console.error(error);
       } finally {
-        setLoading(false); // ✅ stop loading
+        setLoading(false);
       }
     };
     getBanners();
   }, []);
 
   const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this banner?")) return;
     try {
       await userRequest.delete(`/banners/${id}`);
-      window.location.reload();
+      setBanners(banners.filter((b) => b._id !== id));
     } catch (error) {
       console.log(error);
     }
   };
 
   return (
-    <div className="flex justify-evenly m-[10%]">
+    <div className="flex flex-col md:flex-row justify-between p-6 gap-8 bg-gray-50 min-h-screen">
+
       {/* LEFT SIDE – Displays existing banners */}
-      <div className="mr-[50px]">
-        <h2 className="text-xl font-semibold mb-4">Active Banners</h2>
+      <div className="flex-1">
+        <h2 className="text-2xl font-semibold mb-6">Active Banners</h2>
         {loading ? (
-          <p className="text-gray-500">Loading banners...</p> // ✅ show loading
+          <p className="text-gray-500">Loading banners...</p>
+        ) : banners.length === 0 ? (
+          <p className="text-gray-400">No banners available.</p>
         ) : (
-          <div className="flex flex-col space-y-4">
+          <div className="grid grid-cols-1 gap-4">
             {banners.map((banner) => (
               <div
                 key={banner._id}
-                className="flex items-center justify-between border-b border-x-gray-200 pb-4"
+                className="flex items-center gap-4 bg-white p-4 rounded-lg shadow hover:shadow-md transition"
               >
                 <img
                   src={banner.img}
-                  alt=""
+                  alt={banner.title}
                   className="w-32 h-32 object-cover rounded-md"
                 />
-                <div className="flex-1 ml-4">
-                  <h3 className="text-xl font-semibold mb-2">{banner.title}</h3>
-                  <p className="text-gray-600 mb-2">{banner.subtitle}</p>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-800">{banner.title}</h3>
+                  <p className="text-gray-600">{banner.subtitle}</p>
                 </div>
                 <button
-                  className="bg-red-600 p-2 text-white font-semibold cursor-pointer ml-4"
-                  onClick={() => handleDelete(banner._id)} // ✅ pass id correctly
+                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded transition flex items-center gap-2"
+                  onClick={() => handleDelete(banner._id)}
                 >
-                  Delete
+                  <FaTrash /> Delete
                 </button>
               </div>
             ))}
@@ -111,60 +122,57 @@ const Banners = () => {
       </div>
 
       {/* RIGHT SIDE – Form to upload a new banner */}
-      <div className="flex flex-col">
-        <div className="flex-1 bg-white p-5">
-          <label className="font-semibold text-xl mb-1">Image</label>
-          <div className="flex flex-col">
-            {!selectedImage ? (
-              <div className="border-2 h-[100px] w-[100px] border-[#444] border-solid rounded-md mt-2">
-                <div className="flex items-center justify-center mt-[40px]">
-                  <label htmlFor="file" className="cursor-pointer">
-                    <FaPlus className="text-[20px]" />
-                  </label>
-                </div>
-              </div>
-            ) : (
-              <img
-                src={URL.createObjectURL(selectedImage)}
-                alt="Selected"
-                className="h-[100px] w-[100px] object-cover rounded-md mt-2"
+      <div className="w-full md:w-[300px] bg-white p-6 rounded-xl shadow flex flex-col gap-4">
+        <h2 className="text-xl font-semibold mb-4">Upload New Banner</h2>
+
+        {/* Image Upload */}
+        <div className="flex flex-col items-center">
+          {!selectedImage ? (
+            <label className="cursor-pointer w-[120px] h-[120px] flex items-center justify-center border-2 border-dashed border-gray-400 rounded-md">
+              <FaPlus className="text-2xl text-gray-400" />
+              <input
+                type="file"
+                onChange={imageChange}
+                className="hidden"
               />
-            )}
-            <input
-              type="file"
-              id="file"
-              onChange={imageChange}
-              style={{ display: "none" }}
+            </label>
+          ) : (
+            <img
+              src={URL.createObjectURL(selectedImage)}
+              alt="Selected"
+              className="w-[120px] h-[120px] object-cover rounded-md"
             />
-            <span className="text-green-500 mt-[20px]">{uploading}</span>
-          </div>
+          )}
+          <span className="text-green-500 mt-2">{uploading}</span>
         </div>
 
-        <div className="flex flex-col my-3">
-          <span className="font-semibold">Title</span>
+        {/* Title */}
+        <div className="flex flex-col">
+          <label className="font-medium text-gray-700">Title</label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-[250px] outline-none border-b-2 border-[#444] border-solid"
+            className="mt-1 px-3 py-2 border rounded-md outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
           />
         </div>
 
-        <div className="flex flex-col my-3">
-          <span className="font-semibold">Subtitle</span>
+        {/* Subtitle */}
+        <div className="flex flex-col">
+          <label className="font-medium text-gray-700">Subtitle</label>
           <input
             type="text"
             value={subtitle}
             onChange={(e) => setSubtitle(e.target.value)}
-            className="w-[250px] outline-none border-b-2 border-[#444] border-solid"
+            className="mt-1 px-3 py-2 border rounded-md outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
           />
         </div>
 
         <button
-          className="bg-[#1e1e1e] p-2 text-white font-semibold cursor-pointer"
+          className="bg-pink-500 hover:bg-pink-600 text-white py-2 rounded-md font-semibold mt-4 transition"
           onClick={handleUpload}
         >
-          Upload
+          Upload Banner
         </button>
       </div>
     </div>
