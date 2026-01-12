@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { FaCheckDouble, FaClock, FaRegCheckCircle } from "react-icons/fa";
 import { DataGrid } from "@mui/x-data-grid";
 import { userRequest } from "../requestMethods";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -13,16 +15,22 @@ const Orders = () => {
       try {
         setLoading(true);
         const res = await userRequest.get("/orders");
-        setOrders(res.data);
-      } catch (error) {
-        console.error(error);
+        setOrders(res.data.orders || res.data);
+      } catch (err) {
+        console.error("Failed to fetch orders:", err.response?.data || err);
+        toast.error(err.response?.data?.message || "Failed to fetch orders", {
+          position: "top-right",
+          autoClose: 3000,
+        });
       } finally {
         setLoading(false);
       }
     };
+
     getOrders();
   }, []);
 
+  // Update order status to 'delivered' (2)
   const handleUpdateOrder = async (id) => {
     try {
       await userRequest.put(`/orders/${id}`, { status: 2 });
@@ -31,8 +39,16 @@ const Orders = () => {
           order._id === id ? { ...order, status: 2 } : order
         )
       );
-    } catch (error) {
-      console.error("Error updating order status:", error);
+      toast.success("Order marked as delivered!", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    } catch (err) {
+      console.error("Error updating order status:", err.response?.data || err);
+      toast.error(err.response?.data?.message || "Failed to update order", {
+        position: "top-right",
+        autoClose: 3000,
+      });
     }
   };
 
@@ -45,13 +61,11 @@ const Orders = () => {
       headerName: "Status",
       width: 150,
       renderCell: (params) => {
-        if (params.row.status === 0) {
+        if (params.value === 0)
           return <FaClock className="text-yellow-500 text-xl" />;
-        } else if (params.row.status === 1) {
+        if (params.value === 1)
           return <FaCheckDouble className="text-blue-500 text-xl" />;
-        } else {
-          return <FaCheckDouble className="text-green-500 text-xl" />;
-        }
+        return <FaCheckDouble className="text-green-500 text-xl" />;
       },
     },
 
@@ -73,6 +87,7 @@ const Orders = () => {
 
   return (
     <div className="p-6 w-full bg-gray-50 min-h-screen">
+      <ToastContainer />
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-800">All Orders</h1>
       </div>
@@ -107,3 +122,4 @@ const Orders = () => {
 };
 
 export default Orders;
+
