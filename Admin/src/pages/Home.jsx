@@ -1,96 +1,94 @@
 import { LineChart } from "@mui/x-charts/LineChart";
+
 const Home = () => {
   return (
-    <div className="flex justify-between h-[120vh] p-2 bg-gray-200 w-[77vw]">
-      {/* LEFT CARD */}
-      <div className="flex flex-col w-2/3">
-      <div className="flex">
-        <div className="bg-white h-52 w-52 m-5 shadow-xl flex flex-col items-center justify-center rounded-lg">
-          <div className="h-32 w-32 m-5 border-[20px] border-blue-400 border-solid rounded-full flex items-center justify-center">
-            <h2 className="font-bold text-2xl">699</h2>
+    <div className="flex flex-col p-5 bg-gray-100 min-h-screen">
+      {/* --- Top Cards --- */}
+      <div className="flex flex-wrap gap-5 mb-5">
+        {/* Orders Card */}
+        <div className="flex-1 bg-white h-52 shadow-xl rounded-lg flex flex-col items-center justify-center">
+          <div className="h-32 w-32 border-[15px] border-blue-400 rounded-full flex items-center justify-center">
+            <h2 className="text-3xl font-bold">699</h2>
           </div>
-          <h2 className="text-xl font-semibold">Orders</h2>
+          <h2 className="text-xl font-semibold mt-2">Orders</h2>
         </div>
+
         {/* Products Card */}
-          <div className="bg-white h-52 w-60 m-5 shadow-xl flex flex-col rounded-lg items-center">
-            <div className="h-32 w-32 m-5 border-[20px] border-red-500 border-solid rounded-full flex items-center justify-center">
-              <h2 className="font-bold text-2xl">200</h2>
-            </div>
-            <h2 className="font-semibold text-xl">Products</h2>
+        <div className="flex-1 bg-white h-52 shadow-xl rounded-lg flex flex-col items-center justify-center">
+          <div className="h-32 w-32 border-[15px] border-red-500 rounded-full flex items-center justify-center">
+            <h2 className="text-3xl font-bold">200</h2>
           </div>
-          {/* Users Card */}
-          <div className="bg-white h-52 w-52 m-5 shadow-xl flex flex-col rounded-lg items-center">
-            <div className="h-32 w-32 m-5 border-[20px] border-gray-400 border-solid rounded-full flex items-center justify-center">
-              <h2 className="font-bold text-2xl">250</h2>
-            </div>
-            <h2 className="font-semibold text-xl">Users</h2>
+          <h2 className="text-xl font-semibold mt-2">Products</h2>
+        </div>
+
+        {/* Users Card */}
+        <div className="flex-1 bg-white h-52 shadow-xl rounded-lg flex flex-col items-center justify-center">
+          <div className="h-32 w-32 border-[15px] border-gray-400 rounded-full flex items-center justify-center">
+            <h2 className="text-3xl font-bold">250</h2>
           </div>
+          <h2 className="text-xl font-semibold mt-2">Users</h2>
+        </div>
       </div>
-      {/* TABLES */}
-      <div className="bg-white m-5 p-5 rounded-lg">
-        <div className="p-6 bg-white rounded-md">
-          <h3 className="text-lg font-bold mb-4">Latest Transactions</h3>
-          <table className="w-full table-auto">
+
+      {/* --- Table & Chart Section --- */}
+      <div className="flex flex-wrap gap-5">
+        {/* Latest Transactions Table */}
+        <div className="flex-1 bg-white rounded-lg shadow-lg p-5 min-w-[400px]">
+          <h3 className="text-xl font-bold mb-4">Latest Transactions</h3>
+          <table className="w-full table-auto border-collapse">
             <thead>
-              <tr className="bg-gray-100 ">
-                <th className="py-2 px-4">Customer</th>
-                <th className="py-2 px-4">Amount</th>
-                <th className="py-2 px-4">Status</th>
+              <tr className="bg-gray-100">
+                <th className="py-2 px-4 border-b">Customer</th>
+                <th className="py-2 px-4 border-b">Amount</th>
+                <th className="py-2 px-4 border-b">Status</th>
               </tr>
             </thead>
             <tbody>
               <tr className="border-b">
                 <td className="py-2 px-4">Allan Shehe</td>
-                <td className="py-2 px-4">KES 30000</td>
+                <td className="py-2 px-4">KES 30,000</td>
                 <td className="py-2 px-4 text-green-500">Approved</td>
               </tr>
               <tr className="border-b">
                 <td className="py-2 px-4">Mzungu Shehe</td>
-                <td className="py-2 px-4">KES 40000</td>
-                <td className="py-2 px-4 text-red-600">Decline</td>
+                <td className="py-2 px-4">KES 40,000</td>
+                <td className="py-2 px-4 text-red-500">Declined</td>
               </tr>
               <tr className="border-b">
                 <td className="py-2 px-4">Claris Akinyi</td>
-                <td className="py-2 px-4">KES 20000</td>
+                <td className="py-2 px-4">KES 20,000</td>
                 <td className="py-2 px-4 text-green-600">Approved</td>
-              </tr>
-              <tr className="border-b">
-                <td className="py-2 px-4">Claris Akinyi</td>
-                <td className="py-2 px-4">KES 20000</td>
-                <td className="py-2 px-4 text-purple-500">Delivered</td>
-              </tr>
-              <tr className="border-b">
-                <td className="py-2 px-4">Claris Akinyi</td>
-                <td className="py-2 px-4">KES 20000</td>
-                <td className="py-2 px-4 text-gray-800">Pending</td>
-              </tr>
-              <tr className="border-b">
-                <td className="py-2 px-4">Mzungu Shehe</td>
-                <td className="py-2 px-4">KES 40000</td>
-                <td className="py-2 px-4 text-red-600">Decline</td>
               </tr>
             </tbody>
           </table>
         </div>
-      </div>
-      </div>
-      {/* REVENUE CHART */}
-       <div className="flex flex-col w-2/3 bg-white p-5 shadow-xl rounded-lg">
-       <div className="bg-gray-50 p-5 mb-5 shadow-xl rounded-lg flex flex-col items-center">
-        <h2 className="text-xl font-semibold">Total Revenue: KES 1230000</h2>
-       </div>
-       <div className="bg-gray-50 p-5 mb-5 shadow-xl rounded-lg flex flex-col items-center">
-        <h2 className="text-xl font-semibold">Total Loss KES 00</h2>
-       </div>
-       {/* LineChart Component */}
+
+        {/* Revenue Chart */}
+        <div className="flex-1 bg-white rounded-lg shadow-lg p-5 min-w-[400px]">
+          <h3 className="text-xl font-bold mb-4">Revenue Chart</h3>
+
+          <div className="flex flex-col gap-3 mb-5">
+            <div className="bg-gray-50 p-3 rounded-lg shadow flex justify-between">
+              <span className="font-semibold">Total Revenue:</span>
+              <span className="text-green-600 font-bold">KES 1,230,000</span>
+            </div>
+            <div className="bg-gray-50 p-3 rounded-lg shadow flex justify-between">
+              <span className="font-semibold">Total Loss:</span>
+              <span className="text-red-600 font-bold">KES 0</span>
+            </div>
+          </div>
+
+         {/* LineChart Component */}
         <LineChart
           xAxis={[{ data: [1, 2, 3, 5, 8, 10] }]}
           series={[{ data: [2, 5.5, 2, 8.5, 1.5, 5] }]}
           height={300}
         />
-       </div>
+         
+        </div>
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;

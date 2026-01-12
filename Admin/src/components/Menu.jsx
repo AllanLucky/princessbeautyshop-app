@@ -1,82 +1,111 @@
-import {FaHome, FaUser, FaBox, FaClipboardList, FaElementor, FaCog,FaHdd,FaChartBar, FaClipboard,FaSignOutAlt, FaUsers } from "react-icons/fa";
-import {Link} from "react-router-dom";
-const Menu = () => {
-  return (
-    <div className="h-[62vw] w-[250px] bg-gray-50 p-[20px] shadow-lg">
-      <ul className="flex flex-col items-start justify-start mt-[20px] pl-[20px]">
-        <Link to="/admin-dashboard">
-        <li className="flex items-center text-[20px] cursor-ponter mt-[20px] transition-colors duration-100">
-          <FaHome className="mr-[15px] text-[#ef93db]" /> 
-          Home
-        </li>
-        </Link>
-        <Link to="/profile">
-         <li className="flex items-center text-[20px] cursor-ponter mt-[20px] transition-colors duration-100">
-          <FaUsers className="mr-[15px] text-[#ef93db]" />
-          Profile
-        </li>
-        </Link>
-        <hr className="w-full my-[20px] border-gray-300"/>
-        
-         <Link to="/users">
-         <li className="flex items-center text-[20px] cursor-ponter mt-[20px] transition-colors duration-100">
-          <FaUsers className="mr-[15px] text-[#ef93db]" />
-          Users
-        </li>
-        </Link>
-        <Link to="/products">
-        <li className="flex items-center text-[20px] cursor-ponter mt-[20px] transition-colors duration-100">
-          <FaBox className="mr-[15px] text-[#ef93db]" />
-          Products
-        </li>
-        </Link>
-        <Link to="/orders">
-        <li className="flex items-center text-[20px] cursor-ponter mt-[20px] transition-colors    duration-100">
-          <FaClipboardList className="mr-[15px] text-[#ef93db]" />
-          Orders
-        </li>
-        </Link>
-        <hr className="w-full my-[20px] border-gray-300"/>
-        <Link to="/banners">
-        <li className="flex items-center text-[20px] cursor-ponter mt-[20px] transition-colors    duration-100">
-          <FaElementor className="mr-[15px] text-[#ef93db]" />
-          Banners
-        </li>
-        </Link>
-        <Link to="/settings">
-        <li className="flex items-center text-[20px] cursor-ponter mt-[20px] transition-colors    duration-100">
-          <FaCog className="mr-[15px] text-[#ef93db]" />
-          Settings
-        </li>
-        </Link>
-       <Link to="/backups">
-        <li className="flex items-center text-[20px] cursor-ponter mt-[20px] transition-colors    duration-100">
-          <FaHdd className="mr-[15px] text-[#ef93db]" />
-          Backups
-        </li>
-       </Link>
-        <hr className="w-full my-[20px] border-gray-300"/>
-        <Link to="/charts">
-        <li className="flex items-center text-[20px] cursor-ponter mt-[20px] transition-colors    duration-100">
-          <FaChartBar className="mr-[15px] text-[#ef93db]" />
-          Charts
-        </li>
-        </Link>
-       <Link to="/all-logs">
-        <li className="flex items-center text-[20px] cursor-ponter mt-[20px] transition-colors    duration-100">
-          <FaClipboard className="mr-[15px] text-[#ef93db]" />
-          All logs
-        </li>
-       </Link>
-        <Link to="/logout">
-        <li className="flex items-center text-[20px] cursor-ponter mt-[20px] transition-colors    duration-100">
-          <FaSignOutAlt className="mr-[15px] text-[#ef93db]" />
-          Logout
-        </li>
-        </Link>
-      </ul>
-    </div>
-  )
-}
+import {
+  FaHome,
+  FaBox,
+  FaClipboardList,
+  FaElementor,
+  FaCog,
+  FaHdd,
+  FaChartBar,
+  FaClipboard,
+  FaSignOutAlt,
+  FaUsers,
+  FaTachometerAlt,
+} from "react-icons/fa";
+import { NavLink } from "react-router-dom";
+import { logout } from "../redux/adminRedux"; 
+import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
 
-export default Menu
+const Menu = () => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const admin = useSelector((state) => state.admin.currentAdmin);
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/login");
+  };
+
+  const navStyle = ({ isActive }) =>
+    `flex items-center gap-3 px-4 py-3 rounded-lg text-[15px] font-medium transition-all
+     ${
+       isActive
+         ? "bg-pink-100 text-pink-600 shadow-sm"
+         : "text-gray-600 hover:bg-gray-100 hover:text-pink-500"
+     }`;
+
+  return (
+    <div className="h-screen w-[260px] bg-white border-r-2 border-gray-300 px-4 py-6 shadow-sm">
+      
+      {/* Logo and Admin Info */}
+      <div className="flex items-center gap-3 px-4 mb-8">
+        <FaTachometerAlt className="text-pink-500 text-2xl" />
+        <div>
+          <h1 className="text-xl font-bold text-gray-800">Admin Panel</h1>
+          {admin && (
+            <p className="text-gray-500 text-sm">{admin.name}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="space-y-2">
+        <NavLink to="/admin-dashboard" className={navStyle}>
+          <FaHome /> Dashboard
+        </NavLink>
+
+        <NavLink to="/profile" className={navStyle}>
+          <FaUsers /> Profile
+        </NavLink>
+
+        <hr className="my-4" />
+
+        <NavLink to="/users" className={navStyle}>
+          <FaUsers /> Users
+        </NavLink>
+
+        <NavLink to="/products" className={navStyle}>
+          <FaBox /> Products
+        </NavLink>
+
+        <NavLink to="/orders" className={navStyle}>
+          <FaClipboardList /> Orders
+        </NavLink>
+
+        <hr className="my-4" />
+
+        <NavLink to="/banners" className={navStyle}>
+          <FaElementor /> Banners
+        </NavLink>
+
+        <NavLink to="/settings" className={navStyle}>
+          <FaCog /> Settings
+        </NavLink>
+
+        <NavLink to="/backups" className={navStyle}>
+          <FaHdd /> Backups
+        </NavLink>
+
+        <hr className="my-4" />
+
+        <NavLink to="/charts" className={navStyle}>
+          <FaChartBar /> Charts
+        </NavLink>
+
+        <NavLink to="/all-logs" className={navStyle}>
+          <FaClipboard /> All Logs
+        </NavLink>
+
+        {/* Logout Button */}
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3 px-4 py-3 mt-6 rounded-lg text-red-500 hover:bg-red-50 transition w-full"
+        >
+          <FaSignOutAlt /> Logout
+        </button>
+      </nav>
+    </div>
+  );
+};
+
+export default Menu;

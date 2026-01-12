@@ -20,6 +20,7 @@ import Login from "./pages/Login";
 
 // Import your custom ProtectedRoute
 import ProtectedRoute from "./components/ProtectedRoute";
+import Alllogs from "./pages/Alllogs";
 
 // --- Admin Layout ---
 const Layout = () => {
@@ -71,7 +72,7 @@ const router = createBrowserRouter([
       { path: "/settings", element: <Settings /> },
       { path: "/backups", element: <Backups /> },
       { path: "/charts", element: <Charts /> },
-      { path: "/all-logs", element: <Backups /> },
+      { path: "/all-logs", element: <Alllogs /> },
     ],
   },
   // 404 fallback

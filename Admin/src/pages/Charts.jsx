@@ -1,19 +1,18 @@
 import { LineChart } from "@mui/x-charts/LineChart";
 
 const Charts = () => {
-  const xLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
-  const salesData = [4000, 3000, 2000, 2780, 1890, 2390];
-
+  
   return (
-    <div style={{ width: "100%", height: 400 }}>
+    <div className="w-full h-[400px] p-4 bg-white shadow-lg rounded-lg">
+      <h2 className="text-xl font-semibold mb-4">Monthly Sales</h2>
       <LineChart
-        xAxis={[{ data: xLabels }]}
-        series={[{ data: salesData, label: "Sales", color: "#e455c5" }]}
-        width={600}
-        height={400}
-      />
+          xAxis={[{ data: [1, 2, 3, 5, 8, 10] }]}
+          series={[{ data: [2, 5.5, 2, 8.5, 1.5, 5] }]}
+          height={300}
+        />
     </div>
   );
 };
 
 export default Charts;
+
