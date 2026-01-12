@@ -47,9 +47,12 @@ const Login = () => {
   const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   return (
-    <div className={`min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 p-4 transition-all duration-700 ease-in-out ${isTransitioning ? 'opacity-0 transform scale-105' : 'opacity-100'}`}>
-      
-      <div className="max-w-md w-full bg-gradient-to-tl from-white/20 via-white/10 to-white/20 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/20 p-8">
+    <div
+      className={`min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 p-4 transition-all duration-700 ease-in-out ${
+        isTransitioning ? "opacity-0 transform scale-105" : "opacity-100"
+      }`}
+    >
+      <div className="max-w-md w-full bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/20 p-8">
         
         {/* Header */}
         <div className="flex items-center mb-6 justify-center">
@@ -62,11 +65,19 @@ const Login = () => {
           </div>
         </div>
 
-        {/* Error */}
+        {/* Error Message */}
         {error && (
-          <div className="mb-6 p-4 bg-red-500/20 border border-red-400/40 rounded-xl text-red-100 text-sm backdrop-blur-sm flex items-center">
-            <svg className="w-5 h-5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          <div className="mb-6 p-4 bg-red-500/20 border border-red-400/40 rounded-xl text-red-100 text-sm flex items-center backdrop-blur-sm">
+            <svg
+              className="w-5 h-5 mr-3 flex-shrink-0"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                clipRule="evenodd"
+              />
             </svg>
             <span>{error}</span>
           </div>
@@ -74,9 +85,11 @@ const Login = () => {
 
         {/* Form */}
         <form className="space-y-6" onSubmit={handleLogin}>
-          {/* Email */}
+          {/* Email Field */}
           <div className="space-y-2">
-            <label className="block text-white text-sm font-semibold uppercase tracking-wider">Admin Email</label>
+            <label className="block text-white text-sm font-semibold uppercase tracking-wider">
+              Admin Email
+            </label>
             <div className="relative group">
               <FaEnvelope className="absolute top-1/2 left-4 -translate-y-1/2 text-white/70 group-focus-within:text-pink-400 transition-colors duration-300" />
               <input
@@ -90,9 +103,11 @@ const Login = () => {
             </div>
           </div>
 
-          {/* Password */}
+          {/* Password Field */}
           <div className="space-y-2">
-            <label className="block text-white text-sm font-semibold uppercase tracking-wider">Password</label>
+            <label className="block text-white text-sm font-semibold uppercase tracking-wider">
+              Password
+            </label>
             <div className="relative group">
               <FaLock className="absolute top-1/2 left-4 -translate-y-1/2 text-white/70 group-focus-within:text-pink-400 transition-colors duration-300" />
               <input
@@ -107,25 +122,39 @@ const Login = () => {
                 type="button"
                 className="absolute top-1/2 right-4 -translate-y-1/2 text-white/70 hover:text-pink-400 transition-colors duration-300"
                 onClick={togglePasswordVisibility}
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </button>
             </div>
           </div>
 
-          {/* Submit */}
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={loading || isTransitioning}
             className="w-full py-4 bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-500 hover:from-purple-600 hover:via-indigo-600 hover:to-blue-600 text-white font-semibold rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg shadow-pink-500/25 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "Verifying Admin Access..." : <span className="flex items-center"><FaUserShield className="mr-2" />Access Admin Dashboard</span>}
+            {loading ? (
+              "Verifying Admin Access..."
+            ) : (
+              <span className="flex items-center">
+                <FaUserShield className="mr-2" />
+                Access Admin Dashboard
+              </span>
+            )}
           </button>
-        </form>
 
-        {/* <p className="mt-6 text-sm text-white/70 text-center">
-          &copy; 2026 Admin Management System • Administrator Access Required
-        </p> */}
+          {/* Optional: Forgot Password */}
+          <p className="text-xs text-white/70 text-center mt-2">
+            <span
+              className="underline cursor-pointer hover:text-white transition-colors"
+              onClick={() => alert("Forgot password feature coming soon!")}
+            >
+              Forgot password?
+            </span>
+          </p>
+        </form>
       </div>
     </div>
   );
