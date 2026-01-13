@@ -2,6 +2,7 @@ import express from "express";
 import Stripe from "stripe";
 import dotenv from "dotenv";
 import Order from "../models/orderModel.js";
+import Product from "../models/productModel.js"; // import your Product model
 
 dotenv.config();
 const router = express.Router();
@@ -12,9 +13,15 @@ router.post("/create-checkout-session", async (req, res) => {
   try {
     const { userId, name, email, cart } = req.body;
 
-    // Create Stripe customer
+    // Create Stripe customer with minimal metadata
     const customer = await stripe.customers.create({
-      metadata: { userId, name, email, cart: JSON.stringify(cart) },
+      metadata: {
+        userId,
+        name,
+        email,
+        total: cart.total,
+        productIds: cart.products.map(p => p._id).join(","), // only store IDs
+      },
     });
 
     // Map cart products to Stripe line_items
@@ -66,20 +73,29 @@ router.post(
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    // Handle checkout.session.completed
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
 
       try {
-        // Parse cart from metadata
-        const cart = JSON.parse(session.metadata.cart);
+        const { userId, name, email, total, productIds } = session.metadata;
+
+        // Fetch full product details from DB
+        const productIdArray = productIds.split(",");
+        const products = await Product.find({ _id: { $in: productIdArray } });
 
         const newOrder = new Order({
-          userId: session.metadata.userId,
-          name: session.metadata.name,
-          email: session.metadata.email,
-          products: cart.products,
-          total: cart.total,
+          userId,
+          name,
+          email,
+          products: products.map((p) => ({
+            _id: p._id,
+            title: p.title,
+            desc: p.desc,
+            price: p.price,
+            quantity: 1, // set default; adjust if you store quantity somewhere else
+            img: p.img,
+          })),
+          total,
           paymentIntentId: session.payment_intent,
           stripeSessionId: session.id,
           paymentStatus: "paid",
