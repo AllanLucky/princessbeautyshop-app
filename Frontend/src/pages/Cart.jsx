@@ -43,7 +43,7 @@ const Cart = () => {
   const deliveryFee = cart.products.length ? 150 : 0;
   const total = subtotal + deliveryFee;
 
-  // 💳 Checkout
+  // 💳 Checkout: Create order + Stripe
   const handlePaymentCheckout = async () => {
     if (!user) {
       toast.error("You need to login to proceed with checkout", { position: "top-right", autoClose: 3000 });
@@ -57,17 +57,42 @@ const Cart = () => {
     }
 
     try {
-      const res = await userRequest.post("/stripe/create-checkout-session", {
+      // 1️⃣ Create order in MongoDB
+      const orderData = {
+        userId: user._id,
+        name: user.name,
+        email: user.email,
+        products: cart.products.map((p) => ({
+          productId: p._id,
+          title: p.title,
+          img: p.img,
+          price: p.price,
+          quantity: p.quantity,
+        })),
+        total: total,
+        status: 0, // pending
+        paymentMethod: "Credit Card",
+      };
+
+      const orderRes = await userRequest.post("/orders", orderData);
+      console.log("Order created:", orderRes.data);
+
+      // 2️⃣ Clear cart
+      dispatch(clearCart());
+      toast.success("Order created successfully!", { position: "top-right", autoClose: 3000 });
+
+      // 3️⃣ Proceed to Stripe checkout
+      const stripeRes = await userRequest.post("/stripe/create-checkout-session", {
         cart,
         userId: user._id,
         email: user.email,
         name: user.name,
       });
 
-      if (res?.data?.url) {
-        window.location.href = res.data.url;
+      if (stripeRes?.data?.url) {
+        window.location.href = stripeRes.data.url;
       } else {
-        toast.error("Checkout session not created", { position: "top-right", autoClose: 3000 });
+        toast.warning("Checkout session not created. Your order is saved!", { position: "top-right", autoClose: 4000 });
       }
     } catch (error) {
       console.error("Checkout error:", error);
@@ -77,9 +102,7 @@ const Cart = () => {
 
   return (
     <div className="min-h-screen px-4 sm:px-6 md:px-10 lg:px-20 py-10 bg-gray-50">
-      <h2 className="text-2xl sm:text-3xl font-bold mb-10 text-center lg:text-left">
-        Shopping Cart
-      </h2>
+      <h2 className="text-2xl sm:text-3xl font-bold mb-10 text-center lg:text-left">Shopping Cart</h2>
 
       <div className="flex flex-col lg:flex-row gap-10">
         {/* LEFT: Items */}
@@ -112,9 +135,7 @@ const Cart = () => {
                 </div>
 
                 <div className="text-center sm:text-right flex flex-col justify-between">
-                  <span className="text-xl font-bold text-pink-600 mt-4 sm:mt-0">
-                    KES {item.price * item.quantity}
-                  </span>
+                  <span className="text-xl font-bold text-pink-600 mt-4 sm:mt-0">KES {item.price * item.quantity}</span>
                   <FaTrashAlt
                     className="text-red-500 cursor-pointer text-xl mx-auto sm:mx-0"
                     onClick={() => handleRemoveProduct(item)}
