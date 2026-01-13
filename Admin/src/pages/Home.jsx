@@ -1,66 +1,106 @@
+import { useState, useEffect } from "react";
 import { LineChart } from "@mui/x-charts/LineChart";
+import { userRequest } from "../requestMethods";
 
 const Home = () => {
+  const [orders, setOrders] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+
+        const [ordersRes, productsRes, usersRes] = await Promise.all([
+          userRequest.get("/orders"),
+          userRequest.get("/products"),
+          userRequest.get("/users"),
+        ]);
+
+        setOrders(ordersRes.data.orders || ordersRes.data); // handle API shape
+        setProducts(productsRes.data.products || productsRes.data);
+        setUsers(usersRes.data.users || usersRes.data);
+      } catch (err) {
+        console.error("Failed to fetch dashboard data:", err.response || err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  const totalRevenue = orders.reduce((acc, order) => acc + order.totalAmount, 0);
+
+  // Take last 5 orders for table
+  const latestOrders = orders.slice(-5).reverse();
+
   return (
     <div className="flex flex-col p-5 bg-gray-100 min-h-screen">
       {/* --- Top Cards --- */}
       <div className="flex flex-wrap gap-5 mb-5">
-        {/* Orders Card */}
-        <div className="flex-1 bg-white h-52 shadow-xl rounded-lg flex flex-col items-center justify-center">
-          <div className="h-32 w-32 border-[15px] border-blue-400 rounded-full flex items-center justify-center">
-            <h2 className="text-3xl font-bold">699</h2>
+        {[
+          { title: "Orders", count: orders.length, color: "blue", border: "border-blue-400" },
+          { title: "Products", count: products.length, color: "red", border: "border-red-500" },
+          { title: "Users", count: users.length, color: "gray", border: "border-gray-400" },
+        ].map((card) => (
+          <div
+            key={card.title}
+            className="flex-1 bg-white h-52 shadow-xl rounded-lg flex flex-col items-center justify-center"
+          >
+            <div className={`h-32 w-32 border-[15px] rounded-full flex items-center justify-center ${card.border}`}>
+              <h2 className="text-3xl font-bold">{loading ? "..." : card.count}</h2>
+            </div>
+            <h2 className="text-xl font-semibold mt-2">{card.title}</h2>
           </div>
-          <h2 className="text-xl font-semibold mt-2">Orders</h2>
-        </div>
-
-        {/* Products Card */}
-        <div className="flex-1 bg-white h-52 shadow-xl rounded-lg flex flex-col items-center justify-center">
-          <div className="h-32 w-32 border-[15px] border-red-500 rounded-full flex items-center justify-center">
-            <h2 className="text-3xl font-bold">200</h2>
-          </div>
-          <h2 className="text-xl font-semibold mt-2">Products</h2>
-        </div>
-
-        {/* Users Card */}
-        <div className="flex-1 bg-white h-52 shadow-xl rounded-lg flex flex-col items-center justify-center">
-          <div className="h-32 w-32 border-[15px] border-gray-400 rounded-full flex items-center justify-center">
-            <h2 className="text-3xl font-bold">250</h2>
-          </div>
-          <h2 className="text-xl font-semibold mt-2">Users</h2>
-        </div>
+        ))}
       </div>
 
       {/* --- Table & Chart Section --- */}
       <div className="flex flex-wrap gap-5">
-        {/* Latest Transactions Table */}
+        {/* Latest Orders Table */}
         <div className="flex-1 bg-white rounded-lg shadow-lg p-5 min-w-[400px]">
           <h3 className="text-xl font-bold mb-4">Latest Transactions</h3>
-          <table className="w-full table-auto border-collapse">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="py-2 px-4 border-b">Customer</th>
-                <th className="py-2 px-4 border-b">Amount</th>
-                <th className="py-2 px-4 border-b">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-b">
-                <td className="py-2 px-4">Allan Shehe</td>
-                <td className="py-2 px-4">KES 30,000</td>
-                <td className="py-2 px-4 text-green-500">Approved</td>
-              </tr>
-              <tr className="border-b">
-                <td className="py-2 px-4">Mzungu Shehe</td>
-                <td className="py-2 px-4">KES 40,000</td>
-                <td className="py-2 px-4 text-red-500">Declined</td>
-              </tr>
-              <tr className="border-b">
-                <td className="py-2 px-4">Claris Akinyi</td>
-                <td className="py-2 px-4">KES 20,000</td>
-                <td className="py-2 px-4 text-green-600">Approved</td>
-              </tr>
-            </tbody>
-          </table>
+          {loading ? (
+            <p className="text-gray-500">Loading orders...</p>
+          ) : latestOrders.length === 0 ? (
+            <p className="text-gray-500">No orders yet.</p>
+          ) : (
+            <table className="w-full table-auto border-collapse">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="py-2 px-4 border-b">Customer</th>
+                  <th className="py-2 px-4 border-b">Amount</th>
+                  <th className="py-2 px-4 border-b">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {latestOrders.map((order) => (
+                  <tr key={order._id} className="border-b">
+                    <td className="py-2 px-4">{order.name}</td>
+                    <td className="py-2 px-4">KES {order.totalAmount}</td>
+                    <td
+                      className={`py-2 px-4 font-medium ${
+                        order.status === 2
+                          ? "text-green-500"
+                          : order.status === 1
+                          ? "text-blue-500"
+                          : "text-yellow-500"
+                      }`}
+                    >
+                      {order.status === 2
+                        ? "Delivered"
+                        : order.status === 1
+                        ? "Processing"
+                        : "Pending"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
 
         {/* Revenue Chart */}
@@ -70,21 +110,19 @@ const Home = () => {
           <div className="flex flex-col gap-3 mb-5">
             <div className="bg-gray-50 p-3 rounded-lg shadow flex justify-between">
               <span className="font-semibold">Total Revenue:</span>
-              <span className="text-green-600 font-bold">KES 1,230,000</span>
+              <span className="text-green-600 font-bold">KES {totalRevenue}</span>
             </div>
             <div className="bg-gray-50 p-3 rounded-lg shadow flex justify-between">
-              <span className="font-semibold">Total Loss:</span>
-              <span className="text-red-600 font-bold">KES 0</span>
+              <span className="font-semibold">Total Orders:</span>
+              <span className="text-blue-600 font-bold">{orders.length}</span>
             </div>
           </div>
 
-         {/* LineChart Component */}
-        <LineChart
-          xAxis={[{ data: [1, 2, 3, 5, 8, 10] }]}
-          series={[{ data: [2, 5.5, 2, 8.5, 1.5, 5] }]}
-          height={300}
-        />
-         
+          <LineChart
+            xAxis={[{ data: orders.map((_, i) => i + 1) }]}
+            series={[{ data: orders.map((o) => o.totalAmount) }]}
+            height={300}
+          />
         </div>
       </div>
     </div>

@@ -1,32 +1,35 @@
-import { FaPlus, FaTrash } from 'react-icons/fa';
+import { FaPlus, FaTrash } from "react-icons/fa";
 import axios from "axios";
 import { userRequest } from "../requestMethods";
 import { useState } from "react";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const NewProduct = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [inputs, setInputs] = useState({});
-  const [uploading, setUploading] = useState("Uploading is 0%");
+  const [uploading, setUploading] = useState("");
   const [selectedOptions, setSelectedOptions] = useState({
     concern: [],
     skintype: [],
-    categories: []
+    categories: [],
   });
+  const [loading, setLoading] = useState(false);
 
   // Image selection
   const imageChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
       setSelectedImage(e.target.files[0]);
     }
-  }
+  };
 
-  // Input change handler
+  // Input change
   const handleChange = (e) => {
     setInputs((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     }));
-  }
+  };
 
   // Add selected option
   const handleSelectedChange = (e) => {
@@ -34,49 +37,69 @@ const NewProduct = () => {
     if (!value) return;
     setSelectedOptions((prev) => ({
       ...prev,
-      [name]: prev[name].includes(value) ? prev[name] : [...prev[name], value]
+      [name]: prev[name].includes(value) ? prev[name] : [...prev[name], value],
     }));
-  }
+  };
 
   // Remove selected option
   const handleRemoveOption = (name, value) => {
     setSelectedOptions((prev) => ({
       ...prev,
-      [name]: prev[name].filter((option) => option !== value)
+      [name]: prev[name].filter((option) => option !== value),
     }));
-  }
+  };
+
+  // Reset form
+  const resetForm = () => {
+    setSelectedImage(null);
+    setInputs({});
+    setSelectedOptions({ concern: [], skintype: [], categories: [] });
+    setUploading("");
+  };
 
   // Upload and create product
   const handleUpload = async (e) => {
     e.preventDefault();
-    if (!selectedImage) return;
+    if (!selectedImage) {
+      toast.error("Please select an image");
+      return;
+    }
 
     const data = new FormData();
     data.append("file", selectedImage);
     data.append("upload_preset", "uploads");
 
-    setUploading("Uploading...");
-
     try {
+      setLoading(true);
+      setUploading("Uploading...");
+
+      // Upload to Cloudinary
       const uploadRes = await axios.post(
         "https://api.cloudinary.com/v1_1/dkdx7xytz/image/upload",
         data
       );
-
       const { url } = uploadRes.data;
 
+      // Send product to backend
       await userRequest.post("/products", { img: url, ...inputs, ...selectedOptions });
 
       setUploading("Uploaded 100%");
-      alert("Product uploaded successfully!");
+      toast.success("Product uploaded successfully!");
+
+      // Reset form
+      resetForm();
     } catch (error) {
       console.error("Upload failed:", error);
+      toast.error("Upload failed!");
       setUploading("Upload failed!");
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="p-5 w-[79vw]">
+      <ToastContainer position="top-right" autoClose={3000} />
       {/* Header */}
       <div className="flex items-center justify-center mb-6">
         <h1 className="text-3xl font-semibold">Add New Product</h1>
@@ -108,7 +131,7 @@ const NewProduct = () => {
                 )}
                 <input type="file" id="file" onChange={imageChange} style={{ display: "none" }} />
               </div>
-              <span className="text-green-500 mt-1">{uploading}</span>
+              {uploading && <span className="text-green-500 mt-1">{uploading}</span>}
             </div>
 
             {/* Product Name */}
@@ -117,6 +140,7 @@ const NewProduct = () => {
               <input
                 type="text"
                 name="title"
+                value={inputs.title || ""}
                 onChange={handleChange}
                 placeholder="Product Name"
                 className="w-full border border-gray-300 rounded px-3 py-2"
@@ -128,6 +152,7 @@ const NewProduct = () => {
               <label className="block font-semibold mb-2">Product Description</label>
               <textarea
                 name="desc"
+                value={inputs.desc || ""}
                 onChange={handleChange}
                 placeholder="Product Description"
                 rows={6}
@@ -142,6 +167,7 @@ const NewProduct = () => {
                 <input
                   type="number"
                   name="originalPrice"
+                  value={inputs.originalPrice || ""}
                   onChange={handleChange}
                   className="w-full border border-gray-300 rounded px-3 py-2"
                   placeholder="20000"
@@ -152,13 +178,13 @@ const NewProduct = () => {
                 <input
                   type="number"
                   name="discountedPrice"
+                  value={inputs.discountedPrice || ""}
                   onChange={handleChange}
                   className="w-full border border-gray-300 rounded px-3 py-2"
                   placeholder="18000"
                 />
               </div>
             </div>
-
           </div>
 
           {/* RIGHT SIDE */}
@@ -171,6 +197,7 @@ const NewProduct = () => {
                 <input
                   type="number"
                   name="wholesalePrice"
+                  value={inputs.wholesalePrice || ""}
                   onChange={handleChange}
                   className="w-full border border-gray-300 rounded px-3 py-2"
                   placeholder="17000"
@@ -181,6 +208,7 @@ const NewProduct = () => {
                 <input
                   type="number"
                   name="wholesaleMinimumQuantity"
+                  value={inputs.wholesaleMinimumQuantity || ""}
                   onChange={handleChange}
                   className="w-full border border-gray-300 rounded px-3 py-2"
                   placeholder="10"
@@ -193,100 +221,50 @@ const NewProduct = () => {
               <input
                 type="text"
                 name="brand"
+                value={inputs.brand || ""}
                 onChange={handleChange}
                 className="w-full border border-gray-300 rounded px-3 py-2"
                 placeholder="Kylie"
               />
             </div>
 
-            {/* Select Options */}
-            <div>
-              <label className="block font-semibold mb-2">Concern</label>
-              <select
-                name="concern"
-                onChange={handleSelectedChange}
-                className="w-full border border-gray-300 rounded px-3 py-2"
-              >
-                <option value="">Select concern</option>
-                <option value="acne">Acne</option>
-                <option value="dry-skin">Dry Skin</option>
-                <option value="oily-skin">Oily Skin</option>
-                <option value="dark-spots">Dark Spots</option>
-                <option value="aging">Aging</option>
-                <option value="sensitive-skin">Sensitive Skin</option>
-              </select>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {selectedOptions.concern.map((option) => (
-                  <span key={option} className="flex items-center bg-gray-200 px-2 py-1 rounded">
-                    {option}
-                    <FaTrash
-                      className="ml-1 text-red-500 cursor-pointer"
-                      onClick={() => handleRemoveOption("concern", option)}
-                    />
-                  </span>
-                ))}
-              </div>
-            </div>
+            {/* Concern */}
+            <SelectOption
+              label="Concern"
+              name="concern"
+              options={["acne", "dry-skin", "oily-skin", "dark-spots", "aging", "sensitive-skin"]}
+              selectedOptions={selectedOptions}
+              handleSelectedChange={handleSelectedChange}
+              handleRemoveOption={handleRemoveOption}
+            />
 
-            <div>
-              <label className="block font-semibold mb-2">Skin Type</label>
-              <select
-                name="skintype"
-                onChange={handleSelectedChange}
-                className="w-full border border-gray-300 rounded px-3 py-2"
-              >
-                <option value="">Select skin type</option>
-                <option value="all">All</option>
-                <option value="oily">Oily</option>
-                <option value="dry">Dry</option>
-                <option value="sensitive">Sensitive</option>
-                <option value="normal">Normal</option>
-              </select>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {selectedOptions.skintype.map((option) => (
-                  <span key={option} className="flex items-center bg-gray-200 px-2 py-1 rounded">
-                    {option}
-                    <FaTrash
-                      className="ml-1 text-red-500 cursor-pointer"
-                      onClick={() => handleRemoveOption("skintype", option)}
-                    />
-                  </span>
-                ))}
-              </div>
-            </div>
+            {/* Skin Type */}
+            <SelectOption
+              label="Skin Type"
+              name="skintype"
+              options={["all", "oily", "dry", "sensitive", "normal"]}
+              selectedOptions={selectedOptions}
+              handleSelectedChange={handleSelectedChange}
+              handleRemoveOption={handleRemoveOption}
+            />
 
-            <div>
-              <label className="block font-semibold mb-2">Category</label>
-              <select
-                name="categories"
-                onChange={handleSelectedChange}
-                className="w-full border border-gray-300 rounded px-3 py-2"
-              >
-                <option value="">Select category</option>
-                <option value="foundations">Foundations</option>
-                <option value="serum">Serum</option>
-                <option value="toner">Toner</option>
-                <option value="lotions">Lotions</option>
-              </select>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {selectedOptions.categories.map((option) => (
-                  <span key={option} className="flex items-center bg-gray-200 px-2 py-1 rounded">
-                    {option}
-                    <FaTrash
-                      className="ml-1 text-red-500 cursor-pointer"
-                      onClick={() => handleRemoveOption("categories", option)}
-                    />
-                  </span>
-                ))}
-              </div>
-            </div>
+            {/* Category */}
+            <SelectOption
+              label="Category"
+              name="categories"
+              options={["foundations", "serum", "toner", "lotions"]}
+              selectedOptions={selectedOptions}
+              handleSelectedChange={handleSelectedChange}
+              handleRemoveOption={handleRemoveOption}
+            />
 
             <button
               type="button"
               onClick={handleUpload}
-              className="w-full py-3 mt-4 bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-500 text-white font-semibold rounded-xl hover:scale-[1.02] transition-all shadow-lg"
+              disabled={loading}
+              className={`w-full py-3 mt-4 bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-500 text-white font-semibold rounded-xl transition-all shadow-lg ${loading ? "opacity-70 cursor-not-allowed" : "hover:scale-[1.02]"}`}
             >
-              Create Product
+              {loading ? "Creating..." : "Create Product"}
             </button>
 
           </div>
@@ -294,6 +272,36 @@ const NewProduct = () => {
       </div>
     </div>
   );
-}
+};
+
+// Reusable select component
+const SelectOption = ({ label, name, options, selectedOptions, handleSelectedChange, handleRemoveOption }) => (
+  <div>
+    <label className="block font-semibold mb-2">{label}</label>
+    <select
+      name={name}
+      onChange={handleSelectedChange}
+      className="w-full border border-gray-300 rounded px-3 py-2"
+    >
+      <option value="">Select {label.toLowerCase()}</option>
+      {options.map((opt) => (
+        <option key={opt} value={opt}>{opt}</option>
+      ))}
+    </select>
+    <div className="flex flex-wrap gap-2 mt-2">
+      {selectedOptions[name].map((option) => (
+        <span key={option} className="flex items-center bg-gray-200 px-2 py-1 rounded">
+          {option}
+          <FaTrash
+            className="ml-1 text-red-500 cursor-pointer"
+            onClick={() => handleRemoveOption(name, option)}
+          />
+        </span>
+      ))}
+    </div>
+  </div>
+);
 
 export default NewProduct;
+
+

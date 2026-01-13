@@ -1,64 +1,61 @@
 import React, { useState, useEffect } from "react";
 import Product from "./Product";
 import { userRequest } from "../requestMethod";
-import PropTypes from "prop-types";
-import { Link } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 
-const Products = ({ filters, sort, query }) => {
+const Products = ({ sort, query }) => {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
+  const location = useLocation();
 
+  // Get category from query string
+  const params = new URLSearchParams(location.search);
+  const category = params.get("category");
+
+  // Fetch products from backend
   useEffect(() => {
     const getProducts = async () => {
       try {
-        let response;
-        if (query) {
-          response = await userRequest.get(`/products?search=${query}`);
-        } else {
-          response = await userRequest.get("/products");
-        }
-        setProducts(response.data);
-      } catch (error) {
-        console.error("Error fetching products:", error);
+        let url = "/products";
+        if (category) url += `?category=${category}`;
+        else if (query) url += `?search=${query}`;
+
+        const res = await userRequest.get(url);
+        setProducts(res.data);
+      } catch (err) {
+        console.error("Error fetching products:", err);
       }
     };
     getProducts();
-  }, [query]);
+  }, [category, query]);
 
+  // Apply sorting
   useEffect(() => {
-    let tempoProducts = [...products];
+    let tempProducts = [...products];
 
-    // apply filters
-    if (filters) {
-      tempoProducts = tempoProducts.filter((item) =>
-        Object.entries(filters).every(([key, value]) => {
-          if (!value) return true;
-          return String(item[key])
-            .toLowerCase()
-            .includes(String(value).toLowerCase());
-        })
-      );
-    }
-
-    // apply sorting
     if (sort === "newest") {
-      tempoProducts.sort(
+      tempProducts.sort(
         (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
       );
     } else if (sort === "asc") {
-      tempoProducts.sort(
+      tempProducts.sort(
         (a, b) =>
-          (a.price || a.originalPrice) - (b.price || b.originalPrice)
+          (a.discountedPrice || a.originalPrice) -
+          (b.discountedPrice || b.originalPrice)
       );
     } else if (sort === "desc") {
-      tempoProducts.sort(
+      tempProducts.sort(
         (a, b) =>
-          (b.price || b.originalPrice) - (a.price || a.originalPrice)
+          (b.discountedPrice || b.originalPrice) -
+          (a.discountedPrice || a.originalPrice)
       );
     }
 
-    setFilteredProducts(tempoProducts);
-  }, [products, filters, sort]);
+    setFilteredProducts(tempProducts);
+  }, [products, sort]);
+
+  if (!filteredProducts.length)
+    return <div className="text-center mt-10">No products found.</div>;
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -72,9 +69,9 @@ const Products = ({ filters, sort, query }) => {
                 ? product.desc.substring(0, 80) + "..."
                 : product.desc
             }
-            price={product.price || product.originalPrice || "N/A"}
+            price={product.discountedPrice || product.originalPrice || "N/A"}
             image={Array.isArray(product.img) ? product.img[0] : product.img}
-            rating={product.rating || 0}
+            rating={product.ratings?.length ? product.ratings[0].star : 0}
           />
         </Link>
       ))}
@@ -82,11 +79,5 @@ const Products = ({ filters, sort, query }) => {
   );
 };
 
-Products.propTypes = {
-  cat: PropTypes.string,
-  filters: PropTypes.object,
-  sort: PropTypes.string,
-  query: PropTypes.string,
-};
-
 export default Products;
+
