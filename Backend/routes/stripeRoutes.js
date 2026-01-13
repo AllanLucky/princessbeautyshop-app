@@ -30,7 +30,7 @@ router.post("/create-checkout-session", async (req, res) => {
     const line_items = req.body.cart.products.map((product) => {
       return {
         price_data: {
-          currency: "usd",
+          currency: "KES",
           product_data: {
             name: product.title,
             images: product.img ? [String(product.img)] : [], // ensure images array
