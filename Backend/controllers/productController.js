@@ -86,32 +86,23 @@ const ratingProduct = asyncHandler(async (req, res) => {
 
   if (!star) {
     res.status(400);
-    throw new Error("Please provide a rating");
-    return;
+    throw new Error("Rating must be provided");
   }
 
-  try {
-    const product = await Product.findById(req.params.id);
-    if (!product) {
-      res.status(404);
-      throw new Error("Product not found");
-      return;
-    }
+  const updatedProduct = await Product.findByIdAndUpdate(
+    req.params.id,
+    { $push: { ratings: { star, comment, postedBy: req.user._id, name: req.user.name } } },
+    { new: true }
+  );
 
-    // Use logged-in user's id for postedBy
-    const postedBy = req.user._id; // from your protect middleware
-    const name = req.user.name;
-
-    // Push rating
-    product.ratings.push({ star, name, comment, postedBy });
-    await product.save();
-
-    res.status(200).json({ message: "Review submitted successfully", product });
-  } catch (error) {
-    res.status(500);
-    throw new Error(error.message);
+  if (!updatedProduct) {
+    res.status(404);
+    throw new Error("Product not found");
   }
+
+  res.status(200).json(updatedProduct);
 });
+
 
 
 export {
