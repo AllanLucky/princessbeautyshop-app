@@ -1,44 +1,90 @@
 import mongoose from "mongoose";
+
 const OrderSchema = mongoose.Schema(
   {
+    // Customer info
     name: {
       type: String,
       required: true,
     },
+
     userId: {
       type: String,
       required: true,
     },
-    products: {
-      type: Array,
-      required: true,
-    },
-    total: {
-      type: Number,
-      required: true,
-    },
 
-    address: {
+    email: {
       type: String,
+      required: true,
     },
 
     phone: {
       type: String,
     },
 
-    email: {
+    address: {
       type: String,
     },
 
-    status: {
+    // Products
+    products: [
+      {
+        productId: String,
+        title: String,
+        price: Number,
+        quantity: Number,
+        img: String
+      }
+    ],
+
+    // Money
+    total: {
       type: Number,
-      default: 0,
+      required: true,
+    },
+
+    currency: {
+      type: String,
+      default: "KES",
+    },
+
+    // Stripe info
+    paymentIntentId: {
+      type: String,
+    },
+
+    stripeSessionId: {
+      type: String,
+    },
+
+    // Payment status
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "paid", "failed", "refunded"],
+      default: "pending",
+    },
+
+    // Order lifecycle
+    orderStatus: {
+      type: String,
+      enum: ["processing", "confirmed", "shipped", "delivered", "cancelled"],
+      default: "processing",
+    },
+
+    isDelivered: {
+      type: Boolean,
+      default: false,
+    },
+
+    deliveredAt: {
+      type: Date,
+    },
+
+    refundedAt: {
+      type: Date,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-const Order = mongoose.model("Order", OrderSchema);
-export default Order;
+export default mongoose.model("Order", OrderSchema);

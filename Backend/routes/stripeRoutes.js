@@ -7,44 +7,32 @@ dotenv.config();
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_KEY);
 
-let cart;
-let name;
-let email;
-let userId;
-
+// CREATE CHECKOUT SESSION
 router.post("/create-checkout-session", async (req, res) => {
   try {
+    const { userId, name, email, cart } = req.body;
+
+    // Create Stripe customer
     const customer = await stripe.customers.create({
-      metadata: {
-        userId: req.body.userId
-      },
+      metadata: { userId, name, email, cart: JSON.stringify(cart) },
     });
 
-    // assign globals
-    userId = req.body.userId;
-    email = req.body.email;
-    name = req.body.name;
-    cart = req.body.cart;
-
-    // map products to line_items for Stripe
-    const line_items = req.body.cart.products.map((product) => {
-      return {
-        price_data: {
-          currency: "KES",
-          product_data: {
-            name: product.title,
-            images: product.img ? [String(product.img)] : [], // ensure images array
-            description: product.desc || "", // fallback description
-            metadata: {
-              id: product._id,
-            },
-          },
-          unit_amount: Math.round(product.price * 100), // ensure integer in cents
+    // Map cart products to Stripe line_items
+    const line_items = cart.products.map((product) => ({
+      price_data: {
+        currency: "KES",
+        product_data: {
+          name: product.title,
+          images: product.img ? [String(product.img)] : [],
+          description: product.desc || "",
+          metadata: { id: product._id },
         },
-        quantity: product.quantity || 1, // fallback quantity
-      };
-    });
+        unit_amount: Math.round(product.price * 100),
+      },
+      quantity: product.quantity || 1,
+    }));
 
+    // Create checkout session
     const session = await stripe.checkout.sessions.create({
       customer: customer.id,
       line_items,
@@ -53,80 +41,60 @@ router.post("/create-checkout-session", async (req, res) => {
       cancel_url: `${process.env.CLIENT_URL}/cart`,
     });
 
-    res.send({ url: session.url });
+    res.status(200).json({ url: session.url });
   } catch (error) {
     console.error("Checkout error:", error);
-    res.status(500).send({ error: error.message });
+    res.status(500).json({ error: error.message });
   }
 });
 
-// webhook
-let endpointSecret;
-
+// WEBHOOK
 router.post(
   "/webhook",
   express.raw({ type: "application/json" }),
-  (req, res) => {
+  async (req, res) => {
     const sig = req.headers["stripe-signature"];
+    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-    let data;
-    let eventType;
+    let event;
 
-    if (endpointSecret) {
-      let event;
-      try {
-        event = stripe.webhooks.constructEvent(
-          req.body,
-          sig,
-          endpointSecret
-        );
-        console.log("webhook verified");
-      } catch (err) {
-        console.log("webhook error", err.message);
-        res.status(400).send(`Webhook Error: ${err.message}`);
-        return;
-      }
-
-      data = event.data.object;
-      eventType = event.type;
-    } else {
-      data = req.body.data.object;
-      eventType = req.body.type;
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+      console.log("Webhook verified:", event.type);
+    } catch (err) {
+      console.error("Webhook signature error:", err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    // Handle checkout completion
-    if (eventType === "checkout.session.completed") {
-      if (data.customer) {
-        stripe.customers
-          .retrieve(data.customer)
-          .then(async (customer) => {
-            const newOrder = Order({
-              name,
-              userId,
-              products: cart.products,
-              total: cart.total,
-              email
-            });
-            await newOrder.save();
-          })
-          .catch((err) => {
-            console.log(err.message);
-          });
-      } else {
-        // fallback if no customer object
-        const newOrder = Order({
-          name,
-          userId,
+    // Handle checkout.session.completed
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object;
+
+      try {
+        // Parse cart from metadata
+        const cart = JSON.parse(session.metadata.cart);
+
+        const newOrder = new Order({
+          userId: session.metadata.userId,
+          name: session.metadata.name,
+          email: session.metadata.email,
           products: cart.products,
           total: cart.total,
-          email
+          paymentIntentId: session.payment_intent,
+          stripeSessionId: session.id,
+          paymentStatus: "paid",
         });
-        newOrder.save().catch((err) => console.log(err.message));
+
+        await newOrder.save();
+        console.log("Order saved to MongoDB:", newOrder._id);
+      } catch (err) {
+        console.error("Error saving order:", err.message);
       }
     }
 
-    res.send().end();
+    res.json({ received: true });
   }
 );
 
 export default router;
+
