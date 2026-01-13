@@ -57,7 +57,7 @@ const Cart = () => {
     }
 
     try {
-      // 1️⃣ Create order in MongoDB
+      // 1️⃣ Prepare order data for MongoDB
       const orderData = {
         userId: user._id,
         name: user.name,
@@ -65,25 +65,40 @@ const Cart = () => {
         products: cart.products.map((p) => ({
           productId: p._id,
           title: p.title,
-          img: p.img,
+          desc: p.desc,
+          img: Array.isArray(p.img) ? p.img[0] : p.img,
           price: p.price,
           quantity: p.quantity,
         })),
         total: total,
-        status: 0, // pending
         paymentMethod: "Credit Card",
+        status: 0, // pending
       };
 
+      // 2️⃣ Create order in DB
       const orderRes = await userRequest.post("/orders", orderData);
       console.log("Order created:", orderRes.data);
 
-      // 2️⃣ Clear cart
+      // 3️⃣ Clear cart locally
       dispatch(clearCart());
       toast.success("Order created successfully!", { position: "top-right", autoClose: 3000 });
 
-      // 3️⃣ Proceed to Stripe checkout
+      // 4️⃣ Prepare Stripe cart object
+      const stripeCart = {
+        products: cart.products.map((p) => ({
+          _id: p._id,
+          title: p.title,
+          desc: p.desc,
+          img: Array.isArray(p.img) ? p.img[0] : p.img,
+          price: p.price,
+          quantity: p.quantity,
+        })),
+        total: total,
+      };
+
+      // 5️⃣ Create Stripe checkout session
       const stripeRes = await userRequest.post("/stripe/create-checkout-session", {
-        cart,
+        cart: stripeCart,
         userId: user._id,
         email: user.email,
         name: user.name,
@@ -113,7 +128,7 @@ const Cart = () => {
             cart.products.map((item) => (
               <div key={item._id} className="flex flex-col sm:flex-row gap-5 border-b pb-6">
                 <img
-                  src={item.img}
+                  src={Array.isArray(item.img) ? item.img[0] : item.img}
                   alt={item.title}
                   className="w-full sm:w-32 h-32 object-cover rounded-lg mx-auto sm:mx-0"
                 />
@@ -135,7 +150,9 @@ const Cart = () => {
                 </div>
 
                 <div className="text-center sm:text-right flex flex-col justify-between">
-                  <span className="text-xl font-bold text-pink-600 mt-4 sm:mt-0">KES {item.price * item.quantity}</span>
+                  <span className="text-xl font-bold text-pink-600 mt-4 sm:mt-0">
+                    KES {item.price * item.quantity}
+                  </span>
                   <FaTrashAlt
                     className="text-red-500 cursor-pointer text-xl mx-auto sm:mx-0"
                     onClick={() => handleRemoveProduct(item)}

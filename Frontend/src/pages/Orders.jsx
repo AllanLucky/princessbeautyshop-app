@@ -36,19 +36,25 @@ const Order = () => {
   const [expandedOrders, setExpandedOrders] = useState({});
   const [expandedItems, setExpandedItems] = useState({});
 
+  // Fetch user orders and poll for updates
   useEffect(() => {
-    const getUserOrder = async () => {
+    let interval;
+    const getUserOrders = async () => {
+      if (!user?.currentUser) return;
       try {
         const res = await userRequest.get(`/orders/find/${user.currentUser._id}`);
         setOrders(res.data);
-      } catch (error) {
-        console.log(error);
+      } catch (err) {
+        console.error(err);
       }
     };
 
-    if (user.currentUser) {
-      getUserOrder();
-    }
+    getUserOrders();
+
+    // Poll every 10 seconds for payment updates
+    interval = setInterval(() => getUserOrders(), 10000);
+
+    return () => clearInterval(interval);
   }, [user]);
 
   const handleRating = async (productId) => {
@@ -121,7 +127,13 @@ const Order = () => {
                       <p className="text-gray-600 text-sm">{order.products.length} item{order.products.length !== 1 ? 's' : ''} • Total: {formatCurrency(calculateOrderTotal(order) + 500)}</p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="bg-rose-100 text-rose-700 px-3 py-1 rounded-full text-sm font-medium">{order.status || "Completed"}</span>
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        order.paymentStatus === "paid" ? "bg-green-100 text-green-700" :
+                        order.paymentStatus === "pending" ? "bg-yellow-100 text-yellow-700" :
+                        "bg-red-100 text-red-700"
+                      }`}>
+                        {order.paymentStatus || "Pending"}
+                      </span>
                       <button onClick={() => toggleOrderExpansion(order._id)} className="text-rose-600 hover:text-rose-700 transition-colors duration-300">
                         {expandedOrders[order._id] ? <FaChevronUp /> : <FaChevronDown />}
                       </button>
@@ -193,7 +205,7 @@ const Order = () => {
                         <div>
                           <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center"><FaCreditCard className="text-rose-600 mr-2" /> Payment Method</h3>
                           <p className="text-gray-600 capitalize">{order.paymentMethod || 'Credit Card'}</p>
-                          <p className="text-gray-600 text-sm mt-1">Status: <span className="font-medium capitalize text-rose-600">{order.paymentStatus || 'Paid'}</span></p>
+                          <p className="text-gray-600 text-sm mt-1">Status: <span className="font-medium capitalize text-rose-600">{order.paymentStatus || 'Pending'}</span></p>
                         </div>
 
                         <div className="bg-white p-4 rounded-lg shadow-sm">
