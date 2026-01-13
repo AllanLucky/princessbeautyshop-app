@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link } from 'react-router-dom';
 import { userRequest } from '../requestMethod';
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // Custom StarRating Component
 const StarRating = ({ rating, onRatingChange, maxRating = 5 }) => {
@@ -36,7 +38,7 @@ const Order = () => {
   const [expandedOrders, setExpandedOrders] = useState({});
   const [expandedItems, setExpandedItems] = useState({});
 
-  // Fetch user orders and poll for updates
+  // Fetch user orders
   useEffect(() => {
     let interval;
     const getUserOrders = async () => {
@@ -51,15 +53,16 @@ const Order = () => {
 
     getUserOrders();
 
-    // Poll every 10 seconds for payment updates
+    // Poll every 10 seconds for updates
     interval = setInterval(() => getUserOrders(), 10000);
 
     return () => clearInterval(interval);
   }, [user]);
 
+  // ✅ Submit product review
   const handleRating = async (productId) => {
     if (!rating) {
-      alert("Please select a rating");
+      toast.warning("Please select a rating", { position: "top-right", autoClose: 3000 });
       return;
     }
 
@@ -71,14 +74,15 @@ const Order = () => {
     };
 
     try {
-      await userRequest.put(`/products/rating/${productId}`, singleRating);
+      // Use POST to match backend route
+      await userRequest.post(`/products/rating/${productId}`, singleRating);
       setComment("");
       setRating(0);
       setActiveProduct(null);
-      alert("Thank you for your review!");
+      toast.success("Thank you for your review!", { position: "top-right", autoClose: 3000 });
     } catch (error) {
       console.log(error);
-      alert("Error submitting review. Please try again.");
+      toast.error("Error submitting review. Please try again.", { position: "top-right", autoClose: 3000 });
     }
   };
 
@@ -92,6 +96,7 @@ const Order = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-rose-50 to-white pt-24 pb-12 px-4 sm:px-6 lg:px-8">
+      <ToastContainer />
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-10">
