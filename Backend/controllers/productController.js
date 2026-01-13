@@ -80,27 +80,42 @@ const getALLproducts = asyncHandler(async (req, res) => {
   res.status(200).json(products);
 });
 
-// RATING PRODUCT
+// RATE PRODUCT
 const ratingProduct = asyncHandler(async (req, res) => {
   const { star, comment } = req.body;
+  const userId = req.user._id;
 
-  if (!star) {
-    res.status(400);
-    throw new Error("Rating must be provided");
-  }
-
-  const updatedProduct = await Product.findByIdAndUpdate(
-    req.params.id,
-    { $push: { ratings: { star, comment, postedBy: req.user._id, name: req.user.name } } },
-    { new: true }
-  );
-
-  if (!updatedProduct) {
+  const product = await Product.findById(req.params.id);
+  if (!product) {
     res.status(404);
     throw new Error("Product not found");
   }
 
-  res.status(200).json(updatedProduct);
+  // Check if user already reviewed
+  const existingReview = product.ratings.find(
+    (r) => r.postedBy.toString() === userId.toString()
+  );
+
+  if (existingReview) {
+    // UPDATE existing review
+    existingReview.star = star;
+    existingReview.comment = comment;
+  } else {
+    // ADD new review
+    product.ratings.push({
+      star,
+      comment,
+      postedBy: userId,
+      name: req.user.name,
+    });
+  }
+
+  await product.save();
+
+  res.status(200).json({
+    message: existingReview ? "Review updated" : "Review added",
+    ratings: product.ratings,
+  });
 });
 
 
