@@ -18,7 +18,9 @@ const StarRating = ({ rating, onRatingChange, maxRating = 5 }) => {
           <FaStar
             key={i}
             size={25}
-            className={`cursor-pointer transition-colors ${starValue <= (hover || rating) ? "text-yellow-400" : "text-gray-300"}`}
+            className={`cursor-pointer transition-colors ${
+              starValue <= (hover || rating) ? "text-yellow-400" : "text-gray-300"
+            }`}
             onClick={() => onRatingChange(starValue)}
             onMouseEnter={() => setHover(starValue)}
             onMouseLeave={() => setHover(0)}
@@ -29,7 +31,7 @@ const StarRating = ({ rating, onRatingChange, maxRating = 5 }) => {
   );
 };
 
-const Order = () => {
+const Orders = () => {
   const user = useSelector((state) => state.user);
   const [orders, setOrders] = useState([]);
   const [rating, setRating] = useState(0);
@@ -40,9 +42,8 @@ const Order = () => {
 
   // Fetch user orders
   useEffect(() => {
-    let interval;
+    if (!user?.currentUser) return;
     const getUserOrders = async () => {
-      if (!user?.currentUser) return;
       try {
         const res = await userRequest.get(`/orders/find/${user.currentUser._id}`);
         setOrders(res.data);
@@ -50,49 +51,46 @@ const Order = () => {
         console.error(err);
       }
     };
-
     getUserOrders();
-
-    // Poll every 10 seconds for updates
-    interval = setInterval(() => getUserOrders(), 10000);
-
-    return () => clearInterval(interval);
   }, [user]);
 
-  // ✅ Submit product review
   const handleRating = async (productId) => {
-    if (!rating) {
-      toast.warning("Please select a rating", { position: "top-right", autoClose: 3000 });
-      return;
-    }
-
-    const singleRating = {
-      star: rating,
-      name: user.currentUser.name,
-      postedBy: user.currentUser.name,
-      comment: comment,
-    };
+    if (!rating) return toast.warning("Please select a rating!");
 
     try {
-      // Use POST to match backend route
-      await userRequest.post(`/products/rating/${productId}`, singleRating);
+      await userRequest.post(`/products/rating/${productId}`, {
+        star: rating,
+        name: user.currentUser.name,
+        comment,
+        postedBy: user.currentUser._id,
+      });
+      toast.success("Review submitted successfully!");
       setComment("");
       setRating(0);
       setActiveProduct(null);
-      toast.success("Thank you for your review!", { position: "top-right", autoClose: 3000 });
-    } catch (error) {
-      console.log(error);
-      toast.error("Error submitting review. Please try again.", { position: "top-right", autoClose: 3000 });
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to submit review. Try again.");
     }
   };
 
-  const calculateOrderTotal = (order) => order.products.reduce((total, product) => total + product.price * product.quantity, 0);
-  const formatDate = (dateString) => new Date(dateString).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
-  const formatCurrency = (amount) => new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES', minimumFractionDigits: 0 }).format(amount);
+  const calculateOrderTotal = (order) =>
+    order.products.reduce((total, product) => total + product.price * product.quantity, 0);
 
-  const toggleOrderExpansion = (orderId) => setExpandedOrders(prev => ({ ...prev, [orderId]: !prev[orderId] }));
-  const toggleItemsExpansion = (orderId) => setExpandedItems(prev => ({ ...prev, [orderId]: !prev[orderId] }));
-  const getVisibleProducts = (order, orderId) => expandedItems[orderId] ? order.products : order.products.slice(0, 2);
+  const formatDate = (dateString) =>
+    new Date(dateString).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const formatCurrency = (amount) =>
+    new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES', minimumFractionDigits: 0 }).format(amount);
+
+  const toggleOrderExpansion = (orderId) =>
+    setExpandedOrders(prev => ({ ...prev, [orderId]: !prev[orderId] }));
+
+  const toggleItemsExpansion = (orderId) =>
+    setExpandedItems(prev => ({ ...prev, [orderId]: !prev[orderId] }));
+
+  const getVisibleProducts = (order, orderId) =>
+    expandedItems[orderId] ? order.products : order.products.slice(0, 2);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-rose-50 to-white pt-24 pb-12 px-4 sm:px-6 lg:px-8">
@@ -148,81 +146,62 @@ const Order = () => {
 
                 {/* Collapsible Order Details */}
                 {expandedOrders[order._id] && (
-                  <>
+                  <div className="p-6">
                     {/* Order Items */}
-                    <div className="p-6">
-                      <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                        <FaShoppingBag className="text-rose-600 mr-2" />
-                        Items Ordered ({order.products.length})
-                      </h3>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                      <FaShoppingBag className="text-rose-600 mr-2" />
+                      Items Ordered ({order.products.length})
+                    </h3>
+                    <div className="space-y-6">
+                      {getVisibleProducts(order, order._id).map((product) => (
+                        <div key={product._id} className="border-b border-gray-100 pb-6 last:border-0">
+                          <div className="flex flex-col sm:flex-row items-start gap-4">
+                            <img src={product.img} alt={product.title} className="w-20 h-20 rounded-lg object-cover shadow-sm" />
+                            <div className="flex-1">
+                              <h4 className="text-lg font-medium text-gray-800">{product.title}</h4>
+                              <p className="text-gray-600">Quantity: {product.quantity}</p>
+                              <p className="text-lg font-bold text-rose-700 mt-1">{formatCurrency(product.price * product.quantity)}</p>
 
-                      <div className="space-y-6">
-                        {getVisibleProducts(order, order._id).map((product) => (
-                          <div key={product._id} className="border-b border-gray-100 pb-6 last:border-0">
-                            <div className="flex flex-col sm:flex-row items-start gap-4">
-                              <img src={product.img} alt={product.title} className="w-20 h-20 rounded-lg object-cover shadow-sm" />
-                              <div className="flex-1">
-                                <h4 className="text-lg font-medium text-gray-800">{product.title}</h4>
-                                <p className="text-gray-600">Quantity: {product.quantity}</p>
-                                <p className="text-lg font-bold text-rose-700 mt-1">{formatCurrency(product.price * product.quantity)}</p>
-
-                                {/* Rating Section */}
-                                <div className="mt-4">
-                                  <button onClick={() => setActiveProduct(activeProduct === product._id ? null : product._id)} className="text-rose-600 hover:text-rose-700 text-sm font-medium flex items-center">
-                                    <FaStar className="mr-1" />
-                                    {activeProduct === product._id ? "Cancel Review" : "Rate this Product"}
-                                  </button>
-                                  {activeProduct === product._id && (
-                                    <div className="mt-3 p-4 bg-rose-50 rounded-lg">
-                                      <StarRating rating={rating} onRatingChange={setRating} />
-                                      <textarea placeholder="Share your experience (optional)" className="w-full mt-3 p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-300 resize-none" rows="3" value={comment} onChange={(e) => setComment(e.target.value)} />
-                                      <div className="flex gap-2 mt-3">
-                                        <button onClick={() => handleRating(product._id)} className="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-300">Submit Review</button>
-                                        <button onClick={() => { setActiveProduct(null); setComment(""); setRating(0); }} className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-300">Cancel</button>
-                                      </div>
+                              {/* Rating Section */}
+                              <div className="mt-4">
+                                <button onClick={() => setActiveProduct(activeProduct === product._id ? null : product._id)} className="text-rose-600 hover:text-rose-700 text-sm font-medium flex items-center">
+                                  <FaStar className="mr-1" />
+                                  {activeProduct === product._id ? "Cancel Review" : "Rate this Product"}
+                                </button>
+                                {activeProduct === product._id && (
+                                  <div className="mt-3 p-4 bg-rose-50 rounded-lg">
+                                    <StarRating rating={rating} onRatingChange={setRating} />
+                                    <textarea
+                                      placeholder="Share your experience (optional)"
+                                      className="w-full mt-3 p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-300 resize-none"
+                                      rows="3"
+                                      value={comment}
+                                      onChange={(e) => setComment(e.target.value)}
+                                    />
+                                    <div className="flex gap-2 mt-3">
+                                      <button onClick={() => handleRating(product._id)} className="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-300">
+                                        Submit Review
+                                      </button>
+                                      <button onClick={() => { setActiveProduct(null); setComment(""); setRating(0); }} className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-300">
+                                        Cancel
+                                      </button>
                                     </div>
-                                  )}
-                                </div>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
-                        ))}
-                        {order.products.length > 2 && (
-                          <div className="text-center pt-4">
-                            <button onClick={() => toggleItemsExpansion(order._id)} className="text-rose-600 hover:text-rose-700 font-medium flex items-center justify-center gap-2 mx-auto">
-                              {expandedItems[order._id] ? <><FaChevronUp /> Show Less</> : <><FaChevronDown /> Show All {order.products.length} Items</>}
-                            </button>
-                          </div>
-                        )}
-                      </div>
+                        </div>
+                      ))}
+                      {order.products.length > 2 && (
+                        <div className="text-center pt-4">
+                          <button onClick={() => toggleItemsExpansion(order._id)} className="text-rose-600 hover:text-rose-700 font-medium flex items-center justify-center gap-2 mx-auto">
+                            {expandedItems[order._id] ? <><FaChevronUp /> Show Less</> : <><FaChevronDown /> Show All {order.products.length} Items</>}
+                          </button>
+                        </div>
+                      )}
                     </div>
-
-                    {/* Order Summary */}
-                    <div className="bg-gray-50 p-6 border-t border-gray-100">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center"><FaTruck className="text-rose-600 mr-2" /> Shipping Info</h3>
-                          <p className="text-gray-600">{user.currentUser?.email}</p>
-                          <p className="text-gray-600">{user.currentUser?.name}</p>
-                          {order.address && <div className="mt-2 text-sm text-gray-600"><p>{order.address.street}</p><p>{order.address.city}, {order.address.postalCode}</p><p>{order.address.country}</p></div>}
-                        </div>
-
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center"><FaCreditCard className="text-rose-600 mr-2" /> Payment Method</h3>
-                          <p className="text-gray-600 capitalize">{order.paymentMethod || 'Credit Card'}</p>
-                          <p className="text-gray-600 text-sm mt-1">Status: <span className="font-medium capitalize text-rose-600">{order.paymentStatus || 'Pending'}</span></p>
-                        </div>
-
-                        <div className="bg-white p-4 rounded-lg shadow-sm">
-                          <h3 className="text-lg font-semibold text-gray-800 mb-3">Order Summary</h3>
-                          <div className="flex justify-between mb-2"><span className="text-gray-600">Subtotal:</span><span className="font-medium">{formatCurrency(calculateOrderTotal(order))}</span></div>
-                          <div className="flex justify-between mb-2"><span className="text-gray-600">Shipping:</span><span className="font-medium">{formatCurrency(500)}</span></div>
-                          {order.discount > 0 && <div className="flex justify-between mb-2 text-green-600"><span>Discount:</span><span className="font-medium">-{formatCurrency(order.discount)}</span></div>}
-                          <div className="flex justify-between mb-2 pt-2 border-t border-gray-100"><span className="text-lg font-semibold">Total:</span><span className="text-lg font-semibold text-rose-700">{formatCurrency(calculateOrderTotal(order) + 500 - (order.discount || 0))}</span></div>
-                        </div>
-                      </div>
-                    </div>
-                  </>
+                  </div>
                 )}
               </div>
             ))}
@@ -241,4 +220,4 @@ const Order = () => {
   );
 };
 
-export default Order;
+export default Orders;
