@@ -1,28 +1,36 @@
-import { FaCheckCircle, FaShoppingBag, FaTruck, FaCreditCard, FaStar, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { 
+  FaCheckCircle, 
+  FaShoppingBag, 
+  FaTruck, 
+  FaCreditCard, 
+  FaStar, 
+  FaChevronDown, 
+  FaChevronUp 
+} from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { Link } from 'react-router-dom';
-import { userRequest } from '../requestMethod';
+import { Link } from "react-router-dom";
+import { userRequest } from "../requestMethod";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-// Custom StarRating Component
+/* ⭐ Star Rating Component */
 const StarRating = ({ rating, onRatingChange, maxRating = 5 }) => {
   const [hover, setHover] = useState(0);
 
   return (
     <div className="flex space-x-1 mt-1">
       {[...Array(maxRating)].map((_, i) => {
-        const starValue = i + 1;
+        const value = i + 1;
         return (
           <FaStar
             key={i}
-            size={25}
-            className={`cursor-pointer transition-colors ${
-              starValue <= (hover || rating) ? "text-yellow-400" : "text-gray-300"
+            size={22}
+            className={`cursor-pointer transition ${
+              value <= (hover || rating) ? "text-yellow-400" : "text-gray-300"
             }`}
-            onClick={() => onRatingChange(starValue)}
-            onMouseEnter={() => setHover(starValue)}
+            onClick={() => onRatingChange(value)}
+            onMouseEnter={() => setHover(value)}
             onMouseLeave={() => setHover(0)}
           />
         );
@@ -32,71 +40,83 @@ const StarRating = ({ rating, onRatingChange, maxRating = 5 }) => {
 };
 
 const Orders = () => {
-  const user = useSelector((state) => state.user);
+  const user = useSelector((state) => state.user.currentUser);
   const [orders, setOrders] = useState([]);
-  const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState("");
+  const [expanded, setExpanded] = useState({});
   const [activeProduct, setActiveProduct] = useState(null);
-  const [expandedOrders, setExpandedOrders] = useState({});
-  const [expandedItems, setExpandedItems] = useState({});
+  const [ratingData, setRatingData] = useState({});
 
-  // Fetch user orders
+  /* Load orders */
   useEffect(() => {
-    if (!user?.currentUser) return;
-    const getUserOrders = async () => {
+    if (!user) return;
+
+    const fetchOrders = async () => {
       try {
-        const res = await userRequest.get(`/orders/find/${user.currentUser._id}`);
+        const res = await userRequest.get(`/orders/find/${user._id}`);
         setOrders(res.data);
       } catch (err) {
         console.error(err);
       }
     };
-    getUserOrders();
+
+    fetchOrders();
+    const interval = setInterval(fetchOrders, 10000);
+    return () => clearInterval(interval);
   }, [user]);
 
-  const handleRating = async (productId) => {
-    if (!rating) return toast.warning("Please select a rating!");
+  const toggle = (id) => {
+    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  /* 🔥 Calculate average rating + total */
+  const calculateRating = (ratings = []) => {
+    if (!ratings.length) return { avg: 0, total: 0 };
+    const totalStars = ratings.reduce((sum, r) => sum + r.star, 0);
+    return {
+      avg: (totalStars / ratings.length).toFixed(1),
+      total: ratings.length,
+    };
+  };
+
+  const getMyReview = (ratings = []) => {
+    return ratings.find((r) => r.postedBy === user?._id);
+  };
+
+  const submitReview = async (product) => {
+    const data = ratingData[product.productId];
+
+    if (!data?.star) {
+      toast.error("Please select a rating");
+      return;
+    }
 
     try {
-      await userRequest.post(`/products/rating/${productId}`, {
-        star: rating,
-        name: user.currentUser.name,
-        comment,
-        postedBy: user.currentUser._id,
+      await userRequest.post(`/products/rating/${product.productId}`, {
+        star: data.star,
+        comment: data.comment || "",
       });
-      toast.success("Review submitted successfully!");
-      setComment("");
-      setRating(0);
+
+      toast.success("Review saved successfully 🎉");
+      setRatingData({});
       setActiveProduct(null);
+
+      const res = await userRequest.get(`/orders/find/${user._id}`);
+      setOrders(res.data);
     } catch (err) {
+      toast.error("Failed to submit review");
       console.error(err);
-      toast.error("Failed to submit review. Try again.");
     }
   };
 
-  const calculateOrderTotal = (order) =>
-    order.products.reduce((total, product) => total + product.price * product.quantity, 0);
-
-  const formatDate = (dateString) =>
-    new Date(dateString).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+  const formatDate = (date) =>
+    new Date(date).toLocaleDateString("en-KE", { year: "numeric", month: "long", day: "numeric" });
 
   const formatCurrency = (amount) =>
-    new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES', minimumFractionDigits: 0 }).format(amount);
-
-  const toggleOrderExpansion = (orderId) =>
-    setExpandedOrders(prev => ({ ...prev, [orderId]: !prev[orderId] }));
-
-  const toggleItemsExpansion = (orderId) =>
-    setExpandedItems(prev => ({ ...prev, [orderId]: !prev[orderId] }));
-
-  const getVisibleProducts = (order, orderId) =>
-    expandedItems[orderId] ? order.products : order.products.slice(0, 2);
+    new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES" }).format(amount);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-rose-50 to-white pt-24 pb-12 px-4 sm:px-6 lg:px-8">
-      <ToastContainer />
+    <div className="min-h-screen bg-rose-50 pt-24 pb-10 px-4">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
         <div className="text-center mb-10">
           <div className="w-20 h-20 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <FaCheckCircle className="text-rose-600 text-4xl" />
@@ -105,117 +125,119 @@ const Orders = () => {
           <p className="text-gray-600">Thank you for shopping with us! Here are your recent orders.</p>
         </div>
 
-        {/* No Orders */}
-        {orders.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
-            <div className="w-24 h-24 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <FaShoppingBag className="w-12 h-12 text-rose-400" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">No orders yet</h2>
-            <p className="text-gray-600 mb-8">You haven't placed any orders yet. Start shopping to see your order history here.</p>
-            <Link to="/" className="bg-rose-600 hover:bg-rose-700 text-white px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg inline-block">
+        {orders.length === 0 && (
+          <div className="bg-white p-10 text-center rounded-xl shadow">
+            <FaShoppingBag className="text-5xl mx-auto text-rose-400 mb-4" />
+            <p>No orders yet</p>
+            <Link to="/" className="mt-4 inline-block bg-rose-600 text-white px-6 py-3 rounded-lg">
               Start Shopping
             </Link>
           </div>
-        ) : (
-          <div className="space-y-6">
-            {orders.map((order) => (
-              <div key={order._id} className="bg-white rounded-2xl shadow-lg overflow-hidden">
-                {/* Order Header */}
-                <div className="bg-rose-50 p-6 border-b border-rose-100">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div className="flex-1">
-                      <h2 className="text-xl font-semibold text-gray-800">Order #{order._id.slice(-8).toUpperCase()}</h2>
-                      <p className="text-gray-600 text-sm mt-1">Placed on {formatDate(order.createdAt)}</p>
-                      <p className="text-gray-600 text-sm">{order.products.length} item{order.products.length !== 1 ? 's' : ''} • Total: {formatCurrency(calculateOrderTotal(order) + 500)}</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        order.paymentStatus === "paid" ? "bg-green-100 text-green-700" :
-                        order.paymentStatus === "pending" ? "bg-yellow-100 text-yellow-700" :
-                        "bg-red-100 text-red-700"
-                      }`}>
-                        {order.paymentStatus || "Pending"}
-                      </span>
-                      <button onClick={() => toggleOrderExpansion(order._id)} className="text-rose-600 hover:text-rose-700 transition-colors duration-300">
-                        {expandedOrders[order._id] ? <FaChevronUp /> : <FaChevronDown />}
-                      </button>
-                    </div>
-                  </div>
-                </div>
+        )}
 
-                {/* Collapsible Order Details */}
-                {expandedOrders[order._id] && (
-                  <div className="p-6">
-                    {/* Order Items */}
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                      <FaShoppingBag className="text-rose-600 mr-2" />
-                      Items Ordered ({order.products.length})
-                    </h3>
-                    <div className="space-y-6">
-                      {getVisibleProducts(order, order._id).map((product) => (
-                        <div key={product._id} className="border-b border-gray-100 pb-6 last:border-0">
-                          <div className="flex flex-col sm:flex-row items-start gap-4">
-                            <img src={product.img} alt={product.title} className="w-20 h-20 rounded-lg object-cover shadow-sm" />
-                            <div className="flex-1">
-                              <h4 className="text-lg font-medium text-gray-800">{product.title}</h4>
-                              <p className="text-gray-600">Quantity: {product.quantity}</p>
-                              <p className="text-lg font-bold text-rose-700 mt-1">{formatCurrency(product.price * product.quantity)}</p>
-
-                              {/* Rating Section */}
-                              <div className="mt-4">
-                                <button onClick={() => setActiveProduct(activeProduct === product._id ? null : product._id)} className="text-rose-600 hover:text-rose-700 text-sm font-medium flex items-center">
-                                  <FaStar className="mr-1" />
-                                  {activeProduct === product._id ? "Cancel Review" : "Rate this Product"}
-                                </button>
-                                {activeProduct === product._id && (
-                                  <div className="mt-3 p-4 bg-rose-50 rounded-lg">
-                                    <StarRating rating={rating} onRatingChange={setRating} />
-                                    <textarea
-                                      placeholder="Share your experience (optional)"
-                                      className="w-full mt-3 p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-300 resize-none"
-                                      rows="3"
-                                      value={comment}
-                                      onChange={(e) => setComment(e.target.value)}
-                                    />
-                                    <div className="flex gap-2 mt-3">
-                                      <button onClick={() => handleRating(product._id)} className="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-300">
-                                        Submit Review
-                                      </button>
-                                      <button onClick={() => { setActiveProduct(null); setComment(""); setRating(0); }} className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-300">
-                                        Cancel
-                                      </button>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                      {order.products.length > 2 && (
-                        <div className="text-center pt-4">
-                          <button onClick={() => toggleItemsExpansion(order._id)} className="text-rose-600 hover:text-rose-700 font-medium flex items-center justify-center gap-2 mx-auto">
-                            {expandedItems[order._id] ? <><FaChevronUp /> Show Less</> : <><FaChevronDown /> Show All {order.products.length} Items</>}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+        {orders.map((order) => (
+          <div key={order._id} className="bg-white rounded-xl shadow mb-6">
+            <div className="p-6 flex justify-between items-center bg-rose-100">
+              <div>
+                <h3 className="font-semibold">Order #{order._id.slice(-6)}</h3>
+                <p className="text-sm">{formatDate(order.createdAt)}</p>
               </div>
-            ))}
-          </div>
-        )}
+              <button onClick={() => toggle(order._id)}>
+                {expanded[order._id] ? <FaChevronUp /> : <FaChevronDown />}
+              </button>
+            </div>
 
-        {orders.length > 0 && (
-          <div className="text-center mt-10">
-            <Link to="/" className="bg-rose-600 hover:bg-rose-700 text-white px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg inline-block">
-              Continue Shopping
-            </Link>
+            {expanded[order._id] && (
+              <div className="p-6 space-y-6">
+                {order.products.map((product) => {
+                  const { avg, total } = calculateRating(product.ratings || []);
+                  const myReview = getMyReview(product.ratings || []);
+
+                  return (
+                    <div key={product._id} className="border-b pb-4">
+                      <div className="flex gap-4">
+                        <img src={product.img} className="w-20 h-20 object-cover rounded" />
+                        <div className="flex-1">
+                          <h4 className="font-semibold">{product.title}</h4>
+                          <p>Qty: {product.quantity}</p>
+                          <p className="text-rose-600 font-bold">
+                            {formatCurrency(product.price * product.quantity)}
+                          </p>
+
+                          <p className="text-yellow-500 text-sm">
+                            ⭐ {avg} ({total} Reviews)
+                          </p>
+
+                          {myReview && (
+                            <p className="text-sm text-green-600">
+                              You rated: {myReview.star} ⭐
+                            </p>
+                          )}
+
+                          <button
+                            onClick={() =>
+                              setActiveProduct(activeProduct === product._id ? null : product._id)
+                            }
+                            className="text-sm text-rose-600 mt-2"
+                          >
+                            <FaStar className="inline mr-1" />
+                            {myReview ? "Update Review" : "Rate Product"}
+                          </button>
+
+                          {activeProduct === product._id && (
+                            <div className="mt-3 bg-rose-50 p-4 rounded">
+                              <StarRating
+                                rating={ratingData[product.productId]?.star || myReview?.star || 0}
+                                onRatingChange={(value) =>
+                                  setRatingData({
+                                    ...ratingData,
+                                    [product.productId]: {
+                                      ...ratingData[product.productId],
+                                      star: value,
+                                    },
+                                  })
+                                }
+                              />
+
+                              <textarea
+                                value={
+                                  ratingData[product.productId]?.comment ||
+                                  myReview?.comment ||
+                                  ""
+                                }
+                                onChange={(e) =>
+                                  setRatingData({
+                                    ...ratingData,
+                                    [product.productId]: {
+                                      ...ratingData[product.productId],
+                                      comment: e.target.value,
+                                    },
+                                  })
+                                }
+                                className="w-full mt-2 p-2 border rounded"
+                                placeholder="Write your review"
+                              />
+
+                              <button
+                                onClick={() => submitReview(product)}
+                                className="bg-rose-600 text-white px-4 py-2 mt-3 rounded"
+                              >
+                                Save Review
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        )}
+        ))}
       </div>
+
+      <ToastContainer />
     </div>
   );
 };
