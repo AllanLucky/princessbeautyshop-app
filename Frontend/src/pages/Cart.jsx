@@ -8,7 +8,7 @@ import { userRequest } from "../requestMethod";
 
 const Cart = () => {
   const cart = useSelector((state) => state.cart);
-  const user = useSelector((state) => state.user)
+  const user = useSelector((state) => state.user?.currentUser);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -40,25 +40,34 @@ const Cart = () => {
 
   // 💰 Calculate totals
   const subtotal = cart.products.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const deliveryFee = cart.products.length > 0 ? 150 : 0;
+  const deliveryFee = cart.products.length ? 150 : 0;
   const total = subtotal + deliveryFee;
 
   // 💳 Checkout
   const handlePaymentCheckout = async () => {
-    if (!user.currentUser) {
+    if (!user) {
       toast.error("You need to login to proceed with checkout", { position: "top-right", autoClose: 3000 });
       navigate("/login");
       return;
     }
+
+    if (!cart.products.length) {
+      toast.warning("Cart is empty", { position: "top-right", autoClose: 3000 });
+      return;
+    }
+
     try {
       const res = await userRequest.post("/stripe/create-checkout-session", {
         cart,
-        userId: user.currentUser._id,
-        email: user.currentUser.email,
-        name: user.currentUser.name,
+        userId: user._id,
+        email: user.email,
+        name: user.name,
       });
-      if (res.data.url) {
+
+      if (res?.data?.url) {
         window.location.href = res.data.url;
+      } else {
+        toast.error("Checkout session not created", { position: "top-right", autoClose: 3000 });
       }
     } catch (error) {
       console.error("Checkout error:", error);
@@ -71,12 +80,12 @@ const Cart = () => {
       <h2 className="text-2xl sm:text-3xl font-bold mb-10 text-center lg:text-left">
         Shopping Cart
       </h2>
+
       <div className="flex flex-col lg:flex-row gap-10">
-        {/* LEFT */}
+        {/* LEFT: Items */}
         <div className="flex-1 bg-white shadow-md rounded-xl p-4 sm:p-6">
           <h3 className="text-lg font-semibold mb-6 border-b pb-2">Your Items</h3>
 
-          {/* Items */}
           {cart.products.length > 0 ? (
             cart.products.map((item) => (
               <div key={item._id} className="flex flex-col sm:flex-row gap-5 border-b pb-6">
@@ -89,7 +98,6 @@ const Cart = () => {
                   <h4 className="text-lg font-semibold">{item.title}</h4>
                   <p className="text-gray-500 text-sm mt-1">{item.desc}</p>
 
-                  {/* Qty */}
                   <div className="flex justify-center sm:justify-start items-center gap-4 mt-5">
                     <FaMinus
                       className="bg-pink-300 p-2 text-white rounded-full cursor-pointer"
@@ -103,7 +111,6 @@ const Cart = () => {
                   </div>
                 </div>
 
-                {/* Price */}
                 <div className="text-center sm:text-right flex flex-col justify-between">
                   <span className="text-xl font-bold text-pink-600 mt-4 sm:mt-0">
                     KES {item.price * item.quantity}
@@ -129,11 +136,12 @@ const Cart = () => {
           )}
         </div>
 
-        {/* RIGHT */}
-        {cart.products.length > 0 ? (
-          <div className="w-full lg:w-[350px] h-[350px] bg-white shadow-md rounded-xl p-6 mx-auto lg:mx-0">
-            <h3 className="font-semibold mb-6 border-b pb-2">Order Summary</h3>
-            <div className="space-y-4 text-gray-700">
+        {/* RIGHT: Summary */}
+        <div className="w-full lg:w-[350px] bg-white shadow-md rounded-xl p-6 mx-auto lg:mx-0">
+          <h3 className="font-semibold mb-6 border-b pb-2">Order Summary</h3>
+
+          {cart.products.length > 0 ? (
+            <div className="space-y-4 text-gray-700 h-[350px]">
               <div className="flex justify-between">
                 <span>Subtotal</span>
                 <span>KES {subtotal}</span>
@@ -146,28 +154,27 @@ const Cart = () => {
                 <span>Total</span>
                 <span>KES {total}</span>
               </div>
+              <button
+                className="bg-pink-600 w-full mt-6 py-3 rounded-lg text-white font-semibold hover:bg-pink-700"
+                onClick={handlePaymentCheckout}
+              >
+                Proceed Checkout
+              </button>
             </div>
-            <button
-              className="bg-pink-600 w-full mt-6 py-3 rounded-lg text-white font-semibold hover:bg-pink-700"
-              onClick={handlePaymentCheckout}
-            >
-              Proceed Checkout
-            </button>
-          </div>
-        ) : (
-          <div className="w-full lg:w-[350px] bg-white shadow-md rounded-xl p-6 mx-auto lg:mx-0 text-center">
-            <p className="text-gray-600 mb-4">Your cart is empty. Start shopping now!</p>
-            <button
-              className="bg-pink-600 w-full py-3 rounded-lg text-white font-semibold hover:bg-pink-700"
-              onClick={() => navigate("/products/all")}
-            >
-              Go to Products
-            </button>
-          </div>
-        )}
+          ) : (
+            <div className="text-center mt-10">
+              <p className="text-gray-600 mb-4">Your cart is empty. Start shopping now!</p>
+              <button
+                className="bg-pink-600 w-full py-3 rounded-lg text-white font-semibold hover:bg-pink-700"
+                onClick={() => navigate("/products/all")}
+              >
+                Go to Products
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Toast Container */}
       <ToastContainer />
     </div>
   );
