@@ -2,7 +2,7 @@ import express from "express";
 import Stripe from "stripe";
 import dotenv from "dotenv";
 import Order from "../models/orderModel.js";
-import Product from "../models/productModel.js"; // import your Product model
+import Product from "../models/productModel.js";
 
 dotenv.config();
 const router = express.Router();
@@ -13,14 +13,23 @@ router.post("/create-checkout-session", async (req, res) => {
   try {
     const { userId, name, email, cart } = req.body;
 
-    // Create Stripe customer with minimal metadata
+    if (!cart.products || cart.products.length === 0) {
+      return res.status(400).json({ error: "Cart is empty" });
+    }
+
+    // Create Stripe customer with metadata
     const customer = await stripe.customers.create({
       metadata: {
         userId,
         name,
         email,
         total: cart.total,
-        productIds: cart.products.map(p => p._id).join(","), // only store IDs
+        products: JSON.stringify(
+          cart.products.map((p) => ({
+            id: p._id,
+            quantity: p.quantity,
+          }))
+        ),
       },
     });
 
@@ -55,7 +64,7 @@ router.post("/create-checkout-session", async (req, res) => {
   }
 });
 
-// WEBHOOK
+// STRIPE WEBHOOK
 router.post(
   "/webhook",
   express.raw({ type: "application/json" }),
@@ -77,24 +86,28 @@ router.post(
       const session = event.data.object;
 
       try {
-        const { userId, name, email, total, productIds } = session.metadata;
+        const { userId, name, email, products: productsMetaStr, total } = session.metadata;
+        const productsMeta = JSON.parse(productsMetaStr);
 
-        // Fetch full product details from DB
-        const productIdArray = productIds.split(",");
-        const products = await Product.find({ _id: { $in: productIdArray } });
+        // Fetch products from DB
+        const productIds = productsMeta.map((p) => p.id);
+        const products = await Product.find({ _id: { $in: productIds } });
 
         const newOrder = new Order({
           userId,
           name,
           email,
-          products: products.map((p) => ({
-            _id: p._id,
-            title: p.title,
-            desc: p.desc,
-            price: p.price,
-            quantity: 1, // set default; adjust if you store quantity somewhere else
-            img: p.img,
-          })),
+          products: products.map((p) => {
+            const meta = productsMeta.find((mp) => mp.id === String(p._id));
+            return {
+              _id: p._id,
+              title: p.title,
+              desc: p.desc,
+              price: p.price,
+              quantity: meta ? meta.quantity : 1,
+              img: p.img,
+            };
+          }),
           total,
           paymentIntentId: session.payment_intent,
           stripeSessionId: session.id,
@@ -102,7 +115,7 @@ router.post(
         });
 
         await newOrder.save();
-        console.log("Order saved to MongoDB:", newOrder._id);
+        console.log("Order saved:", newOrder._id);
       } catch (err) {
         console.error("Error saving order:", err.message);
       }
@@ -113,4 +126,3 @@ router.post(
 );
 
 export default router;
-
