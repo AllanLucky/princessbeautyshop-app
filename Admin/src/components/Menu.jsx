@@ -72,6 +72,10 @@ const Menu = () => {
           <FaClipboardList /> Orders
         </NavLink>
 
+        <NavLink to="/invoices" className={navStyle}>
+          <FaClipboardList /> Invoices
+        </NavLink>
+
         <hr className="my-4" />
 
         <NavLink to="/banners" className={navStyle}>

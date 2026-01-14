@@ -17,33 +17,32 @@ import Backups from "./pages/Backups";
 import Charts from "./pages/Charts";
 import Myaccounts from "./pages/Myaccounts";
 import Login from "./pages/Login";
-
-// Import your custom ProtectedRoute
-import ProtectedRoute from "./components/ProtectedRoute";
 import Alllogs from "./pages/Alllogs";
+import AdminInvoices from "./pages/AdminInvoices";
+
+// Custom ProtectedRoute
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // --- Admin Layout ---
-const Layout = () => {
-  return (
-    <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <Headers />
+const Layout = () => (
+  <div className="min-h-screen flex flex-col">
+    {/* Header */}
+    <Headers />
 
-      {/* Body: Sidebar + Main */}
-      <div className="flex flex-1">
-        {/* Sidebar */}
-        <div className="w-64 bg-gray-100">
-          <Menu />
-        </div>
+    {/* Body: Sidebar + Main */}
+    <div className="flex flex-1">
+      {/* Sidebar */}
+      <div className="w-64 bg-gray-100">
+        <Menu />
+      </div>
 
-        {/* Main content */}
-        <div className="flex-1 bg-white p-5 overflow-auto">
-          <Outlet />
-        </div>
+      {/* Main content */}
+      <div className="flex-1 bg-white p-5 overflow-auto">
+        <Outlet />
       </div>
     </div>
-  );
-};
+  </div>
+);
 
 // --- Routes ---
 const router = createBrowserRouter([
@@ -61,18 +60,20 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { path: "/admin-dashboard", element: <Home /> },
-      { path: "/profile", element: <Myaccounts /> },
-      { path: "/users", element: <Users /> },
-      { path: "/products", element: <Products /> },
-      { path: "/newproduct", element: <NewProduct /> },
-      { path: "/product/:productId", element: <Product /> },
-      { path: "/orders", element: <Orders /> },
-      { path: "/banners", element: <Banners /> },
-      { path: "/settings", element: <Settings /> },
-      { path: "/backups", element: <Backups /> },
-      { path: "/charts", element: <Charts /> },
-      { path: "/all-logs", element: <Alllogs /> },
+      { path: "", element: <Navigate to="/admin-dashboard" /> }, // Default redirect
+      { path: "admin-dashboard", element: <Home /> },
+      { path: "profile", element: <Myaccounts /> },
+      { path: "users", element: <Users /> },
+      { path: "products", element: <Products /> },
+      { path: "newproduct", element: <NewProduct /> },
+      { path: "product/:productId", element: <Product /> },
+      { path: "orders", element: <Orders /> },
+      { path: "invoices", element: <AdminInvoices /> },
+      { path: "banners", element: <Banners /> },
+      { path: "settings", element: <Settings /> },
+      { path: "backups", element: <Backups /> },
+      { path: "charts", element: <Charts /> },
+      { path: "all-logs", element: <Alllogs /> },
     ],
   },
   // 404 fallback
@@ -88,10 +89,9 @@ const router = createBrowserRouter([
 ]);
 
 // --- App Component ---
-const App = () => {
-  return <RouterProvider router={router} />;
-};
+const App = () => <RouterProvider router={router} />;
 
 export default App;
+
 
 
