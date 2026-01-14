@@ -8,6 +8,22 @@ const Home = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // Format amounts in KES
+  const formatKES = (amount) =>
+    Number(amount || 0).toLocaleString("en-KE", { style: "currency", currency: "KES" });
+
+  // Calculate total for an order dynamically using merged products
+  const calculateOrderTotal = (order) => {
+    if (!order.products) return 0;
+    return order.products.reduce((sum, p) => {
+      // Find the product details from fetched products
+      const product = products.find((prod) => prod._id === p.productId || prod._id === p._id);
+      if (!product) return sum;
+      const price = product.discountedPrice || product.originalPrice || 0;
+      return sum + price * (p.quantity || 1);
+    }, 0);
+  };
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -19,9 +35,12 @@ const Home = () => {
           userRequest.get("/users"),
         ]);
 
-        setOrders(ordersRes.data.orders || ordersRes.data); // handle API shape
+        setOrders(ordersRes.data.orders || ordersRes.data);
         setProducts(productsRes.data.products || productsRes.data);
         setUsers(usersRes.data.users || usersRes.data);
+
+        console.log("Orders fetched:", ordersRes.data.orders || ordersRes.data);
+        console.log("Products fetched:", productsRes.data.products || productsRes.data);
       } catch (err) {
         console.error("Failed to fetch dashboard data:", err.response || err);
       } finally {
@@ -32,9 +51,10 @@ const Home = () => {
     fetchDashboardData();
   }, []);
 
-  const totalRevenue = orders.reduce((acc, order) => acc + order.totalAmount, 0);
+  // Total revenue across all orders
+  const totalRevenue = orders.reduce((acc, order) => acc + calculateOrderTotal(order), 0);
 
-  // Take last 5 orders for table
+  // Last 5 orders for the table
   const latestOrders = orders.slice(-5).reverse();
 
   return (
@@ -42,9 +62,9 @@ const Home = () => {
       {/* --- Top Cards --- */}
       <div className="flex flex-wrap gap-5 mb-5">
         {[
-          { title: "Orders", count: orders.length, color: "blue", border: "border-blue-400" },
-          { title: "Products", count: products.length, color: "red", border: "border-red-500" },
-          { title: "Users", count: users.length, color: "gray", border: "border-gray-400" },
+          { title: "Orders", count: orders.length, border: "border-blue-400" },
+          { title: "Products", count: products.length, border: "border-red-500" },
+          { title: "Users", count: users.length, border: "border-gray-400" },
         ].map((card) => (
           <div
             key={card.title}
@@ -77,27 +97,30 @@ const Home = () => {
                 </tr>
               </thead>
               <tbody>
-                {latestOrders.map((order) => (
-                  <tr key={order._id} className="border-b">
-                    <td className="py-2 px-4">{order.name}</td>
-                    <td className="py-2 px-4">KES {order.totalAmount}</td>
-                    <td
-                      className={`py-2 px-4 font-medium ${
-                        order.status === 2
-                          ? "text-green-500"
+                {latestOrders.map((order) => {
+                  const orderTotal = calculateOrderTotal(order); // calculate per order
+                  return (
+                    <tr key={order._id} className="border-b">
+                      <td className="py-2 px-4">{order.name}</td>
+                      <td className="py-2 px-4">{formatKES(orderTotal)}</td>
+                      <td
+                        className={`py-2 px-4 font-medium ${
+                          order.status === 2
+                            ? "text-green-500"
+                            : order.status === 1
+                            ? "text-blue-500"
+                            : "text-yellow-500"
+                        }`}
+                      >
+                        {order.status === 2
+                          ? "Delivered"
                           : order.status === 1
-                          ? "text-blue-500"
-                          : "text-yellow-500"
-                      }`}
-                    >
-                      {order.status === 2
-                        ? "Delivered"
-                        : order.status === 1
-                        ? "Processing"
-                        : "Pending"}
-                    </td>
-                  </tr>
-                ))}
+                          ? "Processing"
+                          : "Pending"}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
@@ -110,7 +133,7 @@ const Home = () => {
           <div className="flex flex-col gap-3 mb-5">
             <div className="bg-gray-50 p-3 rounded-lg shadow flex justify-between">
               <span className="font-semibold">Total Revenue:</span>
-              <span className="text-green-600 font-bold">KES {totalRevenue}</span>
+              <span className="text-green-600 font-bold">{formatKES(totalRevenue)}</span>
             </div>
             <div className="bg-gray-50 p-3 rounded-lg shadow flex justify-between">
               <span className="font-semibold">Total Orders:</span>
@@ -120,7 +143,7 @@ const Home = () => {
 
           <LineChart
             xAxis={[{ data: orders.map((_, i) => i + 1) }]}
-            series={[{ data: orders.map((o) => o.totalAmount) }]}
+            series={[{ data: orders.map((o) => calculateOrderTotal(o)) }]}
             height={300}
           />
         </div>
