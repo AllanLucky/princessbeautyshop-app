@@ -69,5 +69,7 @@ const ProductSchema = mongoose.Schema(
 // Full text search index for all string fields
 ProductSchema.index({ "$**": "text" });
 
-const Product = mongoose.model("Product", ProductSchema);
+// ✅ Fix OverwriteModelError:
+const Product = mongoose.models.Product || mongoose.model("Product", ProductSchema);
+
 export default Product;
