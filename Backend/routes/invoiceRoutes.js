@@ -1,6 +1,4 @@
 import express from "express";
-const router = express.Router();
-
 import {
   createInvoice,
   getInvoice,
@@ -8,22 +6,24 @@ import {
   listInvoices,
   deleteInvoice,
 } from "../controllers/invoiceController.js";
+import {  adminOnly } from "../middlewares/authMiddleware.js";
 
-import { protect, adminOnly } from "../middlewares/authMiddleware.js";
+const router = express.Router();
 
-// CREATE INVOICE
-router.post("/", protect, adminOnly, createInvoice);
+// Create invoice (admin only)
+router.post("/", adminOnly, createInvoice);
 
-// GET INVOICE BY ID
-router.get("/:invoiceId", protect, getInvoice);
+// Get invoice by ID
+router.get("/:invoiceId", adminOnly, getInvoice);
 
-// GENERATE PDF
-router.get("/:invoiceId/pdf", protect, generateInvoicePDF);
+// Generate PDF
+router.get("/:invoiceId/pdf", adminOnly, generateInvoicePDF);
 
-// LIST ALL INVOICES (ADMIN)
-router.get("/", protect, adminOnly, listInvoices);
-
-// DELETE INVOICE (ADMIN)
-router.delete("/:invoiceId", protect, adminOnly, deleteInvoice);
+// List all invoices
+router.get("/", adminOnly, listInvoices);
+// Delete invoice
+router.delete("/:invoiceId", adminOnly, deleteInvoice);
 
 export default router;
+
+

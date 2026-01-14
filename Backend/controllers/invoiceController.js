@@ -8,9 +8,16 @@ export const createInvoice = async (req, res, next) => {
   try {
     const { orderId } = req.body;
 
+    // Find the order
     const order = await Order.findById(orderId);
     if (!order) return res.status(404).json({ message: "Order not found" });
 
+    // Ensure order has a customer
+    if (!order.customer && !req.user?._id) {
+      return res.status(400).json({ message: "Cannot generate invoice: no customer info" });
+    }
+
+    // Check if invoice already exists
     const existingInvoice = await Invoice.findOne({ order: order._id });
     if (existingInvoice)
       return res.status(400).json({ message: "Invoice already exists for this order" });
@@ -19,7 +26,7 @@ export const createInvoice = async (req, res, next) => {
 
     const invoice = await Invoice.create({
       order: order._id,
-      customer: order.customer,
+      customer: order.customer || req.user._id, // fallback
       customerDetails: {
         name: order.name,
         email: order.email,
@@ -28,7 +35,7 @@ export const createInvoice = async (req, res, next) => {
         city: order.city || "",
         country: order.country || "",
       },
-      products: order.products.map(p => ({
+      products: order.products.map((p) => ({
         productId: p.productId,
         name: p.title,
         quantity: p.quantity,
@@ -45,7 +52,8 @@ export const createInvoice = async (req, res, next) => {
 
     res.status(201).json(invoice);
   } catch (error) {
-    next(error);
+    console.error("Create Invoice Error:", error);
+    res.status(500).json({ message: error.message || "Failed to create invoice" });
   }
 };
 
@@ -57,6 +65,7 @@ export const getInvoice = async (req, res, next) => {
     const invoice = await Invoice.findById(req.params.invoiceId);
     if (!invoice) return res.status(404).json({ message: "Invoice not found" });
 
+    // Only admin or owner can access
     if (req.user.role !== "admin" && req.user.email !== invoice.customerDetails.email)
       return res.status(403).json({ message: "Access denied" });
 
@@ -83,7 +92,6 @@ export const generateInvoicePDF = async (req, res, next) => {
     // HEADER
     doc.setFontSize(18);
     doc.text("Princess Beauty Shop", 20, 20);
-
     doc.setFontSize(10);
     doc.text("123 BeautyBliss Ave, City, Country", 20, 28);
     doc.text("Phone: (+254) 788 425 000", 20, 34);
