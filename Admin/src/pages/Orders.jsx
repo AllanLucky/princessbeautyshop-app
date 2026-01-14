@@ -1,15 +1,17 @@
 import { useState, useEffect } from "react";
-import { FaCheckDouble, FaClock, FaRegCheckCircle } from "react-icons/fa";
+import { FaCheckDouble, FaClock, FaRegCheckCircle, FaEye } from "react-icons/fa";
 import { DataGrid } from "@mui/x-data-grid";
 import { userRequest } from "../requestMethods";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import OrderDetailModal from "./OrderDetailModal";
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
-  // Fetch orders from server
+  // Fetch orders
   useEffect(() => {
     const getOrders = async () => {
       try {
@@ -17,58 +19,62 @@ const Orders = () => {
         const res = await userRequest.get("/orders");
         setOrders(res.data.orders || res.data);
       } catch (err) {
-        console.error("Failed to fetch orders:", err.response?.data || err);
-        toast.error(err.response?.data?.message || "Failed to fetch orders", {
-          position: "top-right",
-          autoClose: 3000,
-        });
+        console.error(err);
+        toast.error(err.response?.data?.message || "Failed to fetch orders");
       } finally {
         setLoading(false);
       }
     };
-
     getOrders();
   }, []);
 
-  // Update order status to 'delivered' (2)
+  // Mark delivered
   const handleUpdateOrder = async (id) => {
     try {
       await userRequest.put(`/orders/${id}`, { status: 2 });
       setOrders((prev) =>
-        prev.map((order) =>
-          order._id === id ? { ...order, status: 2 } : order
-        )
+        prev.map((order) => (order._id === id ? { ...order, status: 2 } : order))
       );
-      toast.success("Order marked as delivered!", {
-        position: "top-right",
-        autoClose: 3000,
-      });
+      toast.success("Order marked as delivered!");
     } catch (err) {
-      console.error("Error updating order status:", err.response?.data || err);
-      toast.error(err.response?.data?.message || "Failed to update order", {
-        position: "top-right",
-        autoClose: 3000,
-      });
+      toast.error(err.response?.data?.message || "Failed to update order");
     }
   };
+
+  // Generate invoice
+  const handleGenerateInvoice = async (orderId) => {
+    try {
+      const { data } = await userRequest.post("/invoices", { orderId });
+      setOrders((prev) =>
+        prev.map((o) => (o._id === orderId ? { ...o, invoice: data } : o))
+      );
+      toast.success("Invoice generated!");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to generate invoice");
+    }
+  };
+
+  // Download PDF
+  const handleDownloadPDF = (invoiceId) => {
+    window.open(`${userRequest.defaults.baseURL}/invoices/${invoiceId}/pdf`, "_blank");
+  };
+
+  const openOrderDetails = (order) => setSelectedOrder(order);
+  const closeOrderDetails = () => setSelectedOrder(null);
 
   const columns = [
     { field: "_id", headerName: "Order ID", width: 200 },
     { field: "name", headerName: "Customer Name", width: 200 },
-
     {
       field: "status",
       headerName: "Status",
       width: 150,
       renderCell: (params) => {
-        if (params.value === 0)
-          return <FaClock className="text-yellow-500 text-xl" />;
-        if (params.value === 1)
-          return <FaCheckDouble className="text-blue-500 text-xl" />;
+        if (params.value === 0) return <FaClock className="text-yellow-500 text-xl" />;
+        if (params.value === 1) return <FaCheckDouble className="text-blue-500 text-xl" />;
         return <FaCheckDouble className="text-green-500 text-xl" />;
       },
     },
-
     {
       field: "deliver",
       headerName: "Mark Delivered",
@@ -82,6 +88,19 @@ const Orders = () => {
         ) : (
           <span className="text-gray-400 font-medium">Completed</span>
         ),
+    },
+    {
+      field: "details",
+      headerName: "View Details",
+      width: 150,
+      renderCell: (params) => (
+        <button
+          className="bg-pink-500 hover:bg-pink-600 text-white py-1 px-2 rounded-md transition flex items-center justify-center"
+          onClick={() => openOrderDetails(params.row)}
+        >
+          <FaEye className="mr-2" /> View
+        </button>
+      ),
     },
   ];
 
@@ -117,9 +136,16 @@ const Orders = () => {
           }}
         />
       </div>
+
+      {/* Order Details Modal */}
+      <OrderDetailModal
+        order={selectedOrder}
+        onClose={closeOrderDetails}
+        onGenerateInvoice={handleGenerateInvoice}
+        onDownloadInvoice={handleDownloadPDF}
+      />
     </div>
   );
 };
 
 export default Orders;
-
