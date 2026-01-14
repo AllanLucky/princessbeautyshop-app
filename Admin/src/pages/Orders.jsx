@@ -141,7 +141,7 @@ const Orders = () => {
       <OrderDetailModal
         order={selectedOrder}
         onClose={closeOrderDetails}
-        onGenerateInvoice={handleGenerateInvoice} // ✅ Pass properly
+        onGenerateInvoice={handleGenerateInvoice} 
         onDownloadInvoice={handleDownloadPDF}
       />
     </div>
@@ -149,3 +149,4 @@ const Orders = () => {
 };
 
 export default Orders;
+

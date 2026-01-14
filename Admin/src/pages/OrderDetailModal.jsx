@@ -9,14 +9,13 @@ const OrderDetailModal = ({ order, onClose, onGenerateInvoice, onDownloadInvoice
 
   if (!order) return null;
 
-  // Print modal content
   const handlePrint = () => {
     const printContents = printRef.current.innerHTML;
     const originalContents = document.body.innerHTML;
     document.body.innerHTML = printContents;
     window.print();
     document.body.innerHTML = originalContents;
-    window.location.reload(); // restore React
+    window.location.reload();
   };
 
   return (
@@ -32,7 +31,6 @@ const OrderDetailModal = ({ order, onClose, onGenerateInvoice, onDownloadInvoice
 
         {/* Invoice Content */}
         <div ref={printRef} className="p-6">
-          {/* Shop Info */}
           <div className="mb-6 text-gray-700">
             <h3 className="text-xl font-semibold">Beauty Bliss Shop</h3>
             <p>123 BeautyBliss Ave, City, Country</p>
@@ -40,7 +38,6 @@ const OrderDetailModal = ({ order, onClose, onGenerateInvoice, onDownloadInvoice
             <p>Email: info@beautybliss.com</p>
           </div>
 
-          {/* Customer Info */}
           <div className="mb-6">
             <h4 className="font-semibold text-gray-800 mb-2">Customer Info</h4>
             <p><strong>Name:</strong> {order.name}</p>
@@ -50,7 +47,6 @@ const OrderDetailModal = ({ order, onClose, onGenerateInvoice, onDownloadInvoice
             <p><strong>Order ID:</strong> {order._id}</p>
           </div>
 
-          {/* Products Table */}
           <div className="mb-6 overflow-x-auto">
             <table className="w-full text-left border border-gray-300">
               <thead className="bg-gray-100">
@@ -76,7 +72,6 @@ const OrderDetailModal = ({ order, onClose, onGenerateInvoice, onDownloadInvoice
             </table>
           </div>
 
-          {/* Total */}
           <div className="flex justify-end text-lg font-semibold text-gray-800">
             Total: {formatKES(order.total)}
           </div>
@@ -91,7 +86,6 @@ const OrderDetailModal = ({ order, onClose, onGenerateInvoice, onDownloadInvoice
             <FaFileInvoice className="mr-2" /> Print
           </button>
 
-          {/* Generate or Download Invoice */}
           {order.invoice ? (
             <button
               className="flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
@@ -121,3 +115,5 @@ const OrderDetailModal = ({ order, onClose, onGenerateInvoice, onDownloadInvoice
 };
 
 export default OrderDetailModal;
+
+
