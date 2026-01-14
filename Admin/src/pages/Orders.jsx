@@ -19,7 +19,6 @@ const Orders = () => {
         const res = await userRequest.get("/orders");
         setOrders(res.data.orders || res.data);
       } catch (err) {
-        console.error(err);
         toast.error(err.response?.data?.message || "Failed to fetch orders");
       } finally {
         setLoading(false);
@@ -56,6 +55,7 @@ const Orders = () => {
 
   // Download PDF
   const handleDownloadPDF = (invoiceId) => {
+    if (!invoiceId) return toast.error("Invoice not available");
     window.open(`${userRequest.defaults.baseURL}/invoices/${invoiceId}/pdf`, "_blank");
   };
 
@@ -105,13 +105,13 @@ const Orders = () => {
   ];
 
   return (
-    <div className="p-6 w-full bg-gray-50 min-h-screen">
+    <div className="p-4 md:p-6 w-full min-w-[300px] bg-gray-50 min-h-screen">
       <ToastContainer />
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">All Orders</h1>
+      <div className="flex items-center justify-between mb-4 md:mb-6">
+        <h1 className="text-xl md:text-2xl font-bold text-gray-800">All Orders</h1>
       </div>
 
-      <div className="bg-white rounded-xl shadow p-4">
+      <div className="bg-white rounded-xl shadow p-2 md:p-4 w-full overflow-auto">
         <DataGrid
           rows={orders}
           columns={columns}
@@ -141,7 +141,7 @@ const Orders = () => {
       <OrderDetailModal
         order={selectedOrder}
         onClose={closeOrderDetails}
-        onGenerateInvoice={handleGenerateInvoice}
+        onGenerateInvoice={handleGenerateInvoice} // ✅ Pass properly
         onDownloadInvoice={handleDownloadPDF}
       />
     </div>

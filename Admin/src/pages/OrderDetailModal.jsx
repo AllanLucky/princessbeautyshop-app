@@ -1,12 +1,7 @@
 import React, { useRef } from "react";
 import { FaFileInvoice, FaTimes } from "react-icons/fa";
 
-const OrderDetailModal = ({
-  order,
-  onClose,
-  onGenerateInvoice,
-  onDownloadInvoice,
-}) => {
+const OrderDetailModal = ({ order, onClose, onGenerateInvoice, onDownloadInvoice }) => {
   const formatKES = (amount) =>
     amount.toLocaleString("en-KE", { style: "currency", currency: "KES" });
 
@@ -21,7 +16,7 @@ const OrderDetailModal = ({
     document.body.innerHTML = printContents;
     window.print();
     document.body.innerHTML = originalContents;
-    window.location.reload(); // reload to restore React
+    window.location.reload(); // restore React
   };
 
   return (
@@ -30,10 +25,7 @@ const OrderDetailModal = ({
         {/* Header */}
         <div className="flex justify-between items-center border-b p-4">
           <h2 className="text-2xl font-bold">Order Invoice</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-800"
-          >
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-800">
             <FaTimes size={20} />
           </button>
         </div>
@@ -77,9 +69,7 @@ const OrderDetailModal = ({
                     <td className="px-4 py-2 border">{p.title}</td>
                     <td className="px-4 py-2 border">{p.quantity}</td>
                     <td className="px-4 py-2 border">{formatKES(p.price)}</td>
-                    <td className="px-4 py-2 border">
-                      {formatKES(p.price * p.quantity)}
-                    </td>
+                    <td className="px-4 py-2 border">{formatKES(p.price * p.quantity)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -101,6 +91,7 @@ const OrderDetailModal = ({
             <FaFileInvoice className="mr-2" /> Print
           </button>
 
+          {/* Generate or Download Invoice */}
           {order.invoice ? (
             <button
               className="flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
