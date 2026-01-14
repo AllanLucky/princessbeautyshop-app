@@ -3,28 +3,11 @@ import mongoose from "mongoose";
 const OrderSchema = mongoose.Schema(
   {
     // Customer info
-    name: {
-      type: String,
-      required: true,
-    },
-
-    userId: {
-      type: String,
-      required: true,
-    },
-
-    email: {
-      type: String,
-      required: true,
-    },
-
-    phone: {
-      type: String,
-    },
-
-    address: {
-      type: String,
-    },
+    name: { type: String, required: true },
+    userId: { type: String, required: true },
+    email: { type: String, required: true },
+    phone: { type: String },
+    address: { type: String },
 
     // Products
     products: [
@@ -33,29 +16,17 @@ const OrderSchema = mongoose.Schema(
         title: String,
         price: Number,
         quantity: Number,
-        img: String
+        img: String,
       }
     ],
 
     // Money
-    total: {
-      type: Number,
-      required: true,
-    },
-
-    currency: {
-      type: String,
-      default: "KES",
-    },
+    total: { type: Number, required: true },
+    currency: { type: String, default: "KES" },
 
     // Stripe info
-    paymentIntentId: {
-      type: String,
-    },
-
-    stripeSessionId: {
-      type: String,
-    },
+    paymentIntentId: { type: String },
+    stripeSessionId: { type: String },
 
     // Payment status
     paymentStatus: {
@@ -71,20 +42,15 @@ const OrderSchema = mongoose.Schema(
       default: "processing",
     },
 
-    isDelivered: {
-      type: Boolean,
-      default: false,
-    },
-
-    deliveredAt: {
-      type: Date,
-    },
-
-    refundedAt: {
-      type: Date,
-    },
+    isDelivered: { type: Boolean, default: false },
+    deliveredAt: { type: Date },
+    refundedAt: { type: Date },
   },
   { timestamps: true }
 );
 
-export default mongoose.model("Order", OrderSchema);
+// ✅ Fix OverwriteModelError:
+const Order = mongoose.models.Order || mongoose.model("Order", OrderSchema);
+
+export default Order;
+
