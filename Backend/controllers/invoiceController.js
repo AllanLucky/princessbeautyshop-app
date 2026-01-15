@@ -1,12 +1,14 @@
 import asyncHandler from "express-async-handler";
 import Invoice from "../models/InvoiceModel.js";
-import Order from "../models/orderModel.js";
+import Order from "../models/OrderModel.js";
 import PDFDocument from "pdfkit";
 import fs from "fs";
 import path from "path";
 
-// Helper: generate unique invoice numbers
-const generateInvoiceNumber = () => `INV-${Date.now()}`;
+// Helper to generate unique invoice numbers
+const generateInvoiceNumber = () => {
+  return "INV-" + Date.now();
+};
 
 // @desc    Generate invoice PDF
 // @route   POST /api/invoices/generate/:orderId
@@ -18,7 +20,6 @@ export const generateInvoice = asyncHandler(async (req, res) => {
     throw new Error("Order not found");
   }
 
-  // Check if invoice already exists
   const existingInvoice = await Invoice.findOne({ order: order._id });
   if (existingInvoice) {
     return res.status(400).json({ message: "Invoice already generated" });
@@ -35,7 +36,8 @@ export const generateInvoice = asyncHandler(async (req, res) => {
   // Header
   doc.fontSize(25).text("BEAUTY BLISS SHOP", { align: "center" });
   doc.fontSize(14).text("123 BeautyBliss Ave, City, Country", { align: "center" });
-  doc.text("Phone: (+254) 788 425 000 | Email: info@beautybliss.com", { align: "center" });
+  doc.text("Phone: (+254) 788 425 000", { align: "center" });
+  doc.text("Email: info@beautybliss.com", { align: "center" });
   doc.moveDown(2);
 
   // Invoice info
@@ -47,16 +49,17 @@ export const generateInvoice = asyncHandler(async (req, res) => {
   doc.moveDown();
 
   // Customer info
-  doc.fontSize(14).text("CUSTOMER INFO", { underline: true });
+  doc.fontSize(14).text("CUSTOMER INFO");
   doc.fontSize(12).text(`Name: ${order.name}`);
   doc.text(`Email: ${order.email}`);
   doc.text(`Phone: ${order.phone || "N/A"}`);
   doc.text(`Address: ${order.address || "N/A"}`);
   doc.moveDown();
 
-  // Invoice details
-  doc.fontSize(14).text("ORDER DETAILS", { underline: true });
+  // Order details table
+  doc.fontSize(14).text("INVOICE DETAILS");
   doc.moveDown(0.5);
+
   doc.fontSize(12);
   doc.text("#  Product                    Quantity   Unit Price   Subtotal");
   doc.moveDown(0.5);
@@ -79,7 +82,6 @@ export const generateInvoice = asyncHandler(async (req, res) => {
 
   doc.end();
 
-  // Save invoice in DB
   const invoice = await Invoice.create({
     invoiceNumber,
     order: order._id,
@@ -93,32 +95,36 @@ export const generateInvoice = asyncHandler(async (req, res) => {
   res.status(201).json(invoice);
 });
 
-// @desc    Get all invoices (admin)
-// @route   GET /api/invoices
-// @access  Admin
+// GET ALL INVOICES
 export const getAllInvoices = asyncHandler(async (req, res) => {
   const invoices = await Invoice.find()
-    .populate({ path: "order", select: "name email total createdAt" })
-    .sort({ createdAt: -1 });
+    .populate({
+      path: "order",
+      select: "name email createdAt total products",
+    })
+    .populate({
+      path: "user",
+      select: "name email",
+    });
+
   res.json(invoices);
 });
 
-// @desc    Get logged-in user's invoices
-// @route   GET /api/invoices/my
-// @access  Private
+// GET USER INVOICES
 export const getUserInvoices = asyncHandler(async (req, res) => {
-  const invoices = await Invoice.find({ user: req.user._id })
-    .populate({ path: "order", select: "name email total createdAt" })
-    .sort({ createdAt: -1 });
+  const invoices = await Invoice.find({ user: req.user._id }).populate({
+    path: "order",
+    select: "name email createdAt total products",
+  });
   res.json(invoices);
 });
 
-// @desc    Get single invoice by ID
-// @route   GET /api/invoices/:id
-// @access  Admin / Owner
+// GET INVOICE BY ID
 export const getInvoiceById = asyncHandler(async (req, res) => {
-  const invoice = await Invoice.findById(req.params.id)
-    .populate({ path: "order", select: "name email total createdAt" });
+  const invoice = await Invoice.findById(req.params.id).populate({
+    path: "order",
+    select: "name email createdAt total products",
+  });
   if (!invoice) {
     res.status(404);
     throw new Error("Invoice not found");
@@ -126,9 +132,7 @@ export const getInvoiceById = asyncHandler(async (req, res) => {
   res.json(invoice);
 });
 
-// @desc    Download invoice PDF
-// @route   GET /api/invoices/download/:id
-// @access  Admin / Owner
+// DOWNLOAD PDF
 export const downloadInvoice = asyncHandler(async (req, res) => {
   const invoice = await Invoice.findById(req.params.id);
   if (!invoice) {
@@ -143,4 +147,5 @@ export const downloadInvoice = asyncHandler(async (req, res) => {
 
   res.download(invoice.pdfUrl);
 });
+
 
