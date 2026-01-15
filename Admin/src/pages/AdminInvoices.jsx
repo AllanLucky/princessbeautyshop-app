@@ -3,20 +3,18 @@ import { DataGrid } from "@mui/x-data-grid";
 import { userRequest } from "../requestMethods";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import OrderInvoiceModal from "./OrderDetailModal"; // Merged modal for invoice
+import OrderInvoiceModal from "./OrderDetailModal"; 
 
 const AdminInvoices = () => {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [selectedInvoice, setSelectedInvoice] = useState(null); // modal state
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
 
-  // Fetch all invoices
   useEffect(() => {
     const getInvoices = async () => {
       try {
         setLoading(true);
         const res = await userRequest.get("/invoices");
-        console.log("Invoices response:", res.data);
         setInvoices(res.data || []);
       } catch (err) {
         toast.error(err.response?.data?.message || "Failed to fetch invoices");
@@ -24,21 +22,17 @@ const AdminInvoices = () => {
         setLoading(false);
       }
     };
-
     getInvoices();
   }, []);
 
-  // Format currency
   const formatKES = (amount) =>
     amount?.toLocaleString("en-KE", { style: "currency", currency: "KES" }) || "-";
 
-  // Open PDF in new tab
   const handleDownloadPDF = (pdfUrl) => {
     if (!pdfUrl) return toast.error("Invoice PDF not available");
     window.open(`${userRequest.defaults.baseURL}/${pdfUrl}`, "_blank");
   };
 
-  // DataGrid columns
   const columns = [
     { field: "_id", headerName: "Invoice ID", width: 220 },
     {
@@ -72,15 +66,12 @@ const AdminInvoices = () => {
       width: 250,
       renderCell: (params) => (
         <div className="flex space-x-2">
-          {/* View Invoice Modal */}
           <button
             className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
             onClick={() => setSelectedInvoice(params.row)}
           >
             View Invoice
           </button>
-
-          {/* Download PDF */}
           {params.row.pdfUrl && (
             <button
               className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
@@ -110,26 +101,17 @@ const AdminInvoices = () => {
           pageSizeOptions={[5, 10, 20]}
           sx={{
             border: "none",
-            "& .MuiDataGrid-columnHeaders": {
-              backgroundColor: "#f9fafb",
-              color: "#374151",
-              fontWeight: 600
-            },
-            "& .MuiDataGrid-row:hover": {
-              backgroundColor: "#fdf2f8"
-            },
-            "& .MuiDataGrid-cell": {
-              borderBottom: "1px solid #f3f4f6"
-            }
+            "& .MuiDataGrid-columnHeaders": { backgroundColor: "#f9fafb", color: "#374151", fontWeight: 600 },
+            "& .MuiDataGrid-row:hover": { backgroundColor: "#fdf2f8" },
+            "& .MuiDataGrid-cell": { borderBottom: "1px solid #f3f4f6" }
           }}
         />
       </div>
 
-      {/* Invoice Modal */}
       {selectedInvoice && (
         <OrderInvoiceModal
-          order={selectedInvoice.order} // pass order details
-          invoice={selectedInvoice}     // pass invoice info
+          order={selectedInvoice.order} // pass full order
+          invoice={selectedInvoice}     // pass invoice data
           onClose={() => setSelectedInvoice(null)}
         />
       )}
