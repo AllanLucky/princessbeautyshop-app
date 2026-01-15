@@ -1,160 +1,118 @@
-import Invoice from "../models/invoiceModel.js";
-import Order from "../models/orderModel.js";
+import asyncHandler from "express-async-handler";
+import Invoice from "../models/InvoiceModel.js";
+import Order from "../models/OrderModel.js";
+import PDFDocument from "pdfkit";
+import fs from "fs";
+import path from "path";
 
-/**
- * CREATE INVOICE FROM ORDER (ADMIN ONLY)
- */
-export const createInvoice = async (req, res, next) => {
-  try {
-    const { orderId } = req.body;
-
-    // Find the order
-    const order = await Order.findById(orderId);
-    if (!order) return res.status(404).json({ message: "Order not found" });
-
-    // Ensure order has a customer
-    if (!order.customer && !req.user?._id) {
-      return res.status(400).json({ message: "Cannot generate invoice: no customer info" });
-    }
-
-    // Check if invoice already exists
-    const existingInvoice = await Invoice.findOne({ order: order._id });
-    if (existingInvoice)
-      return res.status(400).json({ message: "Invoice already exists for this order" });
-
-    const invoiceNumber = `INV-${Date.now()}`;
-
-    const invoice = await Invoice.create({
-      order: order._id,
-      customer: order.customer || req.user._id, // fallback
-      customerDetails: {
-        name: order.name,
-        email: order.email,
-        phone: order.phone,
-        address: order.address,
-        city: order.city || "",
-        country: order.country || "",
-      },
-      products: order.products.map((p) => ({
-        productId: p.productId,
-        name: p.title,
-        quantity: p.quantity,
-        price: p.price,
-      })),
-      subtotal: order.total,
-      tax: 0,
-      shippingFee: 0,
-      totalPaid: order.total,
-      paymentMethod: "Stripe",
-      invoiceNumber,
-      createdBy: req.user._id,
-    });
-
-    res.status(201).json(invoice);
-  } catch (error) {
-    console.error("Create Invoice Error:", error);
-    res.status(500).json({ message: error.message || "Failed to create invoice" });
-  }
+// Helper to generate unique invoice numbers
+const generateInvoiceNumber = () => {
+  return "INV-" + Date.now();
 };
 
-/**
- * GET INVOICE BY ID (ADMIN OR OWNER)
- */
-export const getInvoice = async (req, res, next) => {
-  try {
-    const invoice = await Invoice.findById(req.params.invoiceId);
-    if (!invoice) return res.status(404).json({ message: "Invoice not found" });
-
-    // Only admin or owner can access
-    if (req.user.role !== "admin" && req.user.email !== invoice.customerDetails.email)
-      return res.status(403).json({ message: "Access denied" });
-
-    res.json(invoice);
-  } catch (error) {
-    next(error);
+// @desc    Generate invoice PDF
+// @route   POST /api/invoices/generate/:orderId
+// @access  Admin
+export const generateInvoice = asyncHandler(async (req, res) => {
+  const order = await Order.findById(req.params.orderId).populate("user");
+  if (!order) {
+    res.status(404);
+    throw new Error("Order not found");
   }
-};
 
-/**
- * GENERATE PDF FOR INVOICE
- */
-export const generateInvoicePDF = async (req, res, next) => {
-  try {
-    const invoice = await Invoice.findById(req.params.invoiceId);
-    if (!invoice) return res.status(404).json({ message: "Invoice not found" });
-
-    if (req.user.role !== "admin" && req.user.email !== invoice.customerDetails.email)
-      return res.status(403).json({ message: "Access denied" });
-
-    const { jsPDF } = await import("jspdf");
-    const doc = new jsPDF();
-
-    // HEADER
-    doc.setFontSize(18);
-    doc.text("Princess Beauty Shop", 20, 20);
-    doc.setFontSize(10);
-    doc.text("123 BeautyBliss Ave, City, Country", 20, 28);
-    doc.text("Phone: (+254) 788 425 000", 20, 34);
-    doc.text("Email: info@beautybliss.com", 20, 40);
-
-    // INVOICE INFO
-    doc.setFontSize(12);
-    doc.text(`Invoice #: ${invoice.invoiceNumber}`, 20, 55);
-    doc.text(`Date: ${invoice.createdAt.toDateString()}`, 20, 62);
-
-    // CUSTOMER INFO
-    doc.text("Bill To:", 20, 75);
-    doc.text(invoice.customerDetails.name, 20, 82);
-    doc.text(invoice.customerDetails.email, 20, 88);
-    doc.text(invoice.customerDetails.address || "-", 20, 94);
-
-    // PRODUCTS
-    let y = 110;
-    invoice.products.forEach((p, i) => {
-      doc.text(`${i + 1}. ${p.name} | Qty: ${p.quantity} | KES ${p.price}`, 20, y);
-      y += 8;
-    });
-
-    // TOTAL
-    y += 10;
-    doc.text(`Total Paid: KES ${invoice.totalPaid}`, 20, y);
-
-    const pdfData = doc.output("arraybuffer");
-
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename=invoice_${invoice.invoiceNumber}.pdf`
-    );
-    res.send(Buffer.from(pdfData));
-  } catch (error) {
-    next(error);
+  // Check if invoice already exists for this order
+  const existingInvoice = await Invoice.findOne({ order: order._id });
+  if (existingInvoice) {
+    return res.status(400).json({ message: "Invoice already generated" });
   }
-};
 
-/**
- * LIST ALL INVOICES (ADMIN ONLY)
- */
-export const listInvoices = async (req, res, next) => {
-  try {
-    const invoices = await Invoice.find().sort({ createdAt: -1 });
-    res.json(invoices);
-  } catch (error) {
-    next(error);
+  // Generate PDF
+  const invoiceNumber = generateInvoiceNumber();
+  const pdfPath = path.join(
+    "uploads/invoices",
+    `${invoiceNumber}.pdf`
+  );
+
+  const doc = new PDFDocument();
+  doc.pipe(fs.createWriteStream(pdfPath));
+
+  doc.fontSize(25).text("Invoice", { align: "center" });
+  doc.moveDown();
+  doc.fontSize(14).text(`Invoice Number: ${invoiceNumber}`);
+  doc.text(`Order ID: ${order._id}`);
+  doc.text(`User: ${order.user.name}`);
+  doc.text(`Amount: KES ${order.totalAmount.toLocaleString()}`);
+  doc.text(`Payment Method: ${order.paymentMethod}`);
+  doc.text(`Status: PAID`);
+  doc.text(`Date: ${new Date().toLocaleDateString()}`);
+
+  doc.end();
+
+  // Save invoice in DB
+  const invoice = await Invoice.create({
+    invoiceNumber,
+    order: order._id,
+    user: order.user._id,
+    amount: order.totalAmount,
+    paymentMethod: order.paymentMethod || "Cash",
+    status: "PAID",
+    pdfUrl: pdfPath,
+  });
+
+  res.status(201).json(invoice);
+});
+
+// @desc    Get all invoices (admin)
+// @route   GET /api/invoices
+// @access  Admin
+export const getAllInvoices = asyncHandler(async (req, res) => {
+  const invoices = await Invoice.find()
+    .populate("user", "name email")
+    .populate("order", "totalAmount");
+  res.json(invoices);
+});
+
+// @desc    Get logged-in user's invoices
+// @route   GET /api/invoices/my
+// @access  Private
+export const getUserInvoices = asyncHandler(async (req, res) => {
+  const invoices = await Invoice.find({ user: req.user._id }).populate(
+    "order",
+    "totalAmount"
+  );
+  res.json(invoices);
+});
+
+// @desc    Get single invoice by ID
+// @route   GET /api/invoices/:id
+// @access  Admin
+export const getInvoiceById = asyncHandler(async (req, res) => {
+  const invoice = await Invoice.findById(req.params.id)
+    .populate("user", "name email")
+    .populate("order", "totalAmount");
+  if (!invoice) {
+    res.status(404);
+    throw new Error("Invoice not found");
   }
-};
+  res.json(invoice);
+});
 
-/**
- * DELETE INVOICE (ADMIN ONLY)
- */
-export const deleteInvoice = async (req, res, next) => {
-  try {
-    const invoice = await Invoice.findById(req.params.invoiceId);
-    if (!invoice) return res.status(404).json({ message: "Invoice not found" });
-
-    await invoice.remove();
-    res.json({ message: "Invoice deleted successfully" });
-  } catch (error) {
-    next(error);
+// @desc    Download invoice PDF
+// @route   GET /api/invoices/download/:id
+// @access  Admin / Owner
+export const downloadInvoice = asyncHandler(async (req, res) => {
+  const invoice = await Invoice.findById(req.params.id);
+  if (!invoice) {
+    res.status(404);
+    throw new Error("Invoice not found");
   }
-};
+
+  // Check if user is admin or owner
+  if (!req.user.isAdmin && invoice.user.toString() !== req.user._id.toString()) {
+    res.status(403);
+    throw new Error("Not authorized to download this invoice");
+  }
+
+  res.download(invoice.pdfUrl);
+});
+
