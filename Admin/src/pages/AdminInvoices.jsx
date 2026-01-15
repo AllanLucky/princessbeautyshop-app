@@ -3,25 +3,37 @@ import { DataGrid } from "@mui/x-data-grid";
 import { userRequest } from "../requestMethods";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import OrderInvoiceModal from "./OrderDetailModal"; 
+import OrderInvoiceModal from "./OrderInvoiceModal";
 
 const AdminInvoices = () => {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
 
+  // Fetch invoices from database
   useEffect(() => {
     const getInvoices = async () => {
       try {
         setLoading(true);
         const res = await userRequest.get("/invoices");
-        setInvoices(res.data || []);
+
+        // Ensure order.products exists
+        const dataWithProducts = (res.data || []).map((invoice) => ({
+          ...invoice,
+          order: {
+            ...invoice.order,
+            products: invoice.order?.products || []
+          }
+        }));
+
+        setInvoices(dataWithProducts);
       } catch (err) {
         toast.error(err.response?.data?.message || "Failed to fetch invoices");
       } finally {
         setLoading(false);
       }
     };
+
     getInvoices();
   }, []);
 
@@ -35,6 +47,12 @@ const AdminInvoices = () => {
 
   const columns = [
     { field: "_id", headerName: "Invoice ID", width: 220 },
+    {
+      field: "invoiceNumber",
+      headerName: "Invoice Number",
+      width: 150,
+      valueGetter: (params) => params?.row?.invoiceNumber || "-"
+    },
     {
       field: "customerName",
       headerName: "Customer Name",
@@ -58,7 +76,7 @@ const AdminInvoices = () => {
       headerName: "Created At",
       width: 180,
       valueGetter: (params) =>
-        new Date(params?.row?.order?.createdAt || params?.row?.createdAt).toLocaleString()
+        new Date(params?.row?.createdAt || params?.row?.order?.createdAt).toLocaleString()
     },
     {
       field: "actions",
@@ -92,7 +110,7 @@ const AdminInvoices = () => {
 
       <div className="bg-white rounded-xl shadow p-2 md:p-4 w-full overflow-auto">
         <DataGrid
-          rows={invoices || []}
+          rows={invoices}
           columns={columns}
           getRowId={(row) => row._id}
           autoHeight
@@ -101,7 +119,11 @@ const AdminInvoices = () => {
           pageSizeOptions={[5, 10, 20]}
           sx={{
             border: "none",
-            "& .MuiDataGrid-columnHeaders": { backgroundColor: "#f9fafb", color: "#374151", fontWeight: 600 },
+            "& .MuiDataGrid-columnHeaders": {
+              backgroundColor: "#f9fafb",
+              color: "#374151",
+              fontWeight: 600
+            },
             "& .MuiDataGrid-row:hover": { backgroundColor: "#fdf2f8" },
             "& .MuiDataGrid-cell": { borderBottom: "1px solid #f3f4f6" }
           }}
@@ -110,8 +132,8 @@ const AdminInvoices = () => {
 
       {selectedInvoice && (
         <OrderInvoiceModal
-          order={selectedInvoice.order} // pass full order
-          invoice={selectedInvoice}     // pass invoice data
+          order={selectedInvoice.order}
+          invoice={selectedInvoice}
           onClose={() => setSelectedInvoice(null)}
         />
       )}
