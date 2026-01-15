@@ -3,21 +3,21 @@ import { DataGrid } from "@mui/x-data-grid";
 import { userRequest } from "../requestMethods";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import OrderInvoiceModal from "./OrderDetailModal"; // import the merged modal
+import OrderInvoiceModal from "./OrderDetailModal"; // Merged modal for invoice
 
 const AdminInvoices = () => {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [selectedInvoice, setSelectedInvoice] = useState(null); // for modal
+  const [selectedInvoice, setSelectedInvoice] = useState(null); // modal state
 
-  // Fetch invoices from backend
+  // Fetch all invoices
   useEffect(() => {
     const getInvoices = async () => {
       try {
         setLoading(true);
         const res = await userRequest.get("/invoices");
-        console.log("Invoices response:", res.data); // 🔍 check backend structure
-        setInvoices(res.data.invoices || res.data); // fallback to array
+        console.log("Invoices response:", res.data);
+        setInvoices(res.data || []);
       } catch (err) {
         toast.error(err.response?.data?.message || "Failed to fetch invoices");
       } finally {
@@ -28,30 +28,14 @@ const AdminInvoices = () => {
     getInvoices();
   }, []);
 
-  // Download PDF
-  const handleDownloadPDF = (invoiceId) => {
-    if (!invoiceId) return toast.error("Invoice not available");
-    window.open(`${userRequest.defaults.baseURL}/invoices/${invoiceId}/pdf`, "_blank");
-  };
-
   // Format currency
   const formatKES = (amount) =>
     amount?.toLocaleString("en-KE", { style: "currency", currency: "KES" }) || "-";
 
-  // Generate invoice (if not already generated)
-  const handleGenerateInvoice = async (orderId) => {
-    try {
-      const res = await userRequest.post(`/invoices/generate/${orderId}`);
-      toast.success("Invoice generated successfully!");
-      // Update invoice in local state
-      setInvoices((prev) =>
-        prev.map((inv) => (inv._id === orderId ? { ...inv, invoice: res.data } : inv))
-      );
-      return res.data; // return invoice for modal
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to generate invoice");
-      throw err;
-    }
+  // Open PDF in new tab
+  const handleDownloadPDF = (pdfUrl) => {
+    if (!pdfUrl) return toast.error("Invoice PDF not available");
+    window.open(`${userRequest.defaults.baseURL}/${pdfUrl}`, "_blank");
   };
 
   // DataGrid columns
@@ -61,25 +45,26 @@ const AdminInvoices = () => {
       field: "customerName",
       headerName: "Customer Name",
       width: 200,
-      valueGetter: (params) => params?.row?.customer?.name || "-"
+      valueGetter: (params) => params?.row?.order?.name || "-"
     },
     {
       field: "customerEmail",
       headerName: "Customer Email",
       width: 220,
-      valueGetter: (params) => params?.row?.customer?.email || "-"
+      valueGetter: (params) => params?.row?.order?.email || "-"
     },
     {
       field: "total",
       headerName: "Total",
       width: 150,
-      valueGetter: (params) => formatKES(params?.row?.total)
+      valueGetter: (params) => formatKES(params?.row?.amount)
     },
     {
       field: "createdAt",
       headerName: "Created At",
       width: 180,
-      valueGetter: (params) => new Date(params?.row?.createdAt).toLocaleString()
+      valueGetter: (params) =>
+        new Date(params?.row?.order?.createdAt || params?.row?.createdAt).toLocaleString()
     },
     {
       field: "actions",
@@ -87,22 +72,19 @@ const AdminInvoices = () => {
       width: 250,
       renderCell: (params) => (
         <div className="flex space-x-2">
+          {/* View Invoice Modal */}
           <button
             className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
-            onClick={async () => {
-              if (!params.row.invoice) {
-                await handleGenerateInvoice(params.row._id);
-              }
-              setSelectedInvoice(params.row); // open modal
-            }}
+            onClick={() => setSelectedInvoice(params.row)}
           >
             View Invoice
           </button>
 
-          {params.row.invoice && (
+          {/* Download PDF */}
+          {params.row.pdfUrl && (
             <button
               className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
-              onClick={() => handleDownloadPDF(params.row._id)}
+              onClick={() => handleDownloadPDF(params.row.pdfUrl)}
             >
               Download PDF
             </button>
@@ -146,10 +128,9 @@ const AdminInvoices = () => {
       {/* Invoice Modal */}
       {selectedInvoice && (
         <OrderInvoiceModal
-          order={selectedInvoice}
+          order={selectedInvoice.order} // pass order details
+          invoice={selectedInvoice}     // pass invoice info
           onClose={() => setSelectedInvoice(null)}
-          onGenerateInvoice={handleGenerateInvoice}
-          onDownloadInvoice={handleDownloadPDF}
         />
       )}
     </div>
@@ -157,4 +138,3 @@ const AdminInvoices = () => {
 };
 
 export default AdminInvoices;
-
