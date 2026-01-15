@@ -40,25 +40,6 @@ const Orders = () => {
     }
   };
 
-  // Generate invoice
-  const handleGenerateInvoice = async (orderId) => {
-    try {
-      const { data } = await userRequest.post("/invoices", { orderId });
-      setOrders((prev) =>
-        prev.map((o) => (o._id === orderId ? { ...o, invoice: data } : o))
-      );
-      toast.success("Invoice generated!");
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to generate invoice");
-    }
-  };
-
-  // Download PDF
-  const handleDownloadPDF = (invoiceId) => {
-    if (!invoiceId) return toast.error("Invoice not available");
-    window.open(`${userRequest.defaults.baseURL}/invoices/${invoiceId}/pdf`, "_blank");
-  };
-
   const openOrderDetails = (order) => setSelectedOrder(order);
   const closeOrderDetails = () => setSelectedOrder(null);
 
@@ -141,12 +122,9 @@ const Orders = () => {
       <OrderDetailModal
         order={selectedOrder}
         onClose={closeOrderDetails}
-        onGenerateInvoice={handleGenerateInvoice} 
-        onDownloadInvoice={handleDownloadPDF}
       />
     </div>
   );
 };
 
 export default Orders;
-
