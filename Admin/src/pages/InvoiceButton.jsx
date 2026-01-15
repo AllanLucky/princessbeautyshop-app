@@ -9,16 +9,23 @@ const InvoiceButton = ({ order, onInvoiceGenerated }) => {
     try {
       setLoading(true);
 
+      // Generate invoice on server
       const { data } = await userRequest.post(
         `/invoices/generate/${order._id}`
       );
 
       toast.success("Invoice generated successfully!");
 
-      // notify parent instead of mutating props
+      // Notify parent component if needed
       if (onInvoiceGenerated) {
         onInvoiceGenerated(order._id, data);
       }
+
+      // Open the generated PDF in a new tab
+      window.open(
+        `${userRequest.defaults.baseURL}/invoices/download/${data._id}`,
+        "_blank"
+      );
     } catch (err) {
       toast.error(
         err.response?.data?.message || "Failed to generate invoice"
@@ -33,11 +40,12 @@ const InvoiceButton = ({ order, onInvoiceGenerated }) => {
       return toast.error("Invoice not available");
 
     window.open(
-      `${userRequest.defaults.baseURL}/invoices/order/${order._id}`,
+      `${userRequest.defaults.baseURL}/invoices/download/${order.invoice._id}`,
       "_blank"
     );
   };
 
+  // If invoice already exists, show download button
   if (order.invoice) {
     return (
       <button
@@ -62,3 +70,4 @@ const InvoiceButton = ({ order, onInvoiceGenerated }) => {
 };
 
 export default InvoiceButton;
+
