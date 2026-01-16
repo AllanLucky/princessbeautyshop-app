@@ -8,7 +8,9 @@ dotenv.config();
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_KEY);
 
+// -------------------------
 // CREATE CHECKOUT SESSION
+// -------------------------
 router.post("/create-checkout-session", async (req, res) => {
   try {
     const { userId, name, email, cart } = req.body;
@@ -25,15 +27,12 @@ router.post("/create-checkout-session", async (req, res) => {
         email,
         total: cart.total,
         products: JSON.stringify(
-          cart.products.map((p) => ({
-            id: p._id,
-            quantity: p.quantity,
-          }))
+          cart.products.map((p) => ({ id: p._id, quantity: p.quantity }))
         ),
       },
     });
 
-    // Map cart products to Stripe line_items
+    // Map cart products to Stripe line items
     const line_items = cart.products.map((product) => ({
       price_data: {
         currency: "KES",
@@ -43,7 +42,7 @@ router.post("/create-checkout-session", async (req, res) => {
           description: product.desc || "",
           metadata: { id: product._id },
         },
-        unit_amount: Math.round(product.price * 100),
+        unit_amount: Math.round(product.price * 100), // Stripe expects cents
       },
       quantity: product.quantity || 1,
     }));
@@ -53,18 +52,21 @@ router.post("/create-checkout-session", async (req, res) => {
       customer: customer.id,
       line_items,
       mode: "payment",
-      success_url: `${process.env.CLIENT_URL}/myorders`,
-      cancel_url: `${process.env.CLIENT_URL}/cart`,
+      payment_method_types: ["card"], // Optional: support only card for now
+      success_url: `${process.env.CLIENT_URL}/myorders?success=true`,
+      cancel_url: `${process.env.CLIENT_URL}/cart?canceled=true`,
     });
 
-    res.status(200).json({ url: session.url });
+    return res.status(200).json({ url: session.url });
   } catch (error) {
     console.error("Checkout error:", error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 
+// -------------------------
 // STRIPE WEBHOOK
+// -------------------------
 router.post(
   "/webhook",
   express.raw({ type: "application/json" }),
@@ -76,29 +78,34 @@ router.post(
 
     try {
       event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
-      console.log("Webhook verified:", event.type);
     } catch (err) {
       console.error("Webhook signature error:", err.message);
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
+    // Handle successful payment
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
 
       try {
-        const { userId, name, email, products: productsMetaStr, total } = session.metadata;
+        const { userId, name, email, products: productsMetaStr, total } =
+          session.metadata;
+
         const productsMeta = JSON.parse(productsMetaStr);
 
-        // Fetch products from DB
+        // Fetch actual products from DB
         const productIds = productsMeta.map((p) => p.id);
         const products = await Product.find({ _id: { $in: productIds } });
 
+        // Build order
         const newOrder = new Order({
           userId,
           name,
           email,
           products: products.map((p) => {
-            const meta = productsMeta.find((mp) => mp.id === String(p._id));
+            const meta = productsMeta.find(
+              (mp) => mp.id === String(p._id)
+            );
             return {
               _id: p._id,
               title: p.title,
@@ -111,13 +118,14 @@ router.post(
           total,
           paymentIntentId: session.payment_intent,
           stripeSessionId: session.id,
-          paymentStatus: "paid",
+          paymentMethod: "Stripe", // Save the payment method
+          paymentStatus: "PAID",
         });
 
         await newOrder.save();
-        console.log("Order saved:", newOrder._id);
+        console.log("✅ Order saved successfully:", newOrder._id);
       } catch (err) {
-        console.error("Error saving order:", err.message);
+        console.error("❌ Error saving order:", err.message);
       }
     }
 
