@@ -4,7 +4,7 @@ import { DataGrid } from "@mui/x-data-grid";
 import { userRequest } from "../requestMethods";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import OrderDetailModal from "./OrderDetailModal";
+import OrderDetailModal from "./OrderInvoiceModal"; // your modal component
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -118,11 +118,14 @@ const Orders = () => {
         />
       </div>
 
-      {/* Order Details Modal */}
-      <OrderDetailModal
-        order={selectedOrder}
-        onClose={closeOrderDetails}
-      />
+      {/* Only render the modal when selectedOrder exists */}
+      {selectedOrder && (
+        <OrderDetailModal
+          order={selectedOrder}
+          invoice={selectedOrder.invoice || {}} // pass empty object if invoice missing
+          onClose={closeOrderDetails}
+        />
+      )}
     </div>
   );
 };
