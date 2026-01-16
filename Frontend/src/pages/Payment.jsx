@@ -13,23 +13,32 @@ const Payment = () => {
     return null;
   }
 
-  const { form, cart, total } = state; // form contains name, email, phone, address
+  const { form, cart } = state; // form contains name, email, phone, address
+
+  // Calculate totals consistently
+  const subtotal = cart.products.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+  const deliveryFee = 150;
+  const total = subtotal + deliveryFee;
 
   const handlePayment = async () => {
     try {
       const res = await userRequest.post("/stripe/create-checkout-session", {
-        userId: form.userId || "", // you can attach userId if available
+        userId: form.userId || "",
         name: form.name,
         email: form.email,
         phone: form.phone,
         address: form.address,
         cart,
-        total,
+        total, // ensure delivery fee is included
       });
 
       if (res?.data?.url) {
         window.location.href = res.data.url; // redirect to Stripe checkout
       } else {
+        console.error("Stripe session response:", res.data);
         toast.error("Failed to create Stripe session.");
       }
     } catch (err) {
@@ -37,12 +46,6 @@ const Payment = () => {
       toast.error("Payment failed. Please try again.");
     }
   };
-
-  const subtotal = cart.products.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
-  const deliveryFee = 150;
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-10">
@@ -133,3 +136,4 @@ const Payment = () => {
 };
 
 export default Payment;
+
