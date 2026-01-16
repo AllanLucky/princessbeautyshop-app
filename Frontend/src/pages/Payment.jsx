@@ -1,32 +1,32 @@
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { userRequest } from "../requestMethod";
 import { toast } from "react-toastify";
 import { FaLock } from "react-icons/fa";
 
 const Payment = () => {
   const { state } = useLocation();
-  const navigate = useNavigate();
-
   if (!state) return null;
 
   const { form, cart, total } = state;
 
   const handlePayment = async () => {
     try {
-      const res = await userRequest.post("/payments/create-intent", {
-        amount: total,
+      const res = await userRequest.post("/stripe/create-checkout-session", {
+        userId: form._id || form.userId,
+        name: form.name,
+        email: form.email,
+        cart,
       });
 
-      navigate("/success", {
-        state: {
-          paymentRef: res.data.paymentRef,
-          form,
-          cart,
-          total,
-        },
-      });
+      if (res.data.url) {
+        // Redirect to Stripe checkout
+        window.location.href = res.data.url;
+      } else {
+        toast.error("Failed to start payment. Try again.");
+      }
     } catch (err) {
-      toast.error("Payment failed. Please try again.", err);
+      console.error(err);
+      toast.error("Payment failed. Please try again.");
     }
   };
 
@@ -53,38 +53,29 @@ const Payment = () => {
               <span className="font-medium">Customer Name</span>
               <span>{form.name}</span>
             </div>
-
             <div className="flex justify-between">
               <span className="font-medium">Email</span>
               <span>{form.email}</span>
             </div>
-
             <div className="flex justify-between">
               <span className="font-medium">Phone</span>
               <span>{form.phone}</span>
             </div>
-
             <div className="flex justify-between">
               <span className="font-medium">Delivery Address</span>
-              <span className="text-right max-w-[60%]">
-                {form.address}
-              </span>
+              <span className="text-right max-w-[60%]">{form.address}</span>
             </div>
           </div>
         </div>
 
         {/* RIGHT: ORDER SUMMARY */}
         <div className="bg-white rounded-xl shadow p-6 h-fit">
-          <h3 className="text-lg font-semibold mb-4 border-b pb-2">
-            Order Summary
-          </h3>
+          <h3 className="text-lg font-semibold mb-4 border-b pb-2">Order Summary</h3>
 
           <div className="space-y-3 text-sm text-gray-700">
             {cart.products.map((item) => (
               <div key={item._id} className="flex justify-between">
-                <span>
-                  {item.title} × {item.quantity}
-                </span>
+                <span>{item.title} × {item.quantity}</span>
                 <span>KES {item.price * item.quantity}</span>
               </div>
             ))}
@@ -122,6 +113,3 @@ const Payment = () => {
 };
 
 export default Payment;
-
-
-
