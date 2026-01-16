@@ -1,35 +1,48 @@
-import { Outlet, RouterProvider, createBrowserRouter, Navigate } from "react-router-dom";
+import {
+  Outlet,
+  RouterProvider,
+  createBrowserRouter,
+  Navigate,
+} from "react-router-dom";
+import { useSelector } from "react-redux";
+
 import Home from "./pages/Home";
 import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
+import Payment from "./pages/Payment";
+import Success from "./pages/PaymentSuccess";
 import MyAccount from "./pages/MyAccount";
+import Orders from "./pages/Orders";
+import Product from "./pages/Product";
+import ProductList from "./pages/ProductList";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import NotFoundPage from "./pages/NotFoundPage";
+
 import Announcement from "./components/Announcement";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import Product from "./pages/Product";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import ProductList from "./pages/ProductList";
-import NotFoundPage from "./pages/NotFoundPage";
-import Orders from "./pages/Orders";
-import { useSelector } from "react-redux";
+import PaymentSuccess from "./pages/PaymentSuccess";
 
 const Layout = () => {
   return (
-    <div>
+    <>
       <Announcement />
       <Navbar />
       <Outlet />
       <Footer />
-    </div>
+    </>
   );
 };
 
-// ProtectedRoute redirects to Home if user is not logged in
+// 🔐 Auth Guard
 const ProtectedRoute = ({ children }) => {
-  const user = useSelector((state) => state.user);
-  if (!user.currentUser) {
+  const currentUser = useSelector((state) => state.user.currentUser);
+
+  if (!currentUser) {
     return <Navigate to="/login" replace />;
   }
+
   return children;
 };
 
@@ -40,25 +53,56 @@ function App() {
       errorElement: <NotFoundPage />,
       children: [
         { path: "/", element: <Home /> },
+
         { path: "/cart", element: <Cart /> },
+
         { path: "/login", element: <Login /> },
         { path: "/create-account", element: <Register /> },
-        { 
-          path: "/profile", 
+
+        // 🔐 Checkout flow (PROTECTED)
+        {
+          path: "/checkout",
+          element: (
+            <ProtectedRoute>
+              <Checkout />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "/payment",
+          element: (
+            <ProtectedRoute>
+              <Payment />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "/success",
+          element: (
+            <ProtectedRoute>
+              <PaymentSuccess />
+            </ProtectedRoute>
+          ),
+        },
+
+        // 🔐 User Pages
+        {
+          path: "/profile",
           element: (
             <ProtectedRoute>
               <MyAccount />
             </ProtectedRoute>
-          ) 
+          ),
         },
-        { 
-          path: "/myorders", 
+        {
+          path: "/myorders",
           element: (
             <ProtectedRoute>
               <Orders />
             </ProtectedRoute>
-          ) 
+          ),
         },
+
         { path: "/product/:productId", element: <Product /> },
         { path: "/products/:searchterm", element: <ProductList /> },
       ],
