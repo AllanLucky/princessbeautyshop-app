@@ -1,11 +1,9 @@
-import { 
-  FaCheckCircle, 
-  FaShoppingBag, 
-  FaTruck, 
-  FaCreditCard, 
-  FaStar, 
-  FaChevronDown, 
-  FaChevronUp 
+import {
+  FaCheckCircle,
+  FaShoppingBag,
+  FaStar,
+  FaChevronDown,
+  FaChevronUp,
 } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
@@ -27,7 +25,9 @@ const StarRating = ({ rating, onRatingChange, maxRating = 5 }) => {
             key={i}
             size={22}
             className={`cursor-pointer transition ${
-              value <= (hover || rating) ? "text-yellow-400" : "text-gray-300"
+              value <= (hover || rating)
+                ? "text-yellow-400"
+                : "text-gray-300"
             }`}
             onClick={() => onRatingChange(value)}
             onMouseEnter={() => setHover(value)}
@@ -46,7 +46,7 @@ const Orders = () => {
   const [activeProduct, setActiveProduct] = useState(null);
   const [ratingData, setRatingData] = useState({});
 
-  /* Load orders */
+  /* 🔄 Load Orders */
   useEffect(() => {
     if (!user) return;
 
@@ -60,15 +60,13 @@ const Orders = () => {
     };
 
     fetchOrders();
-    const interval = setInterval(fetchOrders, 10000);
-    return () => clearInterval(interval);
   }, [user]);
 
   const toggle = (id) => {
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  /* 🔥 Calculate average rating + total */
+  /* ⭐ Ratings Helpers */
   const calculateRating = (ratings = []) => {
     if (!ratings.length) return { avg: 0, total: 0 };
     const totalStars = ratings.reduce((sum, r) => sum + r.star, 0);
@@ -78,9 +76,8 @@ const Orders = () => {
     };
   };
 
-  const getMyReview = (ratings = []) => {
-    return ratings.find((r) => r.postedBy === user?._id);
-  };
+  const getMyReview = (ratings = []) =>
+    ratings.find((r) => r.postedBy === user?._id);
 
   const submitReview = async (product) => {
     const data = ratingData[product.productId];
@@ -102,53 +99,90 @@ const Orders = () => {
 
       const res = await userRequest.get(`/orders/find/${user._id}`);
       setOrders(res.data);
-    } catch (err) {
+    } catch {
       toast.error("Failed to submit review");
-      console.error(err);
     }
   };
 
   const formatDate = (date) =>
-    new Date(date).toLocaleDateString("en-KE", { year: "numeric", month: "long", day: "numeric" });
+    new Date(date).toLocaleDateString("en-KE", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
 
   const formatCurrency = (amount) =>
-    new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES" }).format(amount);
+    new Intl.NumberFormat("en-KE", {
+      style: "currency",
+      currency: "KES",
+    }).format(amount);
 
   return (
     <div className="min-h-screen bg-rose-50 pt-24 pb-10 px-4">
       <div className="max-w-4xl mx-auto">
+        {/* HEADER */}
         <div className="text-center mb-10">
           <div className="w-20 h-20 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <FaCheckCircle className="text-rose-600 text-4xl" />
           </div>
-          <h1 className="text-3xl font-serif font-bold text-gray-800 mb-2">Your Order History</h1>
-          <p className="text-gray-600">Thank you for shopping with us! Here are your recent orders.</p>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+            Your Orders
+          </h1>
+          <p className="text-gray-600">
+            All orders below are successfully paid and confirmed.
+          </p>
         </div>
 
+        {/* EMPTY STATE */}
         {orders.length === 0 && (
           <div className="bg-white p-10 text-center rounded-xl shadow">
             <FaShoppingBag className="text-5xl mx-auto text-rose-400 mb-4" />
             <p>No orders yet</p>
-            <Link to="/" className="mt-4 inline-block bg-rose-600 text-white px-6 py-3 rounded-lg">
+            <Link
+              to="/"
+              className="mt-4 inline-block bg-rose-600 text-white px-6 py-3 rounded-lg"
+            >
               Start Shopping
             </Link>
           </div>
         )}
 
+        {/* ORDERS LIST */}
         {orders.map((order) => (
           <div key={order._id} className="bg-white rounded-xl shadow mb-6">
             <div className="p-6 flex justify-between items-center bg-rose-100">
               <div>
-                <h3 className="font-semibold">Order #{order._id.slice(-6)}</h3>
+                <h3 className="font-semibold">
+                  Order #{order._id.slice(-6)}
+                </h3>
                 <p className="text-sm">{formatDate(order.createdAt)}</p>
+                <p className="text-sm text-green-600 font-semibold">
+                  Payment Status: PAID
+                </p>
               </div>
               <button onClick={() => toggle(order._id)}>
-                {expanded[order._id] ? <FaChevronUp /> : <FaChevronDown />}
+                {expanded[order._id] ? (
+                  <FaChevronUp />
+                ) : (
+                  <FaChevronDown />
+                )}
               </button>
             </div>
 
             {expanded[order._id] && (
               <div className="p-6 space-y-6">
+                {/* CUSTOMER DETAILS */}
+                <div className="bg-gray-50 p-4 rounded text-sm">
+                  <p><strong>Name:</strong> {order.name}</p>
+                  <p><strong>Email:</strong> {order.email}</p>
+                  <p><strong>Phone:</strong> {order.phone}</p>
+                  <p><strong>Address:</strong> {order.address}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Payment Ref: {order.paymentRef}
+                  </p>
+                </div>
+
+                {/* PRODUCTS */}
                 {order.products.map((product) => {
                   const { avg, total } = calculateRating(product.ratings || []);
                   const myReview = getMyReview(product.ratings || []);
@@ -156,12 +190,18 @@ const Orders = () => {
                   return (
                     <div key={product._id} className="border-b pb-4">
                       <div className="flex gap-4">
-                        <img src={product.img} className="w-20 h-20 object-cover rounded" />
+                        <img
+                          src={product.img}
+                          className="w-20 h-20 object-cover rounded"
+                          alt={product.title}
+                        />
                         <div className="flex-1">
                           <h4 className="font-semibold">{product.title}</h4>
                           <p>Qty: {product.quantity}</p>
                           <p className="text-rose-600 font-bold">
-                            {formatCurrency(product.price * product.quantity)}
+                            {formatCurrency(
+                              product.price * product.quantity
+                            )}
                           </p>
 
                           <p className="text-yellow-500 text-sm">
@@ -176,7 +216,11 @@ const Orders = () => {
 
                           <button
                             onClick={() =>
-                              setActiveProduct(activeProduct === product._id ? null : product._id)
+                              setActiveProduct(
+                                activeProduct === product._id
+                                  ? null
+                                  : product._id
+                              )
                             }
                             className="text-sm text-rose-600 mt-2"
                           >
@@ -187,7 +231,11 @@ const Orders = () => {
                           {activeProduct === product._id && (
                             <div className="mt-3 bg-rose-50 p-4 rounded">
                               <StarRating
-                                rating={ratingData[product.productId]?.star || myReview?.star || 0}
+                                rating={
+                                  ratingData[product.productId]?.star ||
+                                  myReview?.star ||
+                                  0
+                                }
                                 onRatingChange={(value) =>
                                   setRatingData({
                                     ...ratingData,
@@ -200,6 +248,8 @@ const Orders = () => {
                               />
 
                               <textarea
+                                className="w-full mt-2 p-2 border rounded"
+                                placeholder="Write your review"
                                 value={
                                   ratingData[product.productId]?.comment ||
                                   myReview?.comment ||
@@ -214,8 +264,6 @@ const Orders = () => {
                                     },
                                   })
                                 }
-                                className="w-full mt-2 p-2 border rounded"
-                                placeholder="Write your review"
                               />
 
                               <button
@@ -243,3 +291,4 @@ const Orders = () => {
 };
 
 export default Orders;
+
