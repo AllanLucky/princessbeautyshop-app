@@ -1,33 +1,34 @@
-import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaLock } from "react-icons/fa";
 import { userRequest } from "../requestMethod";
 
 const Payment = () => {
-  const cart = useSelector((state) => state.cart);
-  const user = useSelector((state) => state.user.currentUser);
+  const { state } = useLocation();
   const navigate = useNavigate();
 
-  if (!user || !cart.products.length) {
-    toast.error("Your cart is empty or you are not logged in.");
+  if (!state) {
+    toast.error("Missing order details.");
     navigate("/cart");
     return null;
   }
 
+  const { form, cart, total } = state; // form contains name, email, phone, address
+
   const handlePayment = async () => {
     try {
-      // Send request to backend to create Stripe checkout session
       const res = await userRequest.post("/stripe/create-checkout-session", {
-        userId: user._id,
-        name: user.name,
-        email: user.email,
+        userId: form.userId || "", // you can attach userId if available
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        address: form.address,
         cart,
+        total,
       });
 
       if (res?.data?.url) {
-        // Redirect to Stripe checkout
-        window.location.href = res.data.url;
+        window.location.href = res.data.url; // redirect to Stripe checkout
       } else {
         toast.error("Failed to create Stripe session.");
       }
@@ -37,14 +38,15 @@ const Payment = () => {
     }
   };
 
-  const subtotal = cart.products.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = cart.products.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
   const deliveryFee = 150;
-  const total = subtotal + deliveryFee;
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-10">
       <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-
         {/* LEFT: PAYMENT INFO */}
         <div className="lg:col-span-2 bg-white rounded-xl shadow p-6">
           <div className="flex items-center gap-2 mb-6">
@@ -62,22 +64,22 @@ const Payment = () => {
           <div className="space-y-4 text-sm">
             <div className="flex justify-between">
               <span className="font-medium">Customer Name</span>
-              <span>{user.name}</span>
+              <span>{form.name}</span>
             </div>
 
             <div className="flex justify-between">
               <span className="font-medium">Email</span>
-              <span>{user.email}</span>
+              <span>{form.email}</span>
             </div>
 
             <div className="flex justify-between">
               <span className="font-medium">Phone</span>
-              <span>{user.phone || "-"}</span>
+              <span>{form.phone}</span>
             </div>
 
             <div className="flex justify-between">
               <span className="font-medium">Delivery Address</span>
-              <span className="text-right max-w-[60%]">{cart.address || "-"}</span>
+              <span className="text-right max-w-[60%]">{form.address}</span>
             </div>
           </div>
         </div>
@@ -91,7 +93,9 @@ const Payment = () => {
           <div className="space-y-3 text-sm text-gray-700">
             {cart.products.map((item) => (
               <div key={item._id} className="flex justify-between">
-                <span>{item.title} × {item.quantity}</span>
+                <span>
+                  {item.title} × {item.quantity}
+                </span>
                 <span>KES {item.price * item.quantity}</span>
               </div>
             ))}
@@ -129,4 +133,3 @@ const Payment = () => {
 };
 
 export default Payment;
-
