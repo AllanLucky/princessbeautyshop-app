@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const OrderSchema = mongoose.Schema(
+const OrderSchema = new mongoose.Schema(
   {
     // Customer info
     name: { type: String, required: true },
@@ -14,10 +14,11 @@ const OrderSchema = mongoose.Schema(
       {
         productId: String,
         title: String,
+        desc: String, // optional: keep product description
         price: Number,
         quantity: Number,
         img: String,
-      }
+      },
     ],
 
     // Money
@@ -34,6 +35,7 @@ const OrderSchema = mongoose.Schema(
       enum: ["pending", "paid", "failed", "refunded"],
       default: "pending",
     },
+    declineReason: { type: String }, // ✅ capture failed payment reason
 
     // Order lifecycle
     orderStatus: {
@@ -44,13 +46,12 @@ const OrderSchema = mongoose.Schema(
 
     isDelivered: { type: Boolean, default: false },
     deliveredAt: { type: Date },
-    refundedAt: { type: Date },
+    refundedAt: { type: Date }, // ✅ capture refund date
   },
   { timestamps: true }
 );
 
-// ✅ Fix OverwriteModelError:
+// ✅ Prevent OverwriteModelError in dev hot-reload
 const Order = mongoose.models.Order || mongoose.model("Order", OrderSchema);
 
 export default Order;
-

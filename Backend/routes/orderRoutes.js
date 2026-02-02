@@ -1,5 +1,4 @@
 import express from "express";
-const router = express.Router();
 import {
   getAllOrders,
   getUserOrder,
@@ -9,19 +8,13 @@ import {
 } from "../controllers/orderController.js";
 import { protect, adminOnly } from "../middlewares/authMiddleware.js";
 
-// CREATE ORDER ROUTE - only logged-in users
-router.post("/", protect, createOrder);
+const router = express.Router();
 
-// UPDATE ORDER ROUTE - only logged-in users
-router.put("/:id", protect, updateOrder);
-
-// GET ALL ORDERS ROUTE - admin only
-router.get("/", protect, adminOnly, getAllOrders);
-
-// DELETE ORDER ROUTE - admin only
-router.delete("/:id", protect, adminOnly, deleteOrder);
-
-// GET USER'S ORDER ROUTE - only the user or admin
-router.get("/find/:id", protect, getUserOrder);
+// Routes
+router.post("/", protect, createOrder); // create order
+router.put("/:id", protect, updateOrder); // update order
+router.get("/", protect, adminOnly, getAllOrders); // all orders admin
+router.delete("/:id", protect, adminOnly, deleteOrder); // delete
+router.get("/find/:id", protect, getUserOrder); // user's orders
 
 export default router;
