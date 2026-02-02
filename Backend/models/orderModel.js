@@ -44,7 +44,7 @@ const OrderSchema = new mongoose.Schema(
       default: "processing",
     },
 
-    isDelivered: { type: Boolean, default: false }
+    isDelivered: { type: Boolean, default: false },
     deliveredAt: { type: Date },
     refundedAt: { type: Date }, // ✅ capture refund date
   },
