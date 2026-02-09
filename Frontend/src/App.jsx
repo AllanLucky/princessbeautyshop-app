@@ -13,7 +13,7 @@ import Payment from "./pages/Payment";
 import Success from "./pages/PaymentSuccess";
 import MyAccount from "./pages/MyAccount";
 import Orders from "./pages/Orders";
-import Product from "./pages/Product";
+import ProductDetails from "./pages/ProductDetails";
 import ProductList from "./pages/ProductList";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -103,7 +103,7 @@ function App() {
           ),
         },
 
-        { path: "/product/:productId", element: <Product /> },
+        { path: "/product/:productId", element: <ProductDetails /> },
         { path: "/products/:searchterm", element: <ProductList /> },
       ],
     },
