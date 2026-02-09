@@ -4,6 +4,7 @@ import {
   FaStar,
   FaChevronDown,
   FaChevronUp,
+  FaSave,
 } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
@@ -12,7 +13,7 @@ import { userRequest } from "../requestMethod";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-/* ⭐ Star Rating Component */
+/* ⭐ Star Rating */
 const StarRating = ({ rating, onRatingChange, maxRating = 5 }) => {
   const [hover, setHover] = useState(0);
 
@@ -45,6 +46,7 @@ const Orders = () => {
   const [expanded, setExpanded] = useState({});
   const [activeProduct, setActiveProduct] = useState(null);
   const [ratingData, setRatingData] = useState({});
+  const [loadingReview, setLoadingReview] = useState(false);
 
   /* 🔄 Load Orders */
   useEffect(() => {
@@ -66,7 +68,7 @@ const Orders = () => {
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  /* ⭐ Ratings Helpers */
+  /* ⭐ Rating helpers */
   const calculateRating = (ratings = []) => {
     if (!ratings.length) return { avg: 0, total: 0 };
     const totalStars = ratings.reduce((sum, r) => sum + r.star, 0);
@@ -79,13 +81,16 @@ const Orders = () => {
   const getMyReview = (ratings = []) =>
     ratings.find((r) => r.postedBy === user?._id);
 
+  /* ⭐ Submit Review */
   const submitReview = async (product) => {
     const data = ratingData[product.productId];
 
     if (!data?.star) {
-      toast.error("Please select a rating");
+      toast.error("Please select rating");
       return;
     }
+
+    setLoadingReview(true);
 
     try {
       await userRequest.post(`/products/rating/${product.productId}`, {
@@ -101,6 +106,8 @@ const Orders = () => {
       setOrders(res.data);
     } catch {
       toast.error("Failed to submit review");
+    } finally {
+      setLoadingReview(false);
     }
   };
 
@@ -119,6 +126,8 @@ const Orders = () => {
 
   return (
     <div className="min-h-screen bg-rose-50 pt-24 pb-10 px-4">
+      <ToastContainer position="top-right" autoClose={3000} />
+
       <div className="max-w-4xl mx-auto">
         {/* HEADER */}
         <div className="text-center mb-10">
@@ -133,7 +142,7 @@ const Orders = () => {
           </p>
         </div>
 
-        {/* EMPTY STATE */}
+        {/* EMPTY */}
         {orders.length === 0 && (
           <div className="bg-white p-10 text-center rounded-xl shadow">
             <FaShoppingBag className="text-5xl mx-auto text-rose-400 mb-4" />
@@ -147,9 +156,10 @@ const Orders = () => {
           </div>
         )}
 
-        {/* ORDERS LIST */}
+        {/* ORDERS */}
         {orders.map((order) => (
           <div key={order._id} className="bg-white rounded-xl shadow mb-6">
+            {/* TOP */}
             <div className="p-6 flex justify-between items-center bg-rose-100">
               <div>
                 <h3 className="font-semibold">
@@ -160,18 +170,16 @@ const Orders = () => {
                   Payment Status: PAID
                 </p>
               </div>
+
               <button onClick={() => toggle(order._id)}>
-                {expanded[order._id] ? (
-                  <FaChevronUp />
-                ) : (
-                  <FaChevronDown />
-                )}
+                {expanded[order._id] ? <FaChevronUp /> : <FaChevronDown />}
               </button>
             </div>
 
+            {/* BODY */}
             {expanded[order._id] && (
               <div className="p-6 space-y-6">
-                {/* CUSTOMER DETAILS */}
+                {/* CUSTOMER */}
                 <div className="bg-gray-50 p-4 rounded text-sm">
                   <p><strong>Name:</strong> {order.name}</p>
                   <p><strong>Email:</strong> {order.email}</p>
@@ -186,6 +194,8 @@ const Orders = () => {
                 {order.products.map((product) => {
                   const { avg, total } = calculateRating(product.ratings || []);
                   const myReview = getMyReview(product.ratings || []);
+                  const currentData = ratingData[product.productId] || {};
+                  const hasChanged = currentData.star || currentData.comment;
 
                   return (
                     <div key={product._id} className="border-b pb-4">
@@ -195,13 +205,12 @@ const Orders = () => {
                           className="w-20 h-20 object-cover rounded"
                           alt={product.title}
                         />
+
                         <div className="flex-1">
                           <h4 className="font-semibold">{product.title}</h4>
                           <p>Qty: {product.quantity}</p>
                           <p className="text-rose-600 font-bold">
-                            {formatCurrency(
-                              product.price * product.quantity
-                            )}
+                            {formatCurrency(product.price * product.quantity)}
                           </p>
 
                           <p className="text-yellow-500 text-sm">
@@ -214,6 +223,7 @@ const Orders = () => {
                             </p>
                           )}
 
+                          {/* OPEN REVIEW */}
                           <button
                             onClick={() =>
                               setActiveProduct(
@@ -228,11 +238,12 @@ const Orders = () => {
                             {myReview ? "Update Review" : "Rate Product"}
                           </button>
 
+                          {/* REVIEW BOX */}
                           {activeProduct === product._id && (
                             <div className="mt-3 bg-rose-50 p-4 rounded">
                               <StarRating
                                 rating={
-                                  ratingData[product.productId]?.star ||
+                                  currentData.star ||
                                   myReview?.star ||
                                   0
                                 }
@@ -240,7 +251,7 @@ const Orders = () => {
                                   setRatingData({
                                     ...ratingData,
                                     [product.productId]: {
-                                      ...ratingData[product.productId],
+                                      ...currentData,
                                       star: value,
                                     },
                                   })
@@ -251,7 +262,7 @@ const Orders = () => {
                                 className="w-full mt-2 p-2 border rounded"
                                 placeholder="Write your review"
                                 value={
-                                  ratingData[product.productId]?.comment ||
+                                  currentData.comment ||
                                   myReview?.comment ||
                                   ""
                                 }
@@ -259,18 +270,26 @@ const Orders = () => {
                                   setRatingData({
                                     ...ratingData,
                                     [product.productId]: {
-                                      ...ratingData[product.productId],
+                                      ...currentData,
                                       comment: e.target.value,
                                     },
                                   })
                                 }
                               />
 
+                              {/* SAVE BUTTON */}
                               <button
                                 onClick={() => submitReview(product)}
-                                className="bg-rose-600 text-white px-4 py-2 mt-3 rounded"
+                                disabled={!hasChanged || loadingReview}
+                                className={`flex items-center justify-center gap-2 px-4 py-2 mt-3 rounded text-white
+                                ${
+                                  !hasChanged
+                                    ? "bg-gray-300 cursor-not-allowed"
+                                    : "bg-rose-600 hover:bg-rose-700"
+                                }`}
                               >
-                                Save Review
+                                <FaSave />
+                                {loadingReview ? "Saving..." : "Save Review"}
                               </button>
                             </div>
                           )}
@@ -284,11 +303,8 @@ const Orders = () => {
           </div>
         ))}
       </div>
-
-      <ToastContainer />
     </div>
   );
 };
 
 export default Orders;
-

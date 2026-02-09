@@ -4,29 +4,54 @@ import { useState } from "react";
 
 const ProductList = () => {
   const location = useLocation();
-  const query = location.pathname.split("/")[2];
-  const [filters, setFilters] = useState({}); // 👈 initialize as object
+  const query = location.pathname.split("/")[2]; // category from URL
+
+  const [filters, setFilters] = useState({});
   const [sort, setSort] = useState("newest");
 
+  // ================= HANDLE FILTER =================
   const handleFilters = (e) => {
-    const value = e.target.value;
-    const name = e.target.name; // 👈 use the select's name attribute
-    setFilters({
-      ...filters,
-      [name]: value,
-    });
+    const { name, value } = e.target;
+
+    if (value === "all") {
+      const newFilters = { ...filters };
+      delete newFilters[name];
+      setFilters(newFilters);
+    } else {
+      setFilters({
+        ...filters,
+        [name]: value,
+      });
+    }
+  };
+
+  // ================= RESET FILTER =================
+  const resetFilters = () => {
+    setFilters({});
+    setSort("newest");
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
-      {/* FILTER & SORT SECTION */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6 gap-4">
+    <div className="min-h-screen bg-gray-50 px-4 md:px-8 pt-24 pb-10">
+      {/* HEADER */}
+      <h1 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800">
+        {query ? query.toUpperCase() : "All Products"}
+      </h1>
 
-        {/* LEFT: Filter Products & Popular Brands */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 flex-wrap">
-          <span className="text-lg font-semibold whitespace-nowrap">Filter Products</span>
+      {/* FILTER & SORT */}
+      <div className="bg-white p-4 rounded-xl shadow mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
 
-          <select name="concern" className="p-2 border rounded-md min-w-[150px]" onChange={handleFilters}>
+        {/* LEFT FILTER */}
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="font-semibold text-gray-700">Filter:</span>
+
+          {/* SKIN TYPE */}
+          <select
+            name="concern"
+            onChange={handleFilters}
+            className="p-2 border rounded-md"
+          >
+            <option value="all">Skin Type</option>
             <option>Dry Skin</option>
             <option>Oily Skin</option>
             <option>Combination Skin</option>
@@ -35,56 +60,51 @@ const ProductList = () => {
             <option>Acne Prone</option>
             <option>Mature Skin</option>
             <option>Hyperpigmentation</option>
-            <option>Redness</option>
-            <option>Sun Damage</option>
-            <option>Dehydrated Skin</option>
-            <option>Dull Skin</option>
-            <option>Uneven Texture</option>
-            <option>Large Pores</option>
-            <option>Blackheads</option>
-            <option>Whiteheads</option>
-            <option>Fine Lines</option>
-            <option>Wrinkles</option>
-            <option>Dark Circles</option>
-            <option>Uneven Tone</option>
           </select>
 
-          <select name="brand" className="p-2 border rounded-md min-w-[150px]" onChange={handleFilters}>
+          {/* BRAND */}
+          <select
+            name="brand"
+            onChange={handleFilters}
+            className="p-2 border rounded-md"
+          >
+            <option value="all">Brand</option>
             <option>Neutrogena</option>
             <option>Olay</option>
             <option>L'Oréal</option>
             <option>Garnier</option>
             <option>Clinique</option>
-            <option>Maybelline</option>
-            <option>Estée Lauder</option>
-            <option>Vichy</option>
             <option>Nivea</option>
-            <option>La Roche-Posay</option>
-            <option>Revlon</option>
-            <option>Dove</option>
-            <option>Biotherm</option>
-            <option>Shiseido</option>
-            <option>Avène</option>
             <option>Cetaphil</option>
-            <option>Mary Kay</option>
-            <option>Kiehl's</option>
-            <option>Huda Beauty</option>
+            <option>La Roche-Posay</option>
             <option>Fenty Beauty</option>
           </select>
+
+          {/* RESET */}
+          <button
+            onClick={resetFilters}
+            className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-md text-sm"
+          >
+            Reset
+          </button>
         </div>
 
-        {/* RIGHT: Sort Products */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-2 lg:mt-0">
-          <span className="text-lg font-semibold whitespace-nowrap">Sort Products</span>
-          <select name="Price" className="p-2 border rounded-md min-w-[150px]" onChange={(e) => setSort(e.target.value)}>
+        {/* SORT */}
+        <div className="flex items-center gap-3">
+          <span className="font-semibold text-gray-700">Sort:</span>
+          <select
+            onChange={(e) => setSort(e.target.value)}
+            className="p-2 border rounded-md"
+            value={sort}
+          >
             <option value="newest">Newest</option>
-            <option value="asc">Price (asc)</option>
-            <option value="desc">Price (desc)</option>
+            <option value="asc">Price (Low → High)</option>
+            <option value="desc">Price (High → Low)</option>
           </select>
         </div>
       </div>
 
-      {/* PRODUCTS GRID */}
+      {/* PRODUCTS */}
       <Products query={query} filters={filters} sort={sort} />
     </div>
   );
