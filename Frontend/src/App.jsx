@@ -24,6 +24,7 @@ import NotFoundPage from "./pages/NotFoundPage";
 import Announcement from "./components/Announcement";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import VerifyAccounty from "./pages/VerifyAccounty";
 
 // ================= LAYOUT =================
 const Layout = () => {
@@ -86,6 +87,16 @@ function App() {
             </AuthRedirect>
           ),
         },
+
+         {
+          path: "/verify-account",
+          element: (
+            <AuthRedirect>
+              <VerifyAccounty />
+            </AuthRedirect>
+          ),
+        },
+
         {
           path: "/forgot-password",
           element: (

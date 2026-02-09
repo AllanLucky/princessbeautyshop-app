@@ -1,6 +1,6 @@
 import { useState } from "react";
-import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
+import { userRequest } from "../requestMethod"; // use your configured axios instance
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -12,11 +12,9 @@ const ForgotPassword = () => {
 
     try {
       setLoading(true);
-      const { data } = await axios.post(
-        "/api/v1/auth/forgotpassword",
-        { email },
-        { withCredentials: true }
-      );
+      const { data } = await userRequest.post("/auth/forgotpassword", {
+        email,
+      });
 
       toast.success(data.message);
     } catch (err) {
@@ -31,8 +29,8 @@ const ForgotPassword = () => {
       <ToastContainer />
       <form
         onSubmit={submitHandler}
-       className="bg-white px-4 py-6 md:p-8 rounded shadow-md w-full max-w-[800px] mx-4">
-
+        className="bg-white px-2 py-3 md:p-6 rounded shadow-md w-full max-w-[600px] mx-4"
+      >
         <h2 className="text-2xl font-bold mb-6">Forgot Password</h2>
 
         <input
@@ -43,7 +41,11 @@ const ForgotPassword = () => {
           onChange={(e) => setEmail(e.target.value)}
         />
 
-        <button className="w-full bg-pink-500 text-white p-3 rounded">
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-pink-500 text-white p-3 rounded"
+        >
           {loading ? "Sending..." : "Send Reset Link"}
         </button>
       </form>
