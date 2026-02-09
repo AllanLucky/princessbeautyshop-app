@@ -5,23 +5,38 @@ import {
   logoutUser,
   forgotPassword,
   resetPassword,
+  verifyEmailCode,
+  resendVerificationCode,
 } from "../controllers/authController.js";
+
+import {
+  loginLimiter,
+  registerLimiter,
+  forgotLimiter,
+  verifyLimiter,
+} from "../middlewares/rateLimiter.js";
 
 const router = express.Router();
 
-// REGISTER USER
-router.post("/register", registerUser);
+// REGISTER
+router.post("/register", registerLimiter, registerUser);
 
-// LOGIN USER
-router.post("/login", loginUser);
+// VERIFY EMAIL
+router.post("/verify-email", verifyLimiter, verifyEmailCode);
 
-// LOGOUT USER
+// RESEND CODE
+router.post("/resend-code", verifyLimiter, resendVerificationCode);
+
+// LOGIN
+router.post("/login", loginLimiter, loginUser);
+
+// LOGOUT
 router.post("/logout", logoutUser);
 
 // FORGOT PASSWORD
-router.post("/forgotpassword", forgotPassword);
+router.post("/forgotpassword", forgotLimiter, forgotPassword);
 
 // RESET PASSWORD
-router.put("/resetpassword/:resetToken", resetPassword);
+router.put("/resetpassword/:resetToken", forgotLimiter, resetPassword);
 
 export default router;
