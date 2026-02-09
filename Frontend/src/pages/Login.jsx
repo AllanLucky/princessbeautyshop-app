@@ -14,7 +14,7 @@ const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // ================= REDIRECT AFTER LOGIN =================
+  // redirect after login
   useEffect(() => {
     if (currentUser) {
       toast.success("Login successful 🎉");
@@ -24,39 +24,33 @@ const Login = () => {
     }
   }, [currentUser, navigate]);
 
-  // ================= VALIDATION =================
+  // validation
   const validateForm = () => {
     if (!email || !password) {
       toast.error("Email and password are required");
       return false;
     }
-
     const emailRegex = /^\S+@\S+\.\S+$/;
     if (!emailRegex.test(email)) {
       toast.error("Enter valid email address");
       return false;
     }
-
     if (password.length < 6) {
       toast.error("Password must be at least 6 characters");
       return false;
     }
-
     return true;
   };
 
-  // ================= LOGIN =================
+  // login handler
   const handleLogin = async (e) => {
     e.preventDefault();
-
     if (!validateForm()) return;
-
-    if (loading) return; // prevent spam click
+    if (loading || isFetching) return;
 
     setLoading(true);
     try {
       await login(dispatch, { email: email.trim(), password });
-
     } catch (err) {
       toast.error(
         err?.response?.data?.message ||
@@ -67,7 +61,6 @@ const Login = () => {
     }
   };
 
-  // ================= UI =================
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4 py-10">
       <ToastContainer position="top-right" autoClose={3000} />
@@ -133,8 +126,6 @@ const Login = () => {
                 <input type="checkbox" className="accent-[#d55fbb]" />
                 Remember me
               </label>
-
-              {/* 🔥 FORGOT PASSWORD LINK */}
               <Link
                 to="/forgot-password"
                 className="text-[#d55fbb] font-semibold hover:underline"

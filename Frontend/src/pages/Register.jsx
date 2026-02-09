@@ -16,14 +16,17 @@ const Register = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
 
+    // validation
     if (!name || !email || !password || !confirmPassword) {
       return toast.error("All fields are required");
     }
-
+    const emailRegex = /^\S+@\S+\.\S+$/;
+    if (!emailRegex.test(email)) {
+      return toast.error("Enter a valid email address");
+    }
     if (password.length < 6) {
       return toast.error("Password must be at least 6 characters");
     }
-
     if (password !== confirmPassword) {
       return toast.error("Passwords do not match");
     }
@@ -33,11 +36,12 @@ const Register = () => {
     try {
       await userRequest.post("/auth/register", { name, email, password });
 
-      toast.success("Account created successfully 🎉");
+      toast.success("Account created successfully 🎉 Check your email to verify your account.");
 
+      // Instead of navigating to login immediately, go to verify page
       setTimeout(() => {
-        navigate("/login");
-      }, 800);
+        navigate("/verify-account", { state: { email } });
+      }, 1000);
     } catch (error) {
       if (error.response?.data?.message) {
         toast.error(error.response.data.message);
@@ -54,8 +58,7 @@ const Register = () => {
       <ToastContainer position="top-right" autoClose={3000} />
 
       <div className="flex flex-col md:flex-row bg-white shadow-xl rounded-xl overflow-hidden w-full max-w-[900px]">
-        
-        {/* LEFT IMAGE (hide on mobile) */}
+        {/* LEFT IMAGE */}
         <div className="hidden md:flex md:w-1/2 items-center justify-center bg-gray-50">
           <img
             src="/lotion1.jpg"
@@ -109,9 +112,7 @@ const Register = () => {
 
             {/* CONFIRM PASSWORD */}
             <div>
-              <label className="block text-gray-600 mb-1 text-sm">
-                Confirm Password
-              </label>
+              <label className="block text-gray-600 mb-1 text-sm">Confirm Password</label>
               <input
                 type="password"
                 placeholder="******"
