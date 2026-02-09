@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
+import { userRequest } from "../requestMethod"; // use your configured axios instance
 
 const ResetPassword = () => {
   const { token } = useParams();
@@ -13,15 +13,15 @@ const ResetPassword = () => {
   const submitHandler = async (e) => {
     e.preventDefault();
 
-    if (password.length < 6)
-      return toast.error("Password must be 6 chars");
+    if (password.length < 6) {
+      return toast.error("Password must be at least 6 characters");
+    }
 
     try {
       setLoading(true);
-      const { data } = await axios.put(
-        `/api/v1/auth/resetpassword/${token}`,
-        { password },
-        { withCredentials: true }
+      const { data } = await userRequest.put(
+        `/auth/resetpassword/${token}`, // baseURL already includes /api/v1
+        { password }
       );
 
       toast.success(data.message);
@@ -50,7 +50,11 @@ const ResetPassword = () => {
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        <button className="w-full bg-pink-500 text-white p-3 rounded">
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-pink-500 text-white p-3 rounded"
+        >
           {loading ? "Updating..." : "Reset Password"}
         </button>
       </form>
