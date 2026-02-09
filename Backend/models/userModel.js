@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
-const userSchema = mongoose.Schema(
+const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
@@ -22,6 +22,7 @@ const userSchema = mongoose.Schema(
       type: String,
       required: true,
       minlength: 6,
+      select: false, // 🚫 Hide password by default in queries
     },
 
     address: {
@@ -41,8 +42,9 @@ const userSchema = mongoose.Schema(
     },
 
     status: {
-      type: Number,
-      default: 0,
+      type: String,
+      enum: ["active", "inactive", "suspended"],
+      default: "active",
     },
 
     // ================= EMAIL VERIFICATION =================
@@ -51,22 +53,12 @@ const userSchema = mongoose.Schema(
       default: false,
     },
 
-    verificationCode: {
-      type: String,
-    },
-
-    verificationCodeExpire: {
-      type: Date,
-    },
+    verificationCode: String,
+    verificationCodeExpire: Date,
 
     // ================= RESET PASSWORD =================
-    resetPasswordToken: {
-      type: String,
-    },
-
-    resetPasswordExpire: {
-      type: Date,
-    },
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
 
     // ================= SECURITY =================
     loginAttempts: {
@@ -75,30 +67,52 @@ const userSchema = mongoose.Schema(
     },
 
     lockUntil: Date,
+
+    // ================= AUDIT =================
+    lastLogin: Date,
+    lastLoginIP: String,
   },
   {
     timestamps: true,
   }
 );
 
-
-// ================= HASH PASSWORD =================
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+// =======================================================
+// 🔐 HASH PASSWORD BEFORE SAVE
+// =======================================================
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
 
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
-  next();
 });
 
-
-// ================= MATCH PASSWORD =================
+// =======================================================
+// 🔑 MATCH PASSWORD
+// =======================================================
 userSchema.methods.matchPassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
+  return bcrypt.compare(enteredPassword, this.password);
 };
 
+// =======================================================
+// 📩 GENERATE EMAIL VERIFICATION CODE
+// =======================================================
+userSchema.methods.generateVerificationCode = function () {
+  const code = crypto.randomInt(100000, 999999).toString();
 
-// ================= GENERATE RESET TOKEN =================
+  this.verificationCode = crypto
+    .createHash("sha256")
+    .update(code)
+    .digest("hex");
+
+  this.verificationCodeExpire = Date.now() + 10 * 60 * 1000; // 10 min
+
+  return code;
+};
+
+// =======================================================
+// 🔐 GENERATE RESET PASSWORD TOKEN
+// =======================================================
 userSchema.methods.getResetPasswordToken = function () {
   const resetToken = crypto.randomBytes(20).toString("hex");
 
@@ -107,13 +121,14 @@ userSchema.methods.getResetPasswordToken = function () {
     .update(resetToken)
     .digest("hex");
 
-  this.resetPasswordExpire = Date.now() + 15 * 60 * 1000; // 15min
+  this.resetPasswordExpire = Date.now() + 15 * 60 * 1000; // 15 min
 
   return resetToken;
 };
 
-
-// ================= ACCOUNT LOCK (SECURITY) =================
+// =======================================================
+// 🚫 LOGIN ATTEMPTS SECURITY (ANTI BRUTE FORCE)
+// =======================================================
 userSchema.methods.incLoginAttempts = async function () {
   if (this.lockUntil && this.lockUntil > Date.now()) {
     return;
@@ -121,9 +136,8 @@ userSchema.methods.incLoginAttempts = async function () {
 
   this.loginAttempts += 1;
 
-  // lock after 5 failed
   if (this.loginAttempts >= 5) {
-    this.lockUntil = Date.now() + 30 * 60 * 1000; // lock 30min
+    this.lockUntil = Date.now() + 30 * 60 * 1000; // 30 mins
   }
 
   await this.save();
@@ -135,7 +149,16 @@ userSchema.methods.resetLoginAttempts = async function () {
   await this.save();
 };
 
+// =======================================================
+// 🧠 CHECK IF ACCOUNT LOCKED
+// =======================================================
+userSchema.methods.isLocked = function () {
+  return this.lockUntil && this.lockUntil > Date.now();
+};
 
+// =======================================================
+// 🛡 SAFE EXPORT MODEL
+// =======================================================
 const User = mongoose.models.User || mongoose.model("User", userSchema);
 
 export default User;
