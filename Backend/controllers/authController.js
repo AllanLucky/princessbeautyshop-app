@@ -7,7 +7,6 @@ import crypto from "crypto";
 const generateCode = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
 
-
 // ================= REGISTER =================
 const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password, role } = req.body;
@@ -24,6 +23,7 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   const verificationCode = generateCode();
+  const hashedCode = crypto.createHash("sha256").update(verificationCode).digest("hex");
 
   const user = await User.create({
     name,
@@ -31,7 +31,7 @@ const registerUser = asyncHandler(async (req, res) => {
     password,
     role: role || "user",
     isVerified: false,
-    verificationCode,
+    verificationCode: hashedCode,
     verificationCodeExpire: Date.now() + 10 * 60 * 1000,
   });
 
@@ -44,7 +44,6 @@ const registerUser = asyncHandler(async (req, res) => {
     email: user.email,
   });
 });
-
 
 // ================= VERIFY EMAIL =================
 const verifyEmailCode = asyncHandler(async (req, res) => {
@@ -69,8 +68,10 @@ const verifyEmailCode = asyncHandler(async (req, res) => {
     });
   }
 
+  const hashedCode = crypto.createHash("sha256").update(code).digest("hex");
+
   if (
-    user.verificationCode !== code ||
+    user.verificationCode !== hashedCode ||
     user.verificationCodeExpire < Date.now()
   ) {
     res.status(400);
@@ -88,7 +89,6 @@ const verifyEmailCode = asyncHandler(async (req, res) => {
     message: "Email verified successfully. You can now login",
   });
 });
-
 
 // ================= RESEND CODE =================
 const resendVerificationCode = asyncHandler(async (req, res) => {
@@ -112,8 +112,9 @@ const resendVerificationCode = asyncHandler(async (req, res) => {
   }
 
   const newCode = generateCode();
+  const hashedCode = crypto.createHash("sha256").update(newCode).digest("hex");
 
-  user.verificationCode = newCode;
+  user.verificationCode = hashedCode;
   user.verificationCodeExpire = Date.now() + 10 * 60 * 1000;
 
   await user.save();
@@ -127,7 +128,6 @@ const resendVerificationCode = asyncHandler(async (req, res) => {
   });
 });
 
-
 // ================= LOGIN =================
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
@@ -137,7 +137,7 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new Error("Email and password required");
   }
 
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email }).select("+password");
 
   if (!user) {
     res.status(401);
@@ -149,12 +149,23 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new Error("Please verify your email first");
   }
 
+  if (user.isLocked()) {
+    res.status(403);
+    throw new Error("Account locked due to too many failed login attempts. Try again later.");
+  }
+
   const isMatch = await user.matchPassword(password);
 
   if (!isMatch) {
+    await user.incLoginAttempts();
     res.status(401);
     throw new Error("Invalid email or password");
   }
+
+  await user.resetLoginAttempts();
+  user.lastLogin = new Date();
+  user.lastLoginIP = req.ip;
+  await user.save();
 
   generateToken(res, user._id);
 
@@ -170,7 +181,6 @@ const loginUser = asyncHandler(async (req, res) => {
   });
 });
 
-
 // ================= LOGOUT =================
 const logoutUser = asyncHandler(async (req, res) => {
   res.cookie("jwt", "", {
@@ -183,7 +193,6 @@ const logoutUser = asyncHandler(async (req, res) => {
     message: "Logged out successfully",
   });
 });
-
 
 // ================= FORGOT PASSWORD =================
 const forgotPassword = asyncHandler(async (req, res) => {
@@ -222,7 +231,6 @@ const forgotPassword = asyncHandler(async (req, res) => {
     message: "Password reset link sent to email",
   });
 });
-
 
 // ================= RESET PASSWORD =================
 const resetPassword = asyncHandler(async (req, res) => {
