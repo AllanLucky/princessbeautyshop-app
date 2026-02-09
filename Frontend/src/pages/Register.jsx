@@ -2,50 +2,61 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { userRequest } from "../requestMethod";
 import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css"; 
+import "react-toastify/dist/ReactToastify.css";
 
 const Register = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false); // Added loading state
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    setLoading(true); // Start loading
+
+    if (!name || !email || !password || !confirmPassword) {
+      return toast.error("All fields are required");
+    }
+
+    if (password.length < 6) {
+      return toast.error("Password must be at least 6 characters");
+    }
+
+    if (password !== confirmPassword) {
+      return toast.error("Passwords do not match");
+    }
+
+    setLoading(true);
+
     try {
       await userRequest.post("/auth/register", { name, email, password });
-      toast.success("Account created successfully!");
+
+      toast.success("Account created successfully 🎉");
+
       setTimeout(() => {
         navigate("/login");
-      }, 500); // Delay navigation slightly to show toast
+      }, 800);
     } catch (error) {
-      if (error.response && error.response.data.message) {
+      if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else {
-        toast.error("An unexpected error occurred, please try again");
+        toast.error("Something went wrong, try again");
       }
     } finally {
-      setLoading(false); // Stop loading
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4 py-10">
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
-      <div className="flex flex-col md:flex-row bg-white shadow-xl rounded-lg overflow-hidden max-w-[900px] w-full">
-        {/* REGISTER IMAGE */}
-        <div className="w-full md:w-1/2 hidden md:flex items-center justify-center bg-gray-50">
+    <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4 py-6 md:py-10">
+      <ToastContainer position="top-right" autoClose={3000} />
+
+      <div className="flex flex-col md:flex-row bg-white shadow-xl rounded-xl overflow-hidden w-full max-w-[900px]">
+        
+        {/* LEFT IMAGE (hide on mobile) */}
+        <div className="hidden md:flex md:w-1/2 items-center justify-center bg-gray-50">
           <img
             src="/lotion1.jpg"
             alt="register"
@@ -53,16 +64,16 @@ const Register = () => {
           />
         </div>
 
-        {/* REGISTER FORM */}
-        <div className="p-8 md:p-12 w-full md:w-1/2">
-          <h2 className="text-3xl font-bold text-gray-700 mb-8 text-center md:text-left">
+        {/* FORM */}
+        <div className="w-full md:w-1/2 px-5 py-6 md:p-12">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-700 mb-6 md:mb-8 text-center md:text-left">
             Create Account
           </h2>
 
-          <form className="space-y-6" onSubmit={handleRegister}>
-            {/* Full Name */}
+          <form className="space-y-5 md:space-y-6" onSubmit={handleRegister}>
+            {/* NAME */}
             <div>
-              <label className="block text-gray-600 mb-1">Full Name</label>
+              <label className="block text-gray-600 mb-1 text-sm">Full Name</label>
               <input
                 type="text"
                 placeholder="John Doe"
@@ -72,9 +83,9 @@ const Register = () => {
               />
             </div>
 
-            {/* Email */}
+            {/* EMAIL */}
             <div>
-              <label className="block text-gray-600 mb-1">Email</label>
+              <label className="block text-gray-600 mb-1 text-sm">Email</label>
               <input
                 type="email"
                 placeholder="example@gmail.com"
@@ -84,9 +95,9 @@ const Register = () => {
               />
             </div>
 
-            {/* Password */}
+            {/* PASSWORD */}
             <div>
-              <label className="block text-gray-600 mb-1">Password</label>
+              <label className="block text-gray-600 mb-1 text-sm">Password</label>
               <input
                 type="password"
                 placeholder="******"
@@ -96,31 +107,40 @@ const Register = () => {
               />
             </div>
 
-            {/* Confirm Password */}
+            {/* CONFIRM PASSWORD */}
             <div>
-              <label className="block text-gray-600 mb-1">Confirm Password</label>
+              <label className="block text-gray-600 mb-1 text-sm">
+                Confirm Password
+              </label>
               <input
                 type="password"
                 placeholder="******"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#d55fbb]"
               />
             </div>
 
-            {/* Submit Button */}
+            {/* BUTTON */}
             <button
               type="submit"
-              disabled={loading} // Disable while loading
-              className={`w-full py-3 text-white font-semibold rounded-md transition duration-300 ${
-                loading ? "bg-gray-400 cursor-not-allowed" : "bg-[#d55fbb] hover:bg-[#c54fae]"
+              disabled={loading}
+              className={`w-full py-3 text-white font-semibold rounded-md transition ${
+                loading
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-[#d55fbb] hover:bg-[#c54fae]"
               }`}
             >
-              {loading ? "Registering..." : "Register"}
+              {loading ? "Creating account..." : "Register"}
             </button>
 
-            {/* Login Link */}
+            {/* LOGIN */}
             <div className="text-sm text-gray-600 text-center">
               Already have an account?
-              <Link to="/login" className="text-[#d55fbb] hover:underline ml-1">
+              <Link
+                to="/login"
+                className="text-[#d55fbb] font-semibold hover:underline ml-1"
+              >
                 Login
               </Link>
             </div>
