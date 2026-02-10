@@ -7,7 +7,6 @@ import crypto from "crypto";
 const generateCode = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
 
-
 // ================= REGISTER =================
 const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password, role } = req.body;
@@ -31,7 +30,7 @@ const registerUser = asyncHandler(async (req, res) => {
     email,
     password,
     role: role || "user",
-    isVerified: false,
+    isVerified: false, // default false for all
     verificationCode: hashedCode,
     verificationCodeExpire: Date.now() + 10 * 60 * 1000,
   });
@@ -44,7 +43,6 @@ const registerUser = asyncHandler(async (req, res) => {
     email: user.email,
   });
 });
-
 
 // ================= VERIFY EMAIL =================
 const verifyEmailCode = asyncHandler(async (req, res) => {
@@ -91,7 +89,6 @@ const verifyEmailCode = asyncHandler(async (req, res) => {
   });
 });
 
-
 // ================= RESEND CODE =================
 const resendVerificationCode = asyncHandler(async (req, res) => {
   const { email } = req.body;
@@ -129,7 +126,6 @@ const resendVerificationCode = asyncHandler(async (req, res) => {
   });
 });
 
-
 // ================= LOGIN =================
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
@@ -146,18 +142,19 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new Error("Invalid email or password");
   }
 
-  if (!user.isVerified) {
+  // 🔥 CHECK VERIFIED (skip for admins)
+  if (!user.isVerified && user.role !== "admin") {
     res.status(403);
     throw new Error("Please verify your email first");
   }
 
+  // 🔥 LOCK CHECK
   if (user.isLocked()) {
     res.status(403);
     throw new Error("Account locked. Try later.");
   }
 
   const isMatch = await user.matchPassword(password);
-
   if (!isMatch) {
     await user.incLoginAttempts();
     res.status(401);
@@ -183,7 +180,6 @@ const loginUser = asyncHandler(async (req, res) => {
   });
 });
 
-
 // ================= LOGOUT =================
 const logoutUser = asyncHandler(async (req, res) => {
   res.cookie("jwt", "", {
@@ -196,7 +192,6 @@ const logoutUser = asyncHandler(async (req, res) => {
     message: "Logged out successfully",
   });
 });
-
 
 // ================= FORGOT PASSWORD =================
 const forgotPassword = asyncHandler(async (req, res) => {
@@ -234,8 +229,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
   });
 });
 
-
-// ================= RESET PASSWORD (FIXED) =================
+// ================= RESET PASSWORD =================
 const resetPassword = asyncHandler(async (req, res) => {
   const hashedToken = crypto
     .createHash("sha256")
@@ -259,14 +253,10 @@ const resetPassword = asyncHandler(async (req, res) => {
     throw new Error("New password required");
   }
 
-  // 🔥 VERY IMPORTANT FIX
-  // only set password, nothing else
   user.password = password;
-
   user.resetPasswordToken = undefined;
   user.resetPasswordExpire = undefined;
 
-  // avoid enum/status validation crash
   await user.save({ validateBeforeSave: false });
 
   res.json({
@@ -274,7 +264,6 @@ const resetPassword = asyncHandler(async (req, res) => {
     message: "Password reset successful. You can now login",
   });
 });
-
 
 export {
   registerUser,
