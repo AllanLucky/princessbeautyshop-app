@@ -1,6 +1,5 @@
 import User from "../models/userModel.js";
 import asyncHandler from "express-async-handler";
-import bcrypt from "bcryptjs";
 
 
 // =====================================================
@@ -8,6 +7,11 @@ import bcrypt from "bcryptjs";
 // =====================================================
 const getMyProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id).select("-password");
+
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
 
   res.status(200).json({
     success: true,
@@ -20,6 +24,8 @@ const getMyProfile = asyncHandler(async (req, res) => {
 // ✏️ UPDATE MY PROFILE
 // =====================================================
 const updateMyProfile = asyncHandler(async (req, res) => {
+  const { name, email, phone, address } = req.body;
+
   const user = await User.findById(req.user._id);
 
   if (!user) {
@@ -27,8 +33,19 @@ const updateMyProfile = asyncHandler(async (req, res) => {
     throw new Error("User not found");
   }
 
-  user.name = req.body.name || user.name;
-  user.email = req.body.email || user.email;
+  // 🔥 check email already exists
+  if (email && email !== user.email) {
+    const emailExists = await User.findOne({ email });
+    if (emailExists) {
+      res.status(400);
+      throw new Error("Email already in use");
+    }
+    user.email = email;
+  }
+
+  if (name) user.name = name;
+  if (phone) user.phone = phone;
+  if (address) user.address = address;
 
   const updatedUser = await user.save();
 
@@ -39,6 +56,8 @@ const updateMyProfile = asyncHandler(async (req, res) => {
       _id: updatedUser._id,
       name: updatedUser.name,
       email: updatedUser.email,
+      phone: updatedUser.phone,
+      address: updatedUser.address,
       avatar: updatedUser.avatar,
       role: updatedUser.role,
     },
@@ -57,18 +76,23 @@ const changePassword = asyncHandler(async (req, res) => {
     throw new Error("Please provide current and new password");
   }
 
-  const user = await User.findById(req.user._id);
+  const user = await User.findById(req.user._id).select("+password");
 
-  const isMatch = await bcrypt.compare(currentPassword, user.password);
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  // 🔐 compare using model method
+  const isMatch = await user.matchPassword(currentPassword);
 
   if (!isMatch) {
     res.status(400);
     throw new Error("Current password is incorrect");
   }
 
-  const salt = await bcrypt.genSalt(10);
-  user.password = await bcrypt.hash(newPassword, salt);
-
+  // 🔥 DO NOT HASH HERE (model pre-save will hash)
+  user.password = newPassword;
   await user.save();
 
   res.status(200).json({
@@ -88,6 +112,11 @@ const uploadAvatar = asyncHandler(async (req, res) => {
   }
 
   const user = await User.findById(req.user._id);
+
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
 
   user.avatar = `/uploads/avatars/${req.file.filename}`;
   await user.save();
@@ -124,7 +153,14 @@ const deleteMyAccount = asyncHandler(async (req, res) => {
 const updateUser = asyncHandler(async (req, res) => {
   const userId = req.params.id;
 
-  // allow self or admin
+  const existingUser = await User.findById(userId);
+
+  if (!existingUser) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  // 🔐 Only admin or owner
   if (
     req.user._id.toString() !== userId &&
     req.user.role !== "admin" &&
@@ -134,40 +170,42 @@ const updateUser = asyncHandler(async (req, res) => {
     throw new Error("Not authorized");
   }
 
-  // prevent normal user editing role/status
-  if (req.user.role !== "admin" && req.user.role !== "super_admin") {
+  // normal user cannot change role
+  if (req.user.role === "user") {
     delete req.body.role;
-    delete req.body.isVerified;
     delete req.body.status;
+    delete req.body.isVerified;
   }
 
-  // hash password if updating
+  // 🔥 if updating password (let model hash)
   if (req.body.password) {
-    const salt = await bcrypt.genSalt(10);
-    req.body.password = await bcrypt.hash(req.body.password, salt);
+    existingUser.password = req.body.password;
   }
 
-  const updatedUser = await User.findByIdAndUpdate(
-    userId,
-    { $set: req.body },
-    { new: true }
-  ).select("-password");
+  // update fields
+  Object.keys(req.body).forEach((key) => {
+    existingUser[key] = req.body[key];
+  });
 
-  if (!updatedUser) {
-    res.status(404);
-    throw new Error("User not found");
-  }
+  const updatedUser = await existingUser.save();
 
   res.status(200).json({
     success: true,
     message: "User updated successfully",
-    user: updatedUser,
+    user: {
+      _id: updatedUser._id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      status: updatedUser.status,
+      avatar: updatedUser.avatar,
+    },
   });
 });
 
 
 // =====================================================
-// 👑 GET SINGLE USER (ADMIN)
+// 👑 GET SINGLE USER
 // =====================================================
 const getSingleUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id).select("-password");
@@ -193,7 +231,9 @@ const getAllUsers = asyncHandler(async (req, res) => {
     throw new Error("Admin only access");
   }
 
-  const users = await User.find().select("-password").sort({ createdAt: -1 });
+  const users = await User.find()
+    .select("-password")
+    .sort({ createdAt: -1 });
 
   res.status(200).json({
     success: true,
@@ -227,16 +267,13 @@ const deleteUser = asyncHandler(async (req, res) => {
 
 
 export {
-  // user
   getMyProfile,
   updateMyProfile,
   changePassword,
   uploadAvatar,
   deleteMyAccount,
-
-  // admin
   updateUser,
   getAllUsers,
   getSingleUser,
-  deleteUser
+  deleteUser,
 };
