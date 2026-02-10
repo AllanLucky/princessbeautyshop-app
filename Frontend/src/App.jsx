@@ -10,20 +10,23 @@ import Home from "./pages/Home";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Payment from "./pages/Payment";
-import Success from "./pages/PaymentSuccess";
+import PaymentSuccess from "./pages/PaymentSuccess";
 import MyAccount from "./pages/MyAccount";
 import Orders from "./pages/Orders";
-import Product from "./pages/Product";
+import ProductDetails from "./pages/ProductDetails";
 import ProductList from "./pages/ProductList";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import NotFoundPage from "./pages/NotFoundPage";
 
 import Announcement from "./components/Announcement";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import PaymentSuccess from "./pages/PaymentSuccess";
+import VerifyAccounty from "./pages/VerifyAccounty";
 
+// ================= LAYOUT =================
 const Layout = () => {
   return (
     <>
@@ -35,7 +38,7 @@ const Layout = () => {
   );
 };
 
-// 🔐 Auth Guard
+// ================= AUTH GUARD =================
 const ProtectedRoute = ({ children }) => {
   const currentUser = useSelector((state) => state.user.currentUser);
 
@@ -46,6 +49,18 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+// ================= PREVENT LOGIN IF LOGGED IN =================
+const AuthRedirect = ({ children }) => {
+  const currentUser = useSelector((state) => state.user.currentUser);
+
+  if (currentUser) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+};
+
+// ================= ROUTER =================
 function App() {
   const router = createBrowserRouter([
     {
@@ -53,11 +68,51 @@ function App() {
       errorElement: <NotFoundPage />,
       children: [
         { path: "/", element: <Home /> },
-
         { path: "/cart", element: <Cart /> },
 
-        { path: "/login", element: <Login /> },
-        { path: "/create-account", element: <Register /> },
+        // 🔐 AUTH PAGES (only if NOT logged in)
+        {
+          path: "/login",
+          element: (
+            <AuthRedirect>
+              <Login />
+            </AuthRedirect>
+          ),
+        },
+        {
+          path: "/create-account",
+          element: (
+            <AuthRedirect>
+              <Register />
+            </AuthRedirect>
+          ),
+        },
+
+         {
+          path: "/verify-account",
+          element: (
+            <AuthRedirect>
+              <VerifyAccounty />
+            </AuthRedirect>
+          ),
+        },
+
+        {
+          path: "/forgot-password",
+          element: (
+            <AuthRedirect>
+              <ForgotPassword />
+            </AuthRedirect>
+          ),
+        },
+        {
+          path: "/reset-password/:token",
+          element: (
+            <AuthRedirect>
+              <ResetPassword />
+            </AuthRedirect>
+          ),
+        },
 
         // 🔐 Checkout flow (PROTECTED)
         {
@@ -103,7 +158,8 @@ function App() {
           ),
         },
 
-        { path: "/product/:productId", element: <Product /> },
+        // 🛍️ Products
+        { path: "/product/:productId", element: <ProductDetails /> },
         { path: "/products/:searchterm", element: <ProductList /> },
       ],
     },

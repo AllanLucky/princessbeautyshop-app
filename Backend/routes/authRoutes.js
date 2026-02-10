@@ -5,23 +5,58 @@ import {
   logoutUser,
   forgotPassword,
   resetPassword,
+  verifyEmailCode,
+  resendVerificationCode,
 } from "../controllers/authController.js";
+
+import {
+  loginLimiter,
+  registerLimiter,
+  forgotLimiter,
+  verifyLimiter,
+} from "../middlewares/rateLimiter.js";
+
+import { protect } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-// REGISTER USER
-router.post("/register", registerUser);
 
-// LOGIN USER
-router.post("/login", loginUser);
+// =======================================================
+// 🔐 AUTH ROUTES
+// base: /api/v1/auth
+// =======================================================
 
-// LOGOUT USER
-router.post("/logout", logoutUser);
 
-// FORGOT PASSWORD
-router.post("/forgotpassword", forgotPassword);
+// ================= REGISTER =================
+router.post("/register", registerLimiter, registerUser);
 
-// RESET PASSWORD
-router.put("/resetpassword/:resetToken", resetPassword);
+// ================= EMAIL VERIFICATION =================
+router.post("/verify-email", verifyLimiter, verifyEmailCode);
+router.post("/resend-code", verifyLimiter, resendVerificationCode);
+
+// ================= LOGIN =================
+router.post("/login", loginLimiter, loginUser);
+
+// ================= LOGOUT =================
+router.post("/logout", protect, logoutUser);
+
+// ================= FORGOT PASSWORD =================
+router.post("/forgotpassword", forgotLimiter, forgotPassword);
+
+// ================= RESET PASSWORD =================
+router.put("/resetpassword/:resetToken", forgotLimiter, resetPassword);
+
+
+// =======================================================
+// 🔒 SESSION CHECK (VERY IMPORTANT FOR FRONTEND)
+// =======================================================
+// use this to auto-login if cookie exists
+router.get("/me", protect, async (req, res) => {
+  res.status(200).json({
+    success: true,
+    user: req.user,
+  });
+});
+
 
 export default router;

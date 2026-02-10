@@ -11,49 +11,83 @@ const Cart = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // 🗑 Remove product
+  const products = cart?.products || [];
+
+  // ================= REMOVE =================
   const handleRemoveProduct = (product) => {
     dispatch(removeProduct(product));
-    toast.info(`${product.title} removed from cart`);
+    toast.info(`${product.title} removed`);
   };
 
-  // ➖ Decrease quantity
+  // ================= DECREASE =================
   const handleDecrease = (product) => {
-    if (product.quantity > 1) {
-      dispatch(updateQuantity({ _id: product._id, quantity: product.quantity - 1 }));
-    }
+    if (product.quantity <= 1) return;
+
+    dispatch(
+      updateQuantity({
+        _id: product._id,
+        quantity: product.quantity - 1,
+      })
+    );
   };
 
-  // ➕ Increase quantity
+  // ================= INCREASE (WITH STOCK CHECK) =================
   const handleIncrease = (product) => {
-    dispatch(updateQuantity({ _id: product._id, quantity: product.quantity + 1 }));
+    const stock = product.stock ?? product.countInStock ?? 0;
+
+    if (product.quantity >= stock) {
+      toast.error(`Only ${stock} items available in stock`);
+      return;
+    }
+
+    dispatch(
+      updateQuantity({
+        _id: product._id,
+        quantity: product.quantity + 1,
+      })
+    );
   };
 
-  // 🧹 Clear cart
+  // ================= CLEAR =================
   const handleClearCart = () => {
+    if (!products.length) return;
+    if (!window.confirm("Clear entire cart?")) return;
+
     dispatch(clearCart());
     toast.error("Cart cleared");
   };
 
-  // 💰 Totals
-  const subtotal = cart.products.reduce(
+  // ================= TOTAL =================
+  const subtotal = products.reduce(
     (acc, item) => acc + item.price * item.quantity,
     0
   );
-  const deliveryFee = cart.products.length ? 150 : 0;
+
+  const deliveryFee = products.length ? 150 : 0;
   const total = subtotal + deliveryFee;
 
-  // ✅ Proceed to Checkout (NO ORDER CREATED HERE)
+  const format = (num) => `KES ${Number(num).toLocaleString()}`;
+
+  // ================= CHECKOUT =================
   const handleProceedCheckout = () => {
     if (!user) {
-      toast.error("Please login to continue");
+      toast.error("Please login first");
       navigate("/login");
       return;
     }
 
-    if (!cart.products.length) {
-      toast.warning("Your cart is empty");
+    if (!products.length) {
+      toast.warning("Cart is empty");
       return;
+    }
+
+    // check stock before checkout
+    for (let item of products) {
+      const stock = item.stock ?? item.countInStock ?? 0;
+      if (item.quantity > stock) {
+        toast.error(`${item.title} exceeds available stock`);
+        return;
+      }
     }
 
     navigate("/checkout");
@@ -61,58 +95,102 @@ const Cart = () => {
 
   return (
     <div className="min-h-screen px-4 lg:px-20 py-10 bg-gray-50">
-      <h2 className="text-3xl font-bold mb-10">Shopping Cart</h2>
+      <ToastContainer position="top-right" autoClose={2500} />
+
+      <h2 className="text-3xl font-bold mb-10 text-gray-800">
+        🛒 Shopping Cart
+      </h2>
 
       <div className="flex flex-col lg:flex-row gap-10">
         {/* LEFT */}
-        <div className="flex-1 bg-white shadow rounded-xl p-6">
-          <h3 className="font-semibold mb-6 border-b pb-2">Your Items</h3>
+        <div className="flex-1 bg-white shadow-md rounded-xl p-6">
+          <h3 className="font-semibold text-lg mb-6 border-b pb-3">
+            Your Items ({products.length})
+          </h3>
 
-          {cart.products.length ? (
-            cart.products.map((item) => (
-              <div key={item._id} className="flex gap-6 border-b pb-6 mb-6">
-                <img
-                  src={Array.isArray(item.img) ? item.img[0] : item.img}
-                  alt={item.title}
-                  className="w-32 h-32 object-cover rounded"
-                />
+          {products.length ? (
+            products.map((item) => {
+              const stock = item.stock ?? item.countInStock ?? 0;
 
-                <div className="flex-1">
-                  <h4 className="font-semibold">{item.title}</h4>
-                  <p className="text-sm text-gray-500">{item.desc}</p>
+              return (
+                <div
+                  key={item._id}
+                  className="flex gap-6 border-b pb-6 mb-6 items-center"
+                >
+                  <img
+                    src={
+                      Array.isArray(item.img)
+                        ? item.img[0]
+                        : item.img || "/no-image.png"
+                    }
+                    alt={item.title}
+                    className="w-28 h-28 object-cover rounded-lg border"
+                  />
 
-                  <div className="flex items-center gap-4 mt-4">
-                    <FaMinus
-                      onClick={() => handleDecrease(item)}
-                      className="cursor-pointer bg-pink-300 p-2 rounded-full text-white"
-                    />
-                    <span>{item.quantity}</span>
-                    <FaPlus
-                      onClick={() => handleIncrease(item)}
-                      className="cursor-pointer bg-pink-300 p-2 rounded-full text-white"
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-gray-800">
+                      {item.title}
+                    </h4>
+
+                    <p className="text-sm text-gray-500 line-clamp-2">
+                      {item.desc}
+                    </p>
+
+                    {/* STOCK */}
+                    <p className="text-xs text-gray-400 mt-1">
+                      Stock: {stock}
+                    </p>
+
+                    {/* QTY */}
+                    <div className="flex items-center gap-4 mt-4">
+                      <button
+                        onClick={() => handleDecrease(item)}
+                        className="bg-pink-500 hover:bg-pink-600 text-white p-2 rounded-full"
+                      >
+                        <FaMinus size={12} />
+                      </button>
+
+                      <span className="font-semibold">
+                        {item.quantity}
+                      </span>
+
+                      <button
+                        onClick={() => handleIncrease(item)}
+                        className={`p-2 rounded-full text-white ${
+                          item.quantity >= stock
+                            ? "bg-gray-400 cursor-not-allowed"
+                            : "bg-pink-500 hover:bg-pink-600"
+                        }`}
+                      >
+                        <FaPlus size={12} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* PRICE */}
+                  <div className="flex flex-col justify-between items-end">
+                    <span className="font-bold text-pink-600 text-lg">
+                      {format(item.price * item.quantity)}
+                    </span>
+
+                    <FaTrashAlt
+                      onClick={() => handleRemoveProduct(item)}
+                      className="text-red-500 cursor-pointer hover:scale-110"
                     />
                   </div>
                 </div>
-
-                <div className="flex flex-col justify-between text-right">
-                  <span className="font-bold text-pink-600">
-                    KES {item.price * item.quantity}
-                  </span>
-                  <FaTrashAlt
-                    onClick={() => handleRemoveProduct(item)}
-                    className="text-red-500 cursor-pointer"
-                  />
-                </div>
-              </div>
-            ))
+              );
+            })
           ) : (
-            <p className="text-gray-500 text-center">Your cart is empty</p>
+            <div className="text-center py-10 text-gray-500">
+              🛒 Your cart is empty
+            </div>
           )}
 
-          {cart.products.length > 0 && (
+          {products.length > 0 && (
             <button
               onClick={handleClearCart}
-              className="bg-red-400 text-white px-6 py-3 rounded mt-4"
+              className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg mt-4"
             >
               Clear Cart
             </button>
@@ -120,37 +198,43 @@ const Cart = () => {
         </div>
 
         {/* RIGHT */}
-        <div className="w-full lg:w-[350px] bg-white shadow rounded-xl p-6">
-          <h3 className="font-semibold mb-6 border-b pb-2">Order Summary</h3>
+        <div className="w-full lg:w-[360px] bg-white shadow-md rounded-xl p-6 h-fit">
+          <h3 className="font-semibold text-lg mb-6 border-b pb-3">
+            Order Summary
+          </h3>
 
           <div className="space-y-4">
-            <div className="flex justify-between">
+            <div className="flex justify-between text-gray-600">
               <span>Subtotal</span>
-              <span>KES {subtotal}</span>
+              <span>{format(subtotal)}</span>
             </div>
-            <div className="flex justify-between">
+
+            <div className="flex justify-between text-gray-600">
               <span>Delivery</span>
-              <span>KES {deliveryFee}</span>
+              <span>{format(deliveryFee)}</span>
             </div>
-            <div className="flex justify-between font-bold border-t pt-4">
+
+            <div className="flex justify-between font-bold text-lg border-t pt-4">
               <span>Total</span>
-              <span>KES {total}</span>
+              <span className="text-pink-600">{format(total)}</span>
             </div>
 
             <button
               onClick={handleProceedCheckout}
-              className="bg-pink-600 w-full py-3 rounded text-white font-semibold hover:bg-pink-700"
+              disabled={!products.length}
+              className={`w-full py-3 rounded-lg text-white font-semibold ${
+                products.length
+                  ? "bg-pink-600 hover:bg-pink-700"
+                  : "bg-gray-400 cursor-not-allowed"
+              }`}
             >
               Proceed to Checkout
             </button>
           </div>
         </div>
       </div>
-
-      <ToastContainer />
     </div>
   );
 };
 
 export default Cart;
-
