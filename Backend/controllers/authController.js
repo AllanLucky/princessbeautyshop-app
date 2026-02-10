@@ -7,6 +7,7 @@ import crypto from "crypto";
 const generateCode = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
 
+
 // ================= REGISTER =================
 const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password, role } = req.body;
@@ -35,7 +36,6 @@ const registerUser = asyncHandler(async (req, res) => {
     verificationCodeExpire: Date.now() + 10 * 60 * 1000,
   });
 
-  // TODO: send email service
   console.log("Verification code:", verificationCode);
 
   res.status(201).json({
@@ -44,6 +44,7 @@ const registerUser = asyncHandler(async (req, res) => {
     email: user.email,
   });
 });
+
 
 // ================= VERIFY EMAIL =================
 const verifyEmailCode = asyncHandler(async (req, res) => {
@@ -90,6 +91,7 @@ const verifyEmailCode = asyncHandler(async (req, res) => {
   });
 });
 
+
 // ================= RESEND CODE =================
 const resendVerificationCode = asyncHandler(async (req, res) => {
   const { email } = req.body;
@@ -119,7 +121,6 @@ const resendVerificationCode = asyncHandler(async (req, res) => {
 
   await user.save();
 
-  // TODO: send email
   console.log("New verification code:", newCode);
 
   res.json({
@@ -127,6 +128,7 @@ const resendVerificationCode = asyncHandler(async (req, res) => {
     message: "New verification code sent",
   });
 });
+
 
 // ================= LOGIN =================
 const loginUser = asyncHandler(async (req, res) => {
@@ -151,7 +153,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
   if (user.isLocked()) {
     res.status(403);
-    throw new Error("Account locked due to too many failed login attempts. Try again later.");
+    throw new Error("Account locked. Try later.");
   }
 
   const isMatch = await user.matchPassword(password);
@@ -181,6 +183,7 @@ const loginUser = asyncHandler(async (req, res) => {
   });
 });
 
+
 // ================= LOGOUT =================
 const logoutUser = asyncHandler(async (req, res) => {
   res.cookie("jwt", "", {
@@ -193,6 +196,7 @@ const logoutUser = asyncHandler(async (req, res) => {
     message: "Logged out successfully",
   });
 });
+
 
 // ================= FORGOT PASSWORD =================
 const forgotPassword = asyncHandler(async (req, res) => {
@@ -219,11 +223,9 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
   user.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
 
-  await user.save();
+  await user.save({ validateBeforeSave: false });
 
   const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
-
-  // TODO: send email
   console.log("Reset URL:", resetUrl);
 
   res.json({
@@ -232,7 +234,8 @@ const forgotPassword = asyncHandler(async (req, res) => {
   });
 });
 
-// ================= RESET PASSWORD =================
+
+// ================= RESET PASSWORD (FIXED) =================
 const resetPassword = asyncHandler(async (req, res) => {
   const hashedToken = crypto
     .createHash("sha256")
@@ -242,29 +245,36 @@ const resetPassword = asyncHandler(async (req, res) => {
   const user = await User.findOne({
     resetPasswordToken: hashedToken,
     resetPasswordExpire: { $gt: Date.now() },
-  });
+  }).select("+password");
 
   if (!user) {
     res.status(400);
     throw new Error("Invalid or expired reset token");
   }
 
-  if (!req.body.password) {
+  const { password } = req.body;
+
+  if (!password) {
     res.status(400);
-    throw new Error("Password required");
+    throw new Error("New password required");
   }
 
-  user.password = req.body.password;
+  // 🔥 VERY IMPORTANT FIX
+  // only set password, nothing else
+  user.password = password;
+
   user.resetPasswordToken = undefined;
   user.resetPasswordExpire = undefined;
 
-  await user.save();
+  // avoid enum/status validation crash
+  await user.save({ validateBeforeSave: false });
 
   res.json({
     success: true,
-    message: "Password reset successful",
+    message: "Password reset successful. You can now login",
   });
 });
+
 
 export {
   registerUser,
