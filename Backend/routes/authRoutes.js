@@ -16,27 +16,47 @@ import {
   verifyLimiter,
 } from "../middlewares/rateLimiter.js";
 
+import { protect } from "../middlewares/authMiddleware.js";
+
 const router = express.Router();
 
-// REGISTER
+
+// =======================================================
+// 🔐 AUTH ROUTES
+// base: /api/v1/auth
+// =======================================================
+
+
+// ================= REGISTER =================
 router.post("/register", registerLimiter, registerUser);
 
-// VERIFY EMAIL
+// ================= EMAIL VERIFICATION =================
 router.post("/verify-email", verifyLimiter, verifyEmailCode);
-
-// RESEND CODE
 router.post("/resend-code", verifyLimiter, resendVerificationCode);
 
-// LOGIN
+// ================= LOGIN =================
 router.post("/login", loginLimiter, loginUser);
 
-// LOGOUT
-router.post("/logout", logoutUser);
+// ================= LOGOUT =================
+router.post("/logout", protect, logoutUser);
 
-// FORGOT PASSWORD
+// ================= FORGOT PASSWORD =================
 router.post("/forgotpassword", forgotLimiter, forgotPassword);
 
-// RESET PASSWORD
+// ================= RESET PASSWORD =================
 router.put("/resetpassword/:resetToken", forgotLimiter, resetPassword);
+
+
+// =======================================================
+// 🔒 SESSION CHECK (VERY IMPORTANT FOR FRONTEND)
+// =======================================================
+// use this to auto-login if cookie exists
+router.get("/me", protect, async (req, res) => {
+  res.status(200).json({
+    success: true,
+    user: req.user,
+  });
+});
+
 
 export default router;
