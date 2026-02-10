@@ -15,18 +15,35 @@ const Register = () => {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    if (loading) return; // prevent double click
+
+    // trim values
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
 
     // validation
-    if (!name || !email || !password || !confirmPassword) {
+    if (!trimmedName || !trimmedEmail || !password || !confirmPassword) {
       return toast.error("All fields are required");
     }
+
     const emailRegex = /^\S+@\S+\.\S+$/;
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(trimmedEmail)) {
       return toast.error("Enter a valid email address");
     }
+
     if (password.length < 6) {
       return toast.error("Password must be at least 6 characters");
     }
+
+    // strong password rules
+    if (!/[A-Z]/.test(password)) {
+      return toast.error("Password must contain at least one capital letter");
+    }
+
+    if (!/[0-9]/.test(password)) {
+      return toast.error("Password must contain at least one number");
+    }
+
     if (password !== confirmPassword) {
       return toast.error("Passwords do not match");
     }
@@ -34,14 +51,26 @@ const Register = () => {
     setLoading(true);
 
     try {
-      await userRequest.post("/auth/register", { name, email, password });
+      await userRequest.post("/auth/register", {
+        name: trimmedName,
+        email: trimmedEmail,
+        password,
+      });
 
-      toast.success("Account created successfully 🎉 Check your email to verify your account.");
+      toast.success(
+        "Account created successfully 🎉 Check your email to verify account"
+      );
 
-      // Instead of navigating to login immediately, go to verify page
+      // clear form
+      setName("");
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+
+      // go verify page
       setTimeout(() => {
-        navigate("/verify-account", { state: { email } });
-      }, 1000);
+        navigate("/verify-account", { state: { email: trimmedEmail } });
+      }, 1500);
     } catch (error) {
       if (error.response?.data?.message) {
         toast.error(error.response.data.message);
@@ -58,6 +87,7 @@ const Register = () => {
       <ToastContainer position="top-right" autoClose={3000} />
 
       <div className="flex flex-col md:flex-row bg-white shadow-xl rounded-xl overflow-hidden w-full max-w-[900px]">
+        
         {/* LEFT IMAGE */}
         <div className="hidden md:flex md:w-1/2 items-center justify-center bg-gray-50">
           <img
@@ -74,9 +104,12 @@ const Register = () => {
           </h2>
 
           <form className="space-y-5 md:space-y-6" onSubmit={handleRegister}>
+            
             {/* NAME */}
             <div>
-              <label className="block text-gray-600 mb-1 text-sm">Full Name</label>
+              <label className="block text-gray-600 mb-1 text-sm">
+                Full Name
+              </label>
               <input
                 type="text"
                 placeholder="John Doe"
@@ -100,7 +133,9 @@ const Register = () => {
 
             {/* PASSWORD */}
             <div>
-              <label className="block text-gray-600 mb-1 text-sm">Password</label>
+              <label className="block text-gray-600 mb-1 text-sm">
+                Password
+              </label>
               <input
                 type="password"
                 placeholder="******"
@@ -112,7 +147,9 @@ const Register = () => {
 
             {/* CONFIRM PASSWORD */}
             <div>
-              <label className="block text-gray-600 mb-1 text-sm">Confirm Password</label>
+              <label className="block text-gray-600 mb-1 text-sm">
+                Confirm Password
+              </label>
               <input
                 type="password"
                 placeholder="******"
@@ -128,7 +165,7 @@ const Register = () => {
               disabled={loading}
               className={`w-full py-3 text-white font-semibold rounded-md transition ${
                 loading
-                  ? "bg-gray-400 cursor-not-allowed"
+                  ? "bg-gray-400 cursor-not-allowed opacity-70"
                   : "bg-[#d55fbb] hover:bg-[#c54fae]"
               }`}
             >

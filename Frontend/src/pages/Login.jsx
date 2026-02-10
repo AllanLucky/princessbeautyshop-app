@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { toast, ToastContainer } from "react-toastify";
 import { login } from "../redux/apiCall";
+import "react-toastify/dist/ReactToastify.css";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -14,43 +15,54 @@ const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // redirect after login
+  // ================= REDIRECT AFTER LOGIN =================
   useEffect(() => {
     if (currentUser) {
       toast.success("Login successful 🎉");
+
       setTimeout(() => {
         navigate("/", { replace: true });
       }, 1000);
     }
   }, [currentUser, navigate]);
 
-  // validation
+  // ================= VALIDATION =================
   const validateForm = () => {
-    if (!email || !password) {
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail || !password) {
       toast.error("Email and password are required");
       return false;
     }
+
     const emailRegex = /^\S+@\S+\.\S+$/;
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(trimmedEmail)) {
       toast.error("Enter valid email address");
       return false;
     }
+
     if (password.length < 6) {
       toast.error("Password must be at least 6 characters");
       return false;
     }
+
     return true;
   };
 
-  // login handler
+  // ================= LOGIN HANDLER =================
   const handleLogin = async (e) => {
     e.preventDefault();
+
     if (!validateForm()) return;
-    if (loading || isFetching) return;
+    if (loading || isFetching) return; // prevent double click
 
     setLoading(true);
+
     try {
-      await login(dispatch, { email: email.trim(), password });
+      await login(dispatch, {
+        email: email.trim(),
+        password,
+      });
     } catch (err) {
       toast.error(
         err?.response?.data?.message ||
@@ -61,11 +73,13 @@ const Login = () => {
     }
   };
 
+  // ================= UI =================
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4 py-10">
       <ToastContainer position="top-right" autoClose={3000} />
 
       <div className="flex flex-col md:flex-row bg-white shadow-xl rounded-xl overflow-hidden max-w-[900px] w-full">
+        
         {/* LEFT IMAGE */}
         <div className="hidden md:flex md:w-1/2 items-center justify-center bg-gray-50">
           <img
@@ -77,11 +91,15 @@ const Login = () => {
 
         {/* RIGHT FORM */}
         <div className="p-8 md:p-12 w-full md:w-1/2">
-          <h2 className="text-3xl font-bold text-gray-700 mb-8">
+          <h2 className="text-3xl font-bold text-gray-700 mb-2">
             Welcome Back 👋
           </h2>
+          <p className="text-gray-500 mb-8 text-sm">
+            Login to continue to your account
+          </p>
 
           <form className="space-y-6" onSubmit={handleLogin}>
+            
             {/* EMAIL */}
             <div>
               <label className="block text-gray-600 mb-1 font-medium">
@@ -102,6 +120,7 @@ const Login = () => {
               <label className="block text-gray-600 mb-1 font-medium">
                 Password
               </label>
+
               <div className="relative">
                 <input
                   type={showPass ? "text" : "password"}
@@ -111,9 +130,10 @@ const Login = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#d55fbb]"
                 />
+
                 <span
                   onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-3 cursor-pointer text-gray-500 text-sm"
+                  className="absolute right-3 top-3 cursor-pointer text-gray-500 text-sm select-none"
                 >
                   {showPass ? "Hide" : "Show"}
                 </span>
@@ -122,10 +142,11 @@ const Login = () => {
 
             {/* REMEMBER + FORGOT */}
             <div className="flex justify-between items-center text-sm">
-              <label className="flex items-center gap-2">
+              <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" className="accent-[#d55fbb]" />
                 Remember me
               </label>
+
               <Link
                 to="/forgot-password"
                 className="text-[#d55fbb] font-semibold hover:underline"
@@ -138,7 +159,11 @@ const Login = () => {
             <button
               type="submit"
               disabled={loading || isFetching}
-              className="w-full py-3 bg-[#d55fbb] text-white font-semibold rounded-md transition hover:bg-[#bf3ca4] disabled:opacity-50"
+              className={`w-full py-3 text-white font-semibold rounded-md transition ${
+                loading || isFetching
+                  ? "bg-gray-400 cursor-not-allowed opacity-70"
+                  : "bg-[#d55fbb] hover:bg-[#bf3ca4]"
+              }`}
             >
               {loading || isFetching ? "Logging in..." : "Login"}
             </button>

@@ -15,7 +15,7 @@ import {
   FaEyeSlash,
 } from "react-icons/fa";
 
-const Myaccount = () => {
+const MyAccount = () => {
   const user = useSelector((state) => state.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -41,10 +41,21 @@ const Myaccount = () => {
   // ================= UPDATE PROFILE =================
   const handleUpdate = async (e) => {
     e.preventDefault();
-    setLoading(true);
+
+    if (!formData.name || !formData.email) {
+      return toast.error("Name and email required");
+    }
+
+    if (
+      formData.name === user.currentUser?.name &&
+      formData.email === user.currentUser?.email
+    ) {
+      return toast.info("No changes detected");
+    }
 
     try {
-      // 🔥 UPDATE PROFILE API
+      setLoading(true);
+
       await userRequest.put("/users/update-profile", {
         name: formData.name,
         email: formData.email,
@@ -53,7 +64,7 @@ const Myaccount = () => {
       toast.success("Profile updated successfully!");
       setEditMode(false);
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Something went wrong");
+      toast.error(err?.response?.data?.message || "Update failed");
     } finally {
       setLoading(false);
     }
@@ -61,8 +72,18 @@ const Myaccount = () => {
 
   // ================= CHANGE PASSWORD =================
   const handleChangePassword = async () => {
+    if (loading) return;
+
     if (!formData.currentPassword || !formData.newPassword) {
       return toast.error("Fill all password fields");
+    }
+
+    if (formData.newPassword.length < 6) {
+      return toast.error("New password must be at least 6 characters");
+    }
+
+    if (formData.currentPassword === formData.newPassword) {
+      return toast.error("New password must be different");
     }
 
     try {
@@ -74,6 +95,7 @@ const Myaccount = () => {
       });
 
       toast.success("Password changed successfully!");
+
       setFormData((prev) => ({
         ...prev,
         currentPassword: "",
@@ -119,7 +141,6 @@ const Myaccount = () => {
           <div className="p-8 border-b border-gray-100">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center">
-                {/* Avatar */}
                 <div className="w-16 h-16 bg-rose-500 text-white rounded-full flex items-center justify-center mr-4 text-xl font-bold">
                   {user.currentUser?.name?.charAt(0).toUpperCase()}
                 </div>
@@ -132,7 +153,6 @@ const Myaccount = () => {
                 </div>
               </div>
 
-              {/* Edit button */}
               <button
                 onClick={() => setEditMode(!editMode)}
                 className="px-5 py-2 bg-rose-600 text-white rounded-lg font-medium hover:bg-rose-700 transition"
@@ -172,7 +192,6 @@ const Myaccount = () => {
               </h3>
 
               <form onSubmit={handleUpdate} className="space-y-5">
-                {/* NAME */}
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     Full Name
@@ -192,7 +211,6 @@ const Myaccount = () => {
                   </div>
                 </div>
 
-                {/* EMAIL */}
                 <div>
                   <label className="block text-sm font-medium mb-2">Email</label>
                   <div className="relative">
@@ -231,7 +249,6 @@ const Myaccount = () => {
               </h3>
 
               <div className="space-y-5">
-                {/* CURRENT PASSWORD */}
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     Current Password
@@ -248,7 +265,6 @@ const Myaccount = () => {
                   </div>
                 </div>
 
-                {/* NEW PASSWORD */}
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     New Password
@@ -274,12 +290,12 @@ const Myaccount = () => {
 
                 <button
                   onClick={handleChangePassword}
+                  disabled={loading}
                   className="w-full bg-rose-600 hover:bg-rose-700 text-white py-3 rounded-lg font-medium"
                 >
-                  Change Password
+                  {loading ? "Updating..." : "Change Password"}
                 </button>
 
-                {/* LOGOUT */}
                 <button
                   onClick={handleLogout}
                   className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-lg font-medium flex items-center justify-center mt-4"
@@ -300,4 +316,4 @@ const Myaccount = () => {
   );
 };
 
-export default Myaccount;
+export default MyAccount;
