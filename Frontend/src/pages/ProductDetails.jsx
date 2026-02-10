@@ -32,16 +32,26 @@ const ProductDetails = () => {
 
   const dispatch = useDispatch();
 
-  // quantity
+  // ================= QUANTITY =================
   const handleQuantity = (type) => {
-    setQuantity((prev) => {
-      if (type === "dec") return prev > 1 ? prev - 1 : 1;
-      if (type === "inc") return prev + 1;
-      return prev;
-    });
+    if (!product) return;
+
+    const stock = product.stock ?? product.countInStock ?? 0;
+
+    if (type === "dec") {
+      setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
+    }
+
+    if (type === "inc") {
+      if (quantity >= stock) {
+        toast.error(`Only ${stock} items in stock`);
+        return;
+      }
+      setQuantity((prev) => prev + 1);
+    }
   };
 
-  // 🔥 FETCH PRODUCT
+  // ================= FETCH PRODUCT =================
   useEffect(() => {
     const getProduct = async () => {
       try {
@@ -50,34 +60,25 @@ const ProductDetails = () => {
 
         const ratingData = res.data.ratings || [];
 
-        // ⭐ show only latest review per customer
+        // latest review per user
         const latestReviews = {};
-
         ratingData.forEach((r) => {
           const key = r.postedBy || r.name;
-
-          if (!latestReviews[key]) {
-            latestReviews[key] = r;
-          } else {
+          if (!latestReviews[key]) latestReviews[key] = r;
+          else {
             const oldDate = new Date(latestReviews[key].createdAt || 0);
             const newDate = new Date(r.createdAt || 0);
-
-            if (newDate > oldDate) {
-              latestReviews[key] = r;
-            }
+            if (newDate > oldDate) latestReviews[key] = r;
           }
         });
 
         const finalReviews = Object.values(latestReviews);
         setReviews(finalReviews);
 
-        // ⭐ average rating
         if (ratingData.length > 0) {
           const total = ratingData.reduce((a, b) => a + b.star, 0);
           setAvgRating((total / ratingData.length).toFixed(1));
-        } else {
-          setAvgRating(0);
-        }
+        } else setAvgRating(0);
       } catch (err) {
         console.log(err);
       }
@@ -88,7 +89,9 @@ const ProductDetails = () => {
 
   if (!product) return <h2 className="p-10 text-center">Loading...</h2>;
 
-  // 💰 PRICE
+  const stock = product.stock ?? product.countInStock ?? 0;
+
+  // ================= PRICE =================
   const getUnitPrice = () => {
     if (
       product.wholesalePrice &&
@@ -103,8 +106,18 @@ const ProductDetails = () => {
 
   const totalPrice = getUnitPrice() * quantity;
 
-  // 🛒 ADD TO CART
+  // ================= ADD TO CART =================
   const handleAddToCart = () => {
+    if (stock <= 0) {
+      toast.error("Product out of stock");
+      return;
+    }
+
+    if (quantity > stock) {
+      toast.error(`Only ${stock} items available`);
+      return;
+    }
+
     dispatch(
       addProduct({
         ...product,
@@ -116,17 +129,17 @@ const ProductDetails = () => {
       })
     );
 
-    toast.success("Added to cart");
+    toast.success("Added to cart 🛒");
   };
 
-  // 📦 TOTAL ITEMS IN BOX
+  // ================= TOTAL BOX =================
   const totalBoxItems = product.whatinbox
     ? product.whatinbox.reduce((a, b) => a + (b.qty || 1), 0)
     : 0;
 
   return (
     <div className="flex flex-col md:flex-row gap-8 p-6 md:p-12">
-      <ToastContainer />
+      <ToastContainer position="top-right" autoClose={2500} />
 
       {/* IMAGE */}
       <div className="flex-1">
@@ -142,48 +155,48 @@ const ProductDetails = () => {
         <h1 className="text-3xl font-bold">{product.title}</h1>
         <p className="text-gray-600 mt-3">{product.desc}</p>
 
-        {/* 💰 PRICE */}
-        <div className="mt-5">
+        {/* STOCK */}
+        <p className={`mt-2 font-semibold ${stock ? "text-green-600" : "text-red-500"}`}>
+          {stock ? `${stock} items in stock` : "Out of stock"}
+        </p>
+
+        {/* PRICE */}
+        <div className="mt-4">
           <h2 className="text-2xl font-bold text-red-600">
-            KES {totalPrice}
+            KES {totalPrice.toLocaleString()}
           </h2>
         </div>
 
-        {/* ⭐ RATING */}
+        {/* RATING */}
         <div className="flex items-center gap-3 mt-3">
           <StarDisplay rating={Math.round(avgRating)} />
           <span className="text-sm text-gray-600">
-            {avgRating} ⭐ ({reviews.length} customers reviewed)
+            {avgRating} ⭐ ({reviews.length} reviews)
           </span>
         </div>
 
-        {/* 📦 WHAT IN BOX */}
+        {/* WHAT IN BOX */}
         {product.whatinbox && product.whatinbox.length > 0 && (
           <div className="mt-6 bg-gray-50 p-4 rounded-lg border">
             <h3 className="font-bold text-lg mb-3">📦 What's in the box</h3>
 
             {product.whatinbox.map((box, i) => (
-              <div
-                key={i}
-                className="flex justify-between items-center border-b py-2"
-              >
-                <span className="text-gray-700">{box.item}</span>
-
+              <div key={i} className="flex justify-between border-b py-2">
+                <span>{box.item}</span>
                 <span className="bg-black text-white text-xs px-2 py-1 rounded">
                   x{box.qty}
                 </span>
               </div>
             ))}
 
-            {/* TOTAL */}
-            <div className="flex justify-between mt-3 pt-3 font-semibold">
+            <div className="flex justify-between mt-3 font-semibold">
               <span>Total items</span>
               <span>{totalBoxItems}</span>
             </div>
           </div>
         )}
 
-        {/* QUANTITY */}
+        {/* QTY */}
         <div className="flex items-center gap-4 mt-6">
           <button
             onClick={() => handleQuantity("dec")}
@@ -196,7 +209,12 @@ const ProductDetails = () => {
 
           <button
             onClick={() => handleQuantity("inc")}
-            className="p-2 bg-pink-600 text-white rounded-full"
+            disabled={quantity >= stock}
+            className={`p-2 rounded-full text-white ${
+              quantity >= stock
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-pink-600"
+            }`}
           >
             <FaPlus />
           </button>
@@ -205,7 +223,10 @@ const ProductDetails = () => {
         {/* TOTAL */}
         <div className="mt-4 bg-yellow-50 p-3 rounded">
           <p className="font-semibold">
-            Total: <span className="text-red-600">KES {totalPrice}</span>
+            Total:{" "}
+            <span className="text-red-600">
+              KES {totalPrice.toLocaleString()}
+            </span>
           </p>
         </div>
 
@@ -213,9 +234,14 @@ const ProductDetails = () => {
         <div className="flex gap-4 mt-6">
           <button
             onClick={handleAddToCart}
-            className="flex-1 bg-pink-600 text-white py-3 rounded-lg font-semibold"
+            disabled={!stock}
+            className={`flex-1 py-3 rounded-lg font-semibold text-white ${
+              stock
+                ? "bg-pink-600 hover:bg-pink-700"
+                : "bg-gray-400 cursor-not-allowed"
+            }`}
           >
-            Add to Cart
+            {stock ? "Add to Cart" : "Out of Stock"}
           </button>
 
           <button className="flex-1 bg-black text-white py-3 rounded-lg font-semibold">
@@ -223,7 +249,7 @@ const ProductDetails = () => {
           </button>
         </div>
 
-        {/* 💬 COMMENTS */}
+        {/* COMMENTS */}
         <div className="mt-10">
           <h3 className="font-bold text-lg mb-3">Customer Comments</h3>
 
