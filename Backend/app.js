@@ -1,4 +1,6 @@
 import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
 import { errorHandler, notFound } from "./middlewares/errorMiddleware.js";
 import authRoutes from "./routes/authRoutes.js";
 import productRoute from "./routes/productRoutes.js";
@@ -15,22 +17,29 @@ import cors from "cors";
 
 const app = express();
 
-// 🔥 IMPORTANT FOR PRODUCTION (render, nginx, VPS)
+// 🔥 IMPORTANT FOR VPS/RENDER/NGINX
 app.set("trust proxy", 1);
+
+// ================= PATH FIX (IMPORTANT FOR PRODUCTION) =================
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // ================= MIDDLEWARE =================
 
-// Parse JSON
+// parse json
 app.use(express.json());
 
-// Parse cookies
+// cookies
 app.use(cookieParser());
 
-// 🛡 GLOBAL RATE LIMITER (apply to all requests)
+// 🛡 global rate limit
 app.use(globalLimiter);
 
 // ================= CORS =================
-const allowedOrigins = ["http://localhost:5173", "http://localhost:5174"];
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+];
 
 app.use(
   cors({
@@ -45,6 +54,13 @@ app.use(
     },
     credentials: true,
   })
+);
+
+// ================= STATIC UPLOAD FOLDER =================
+// 🔥 VERY IMPORTANT FOR AVATAR IMAGE
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "uploads"))
 );
 
 // ================= ROUTES =================
