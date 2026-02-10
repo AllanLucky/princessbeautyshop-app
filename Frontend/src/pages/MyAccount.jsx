@@ -4,6 +4,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { logout } from "../redux/userRedux";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { userRequest } from "../requestMethod";
 import {
   FaUser,
   FaEnvelope,
@@ -43,13 +44,43 @@ const Myaccount = () => {
     setLoading(true);
 
     try {
-      // 🔥 connect your API here
-      // await axios.put("/api/user/update", formData);
+      // 🔥 UPDATE PROFILE API
+      await userRequest.put("/users/update-profile", {
+        name: formData.name,
+        email: formData.email,
+      });
 
       toast.success("Profile updated successfully!");
       setEditMode(false);
     } catch (err) {
       toast.error(err?.response?.data?.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ================= CHANGE PASSWORD =================
+  const handleChangePassword = async () => {
+    if (!formData.currentPassword || !formData.newPassword) {
+      return toast.error("Fill all password fields");
+    }
+
+    try {
+      setLoading(true);
+
+      await userRequest.put("/users/change-password", {
+        currentPassword: formData.currentPassword,
+        newPassword: formData.newPassword,
+      });
+
+      toast.success("Password changed successfully!");
+      setFormData((prev) => ({
+        ...prev,
+        currentPassword: "",
+        newPassword: "",
+      }));
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Password change failed");
     } finally {
       setLoading(false);
     }
@@ -210,6 +241,7 @@ const Myaccount = () => {
                     <input
                       type={showPassword ? "text" : "password"}
                       name="currentPassword"
+                      value={formData.currentPassword}
                       onChange={handleChange}
                       className="w-full pl-10 p-3 border rounded-lg focus:ring-2 focus:ring-rose-300 outline-none"
                     />
@@ -226,6 +258,7 @@ const Myaccount = () => {
                     <input
                       type={showPassword ? "text" : "password"}
                       name="newPassword"
+                      value={formData.newPassword}
                       onChange={handleChange}
                       className="w-full pl-10 p-3 border rounded-lg focus:ring-2 focus:ring-rose-300 outline-none"
                     />
@@ -238,6 +271,13 @@ const Myaccount = () => {
                     </span>
                   </div>
                 </div>
+
+                <button
+                  onClick={handleChangePassword}
+                  className="w-full bg-rose-600 hover:bg-rose-700 text-white py-3 rounded-lg font-medium"
+                >
+                  Change Password
+                </button>
 
                 {/* LOGOUT */}
                 <button
