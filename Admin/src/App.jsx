@@ -23,6 +23,7 @@ import AdminInvoices from "./pages/AdminInvoices";
 // Custom ProtectedRoute
 import ProtectedRoute from "./components/ProtectedRoute";
 import EditUser from "./pages/EditUser";
+import ProductFeaturePage from "./pages/ProductFeaturePage";
 
 // --- Admin Layout ---
 const Layout = () => (
@@ -69,6 +70,7 @@ const router = createBrowserRouter([
       { path: "products", element: <Products /> },
       { path: "newproduct", element: <NewProduct /> },
       { path: "product/:productId", element: <Product /> },
+      { path: "/admin/product/features/:id", element: <ProductFeaturePage /> },
       { path: "orders", element: <Orders /> },
       { path: "invoices", element: <AdminInvoices /> },
       { path: "banners", element: <Banners /> },
