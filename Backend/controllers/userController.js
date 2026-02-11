@@ -33,7 +33,7 @@ const updateMyProfile = asyncHandler(async (req, res) => {
     throw new Error("User not found");
   }
 
-  // 🔥 check email already exists
+  // check email exists
   if (email && email !== user.email) {
     const emailExists = await User.findOne({ email });
     if (emailExists) {
@@ -83,7 +83,6 @@ const changePassword = asyncHandler(async (req, res) => {
     throw new Error("User not found");
   }
 
-  // 🔐 compare using model method
   const isMatch = await user.matchPassword(currentPassword);
 
   if (!isMatch) {
@@ -91,7 +90,6 @@ const changePassword = asyncHandler(async (req, res) => {
     throw new Error("Current password is incorrect");
   }
 
-  // 🔥 DO NOT HASH HERE (model pre-save will hash)
   user.password = newPassword;
   await user.save();
 
@@ -148,46 +146,47 @@ const deleteMyAccount = asyncHandler(async (req, res) => {
 
 
 // =====================================================
-// 👑 ADMIN UPDATE USER
+// 👑 ADMIN UPDATE USER  (EDIT USER PAGE)
 // =====================================================
 const updateUser = asyncHandler(async (req, res) => {
   const userId = req.params.id;
 
-  const existingUser = await User.findById(userId);
+  const user = await User.findById(userId);
 
-  if (!existingUser) {
+  if (!user) {
     res.status(404);
     throw new Error("User not found");
   }
 
-  // 🔐 Only admin or owner
-  if (
-    req.user._id.toString() !== userId &&
-    req.user.role !== "admin" &&
-    req.user.role !== "super_admin"
-  ) {
+  // 🔐 Only admin/super_admin can edit any user
+  if (req.user.role !== "admin" && req.user.role !== "super_admin") {
     res.status(403);
-    throw new Error("Not authorized");
+    throw new Error("Admin only can update users");
   }
 
-  // normal user cannot change role
-  if (req.user.role === "user") {
-    delete req.body.role;
-    delete req.body.status;
-    delete req.body.isVerified;
+  const { name, email, role, status, phone, address, password } = req.body;
+
+  // email check
+  if (email && email !== user.email) {
+    const emailExists = await User.findOne({ email });
+    if (emailExists) {
+      res.status(400);
+      throw new Error("Email already exists");
+    }
+    user.email = email;
   }
 
-  // 🔥 if updating password (let model hash)
-  if (req.body.password) {
-    existingUser.password = req.body.password;
+  if (name) user.name = name;
+  if (role) user.role = role;
+  if (status) user.status = status;
+  if (phone) user.phone = phone;
+  if (address) user.address = address;
+
+  if (password) {
+    user.password = password; // model will hash
   }
 
-  // update fields
-  Object.keys(req.body).forEach((key) => {
-    existingUser[key] = req.body[key];
-  });
-
-  const updatedUser = await existingUser.save();
+  const updatedUser = await user.save();
 
   res.status(200).json({
     success: true,
@@ -205,7 +204,7 @@ const updateUser = asyncHandler(async (req, res) => {
 
 
 // =====================================================
-// 👑 GET SINGLE USER
+// 👑 GET SINGLE USER (FOR EDIT PAGE)
 // =====================================================
 const getSingleUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id).select("-password");
