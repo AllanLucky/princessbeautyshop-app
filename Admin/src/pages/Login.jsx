@@ -38,7 +38,8 @@ const Login = () => {
       setIsTransitioning(true);
       setTimeout(() => navigate("/admin-dashboard"), 700);
     } else {
-      setError(loginError);
+      setError(loginError || "Login failed");
+      setPassword(""); // clear password on failure
     }
 
     setLoading(false);
@@ -98,6 +99,7 @@ const Login = () => {
                 placeholder="Enter admin email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
                 required
               />
             </div>
@@ -116,6 +118,7 @@ const Login = () => {
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
                 required
               />
               <button
