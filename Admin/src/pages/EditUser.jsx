@@ -1,164 +1,174 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { userRequest } from "../requestMethods";
+import { toast, ToastContainer } from "react-toastify";
+import { FaUpload } from "react-icons/fa";
+import "react-toastify/dist/ReactToastify.css";
 
 const EditUser = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
+  const location = useLocation();
+  const id = location.pathname.split("/")[2];
 
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [user, setUser] = useState({});
+  const [inputs, setInputs] = useState({});
+  const [selectedImage, setSelectedImage] = useState(null);
 
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    role: "user",
-    isActive: true,
-  });
-
-  // ================= FETCH USER =================
+  // ================= GET USER =================
   useEffect(() => {
     const getUser = async () => {
       try {
-        setLoading(true);
         const res = await userRequest.get(`/users/${id}`);
-
-        const u = res.data.user;
-
-        setForm({
-          name: u.name || "",
-          email: u.email || "",
-          role: u.role || "user",
-          isActive: u.isActive ?? true,
-        });
+        setUser(res.data.user);
       } catch (err) {
-        console.error(err.response?.data || err);
-        alert("Failed to load user");
-      } finally {
-        setLoading(false);
+        console.log(err);
       }
     };
-
     getUser();
   }, [id]);
 
   // ================= HANDLE CHANGE =================
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-
-    setForm((prev) => ({
+    setInputs((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [e.target.name]: e.target.value,
     }));
   };
 
-  // ================= UPDATE USER =================
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    try {
-      setSaving(true);
-
-      await userRequest.put(`/users/${id}`, form);
-
-      alert("User updated successfully");
-      navigate("/users");
-    } catch (err) {
-      console.error(err.response?.data || err);
-      alert(err.response?.data?.message || "Update failed");
-    } finally {
-      setSaving(false);
+  // ================= IMAGE CHANGE =================
+  const handleImageChange = (e) => {
+    if (e.target.files[0]) {
+      setSelectedImage(e.target.files[0]);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="p-6 w-[79vw]">
-        <h2 className="text-xl font-semibold">Loading user...</h2>
-      </div>
-    );
-  }
+  // ================= UPDATE USER =================
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+
+    try {
+      let avatarUrl = user.avatar;
+
+      // upload image if selected
+      if (selectedImage) {
+        const data = new FormData();
+        data.append("file", selectedImage);
+        data.append("upload_preset", "uploads");
+
+        const uploadRes = await fetch(
+          "https://api.cloudinary.com/v1_1/dkdx7xytz/image/upload",
+          { method: "POST", body: data }
+        );
+
+        const uploadData = await uploadRes.json();
+        avatarUrl = uploadData.url;
+      }
+
+      await userRequest.put(`/users/${id}`, {
+        ...inputs,
+        avatar: avatarUrl,
+      });
+
+      toast.success("User updated successfully");
+      setInputs({});
+      setSelectedImage(null);
+    } catch (err) {
+      console.log(err);
+      toast.error("Failed to update user");
+    }
+  };
 
   return (
-    <div className="p-6 w-[79vw] bg-gray-50 min-h-screen">
-      <div className="max-w-2xl mx-auto bg-white p-6 rounded-xl shadow-sm">
-        <h1 className="text-2xl font-semibold mb-6 text-gray-800">
-          Edit User
-        </h1>
+    <div className="p-5 w-[79vw]">
+      <ToastContainer />
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+      {/* HEADER */}
+      <div className="flex items-center justify-between mb-5">
+        <h3 className="text-3xl font-semibold">Edit User</h3>
+        <Link to="/users">
+          <button className="bg-slate-500 text-white py-2 px-4 rounded-lg">
+            Back
+          </button>
+        </Link>
+      </div>
 
-          {/* NAME */}
+      {/* USER CARD */}
+      <div className="bg-white p-5 rounded-lg shadow-lg mb-5">
+        <div className="flex items-center gap-5">
+          {/* <img
+            src={selectedImage ? URL.createObjectURL(selectedImage) : user.avatar || "/avatar.png"}
+            className="h-20 w-20 rounded-full object-cover"
+          /> */}
           <div>
-            <label className="block text-sm font-medium mb-1">Name</label>
+            <h2 className="text-xl font-semibold">{user.name}</h2>
+            <p className="text-gray-500 text-sm">{user.email}</p>
+            <span className="text-xs bg-pink-100 text-pink-600 px-2 py-1 rounded-full">
+              {user.role}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* UPDATE FORM */}
+      <div className="bg-white p-5 rounded-lg shadow-lg">
+        <form
+          onSubmit={handleUpdate}
+          className="flex flex-col md:flex-row gap-5"
+        >
+          {/* LEFT */}
+          <div className="flex-1 space-y-4">
             <input
               name="name"
-              value={form.name}
+              placeholder={user.name}
               onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-400"
-              required
+              value={inputs.name || ""}
+              className="w-full border p-2 rounded"
             />
-          </div>
 
-          {/* EMAIL */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Email</label>
             <input
               name="email"
-              type="email"
-              value={form.email}
+              placeholder={user.email}
               onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-400"
-              required
+              value={inputs.email || ""}
+              className="w-full border p-2 rounded"
             />
-          </div>
 
-          {/* ROLE */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Role</label>
             <select
               name="role"
-              value={form.role}
               onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2"
+              value={inputs.role || user.role}
+              className="w-full border p-2 rounded"
             >
               <option value="user">User</option>
-              <option value="customer">Customer</option>
-              <option value="vendor">Vendor</option>
+              <option value="admin">Admin</option>
+            </select>
+
+            <select
+              name="isActive"
+              onChange={handleChange}
+              value={inputs.isActive ?? user.isActive}
+              className="w-full border p-2 rounded"
+            >
+              <option value={true}>Active</option>
+              <option value={false}>Disabled</option>
             </select>
           </div>
 
-          {/* STATUS */}
-          <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              name="isActive"
-              checked={form.isActive}
-              onChange={handleChange}
-              className="h-4 w-4"
+          {/* RIGHT */}
+          <div className="flex-1 flex flex-col items-center gap-5">
+            <img
+              src={selectedImage ? URL.createObjectURL(selectedImage) : user.avatar || "/avatar.png"}
+              className="h-32 w-32 rounded-full object-cover"
             />
-            <label className="text-sm">Active user</label>
-          </div>
 
-          {/* BUTTONS */}
-          <div className="flex gap-3 pt-4">
-            <button
-              type="submit"
-              disabled={saving}
-              className="bg-pink-500 hover:bg-pink-600 text-white px-6 py-2 rounded-lg transition"
-            >
-              {saving ? "Saving..." : "Update User"}
-            </button>
+            <input type="file" hidden id="file" onChange={handleImageChange} />
+            <label htmlFor="file" className="cursor-pointer">
+              <FaUpload className="text-3xl text-gray-700" />
+            </label>
 
-            <button
-              type="button"
-              onClick={() => navigate("/users")}
-              className="bg-gray-200 hover:bg-gray-300 px-6 py-2 rounded-lg"
-            >
-              Cancel
+            <button className="bg-slate-600 text-white py-3 px-6 rounded-lg">
+              Update User
             </button>
           </div>
-
         </form>
       </div>
     </div>
