@@ -2,22 +2,31 @@ import { DataGrid } from "@mui/x-data-grid";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { userRequest } from "../requestMethods";
+import { FaTrash } from "react-icons/fa";
 
 const Users = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   const [paginationModel, setPaginationModel] = useState({
     page: 0,
     pageSize: 10,
   });
 
+  // ================= GET USERS =================
   useEffect(() => {
     const getUsers = async () => {
       try {
         setLoading(true);
         const res = await userRequest.get("/users");
-        setUsers(res.data.users);
+
+        // 🔥 SHOW ONLY NORMAL USERS (hide admin & super_admin)
+        const onlyUsers = res.data.users.filter(
+          (u) => u.role === "user" || u.role === "customer"
+        );
+
+        setUsers(onlyUsers);
       } catch (error) {
         console.error("Failed to fetch users:", error.response?.data || error);
       } finally {
@@ -28,6 +37,24 @@ const Users = () => {
     getUsers();
   }, []);
 
+  // ================= DELETE USER =================
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this user?")) return;
+
+    try {
+      setDeletingId(id);
+      await userRequest.delete(`/users/${id}`);
+
+      setUsers((prev) => prev.filter((user) => user._id !== id));
+    } catch (error) {
+      console.error("Delete failed:", error.response?.data || error);
+      alert(error.response?.data?.message || "Delete failed");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  // ================= TABLE COLUMNS =================
   const userColumns = [
     { field: "_id", headerName: "ID", width: 220 },
 
@@ -81,16 +108,29 @@ const Users = () => {
       ),
     },
 
+    // ================= ACTION COLUMN =================
     {
       field: "action",
-      headerName: "Action",
-      width: 140,
+      headerName: "Actions",
+      width: 190,
       renderCell: (params) => (
-        <Link to={`/user/${params.row._id}`}>
-          <button className="px-3 py-1 text-sm rounded bg-pink-500 text-white hover:bg-pink-600 transition">
-            Edit
+        <div className="flex items-center gap-3">
+          <Link to={`/user/${params.row._id}`}>
+            <button className="bg-pink-500 hover:bg-pink-600 text-white py-1 px-3 rounded-md transition text-sm">
+              Edit
+            </button>
+          </Link>
+
+          <button
+            disabled={deletingId === params.row._id}
+            onClick={() => handleDelete(params.row._id)}
+            className="group relative flex items-center justify-center"
+          >
+            <div className="p-2 rounded-full bg-red-50 group-hover:bg-red-100 transition">
+              <FaTrash className="text-red-500 group-hover:text-red-700 text-sm" />
+            </div>
           </button>
-        </Link>
+        </div>
       ),
     },
   ];
@@ -111,14 +151,11 @@ const Users = () => {
           getRowId={(row) => row._id}
           loading={loading}
           autoHeight
-
           pagination
           paginationModel={paginationModel}
           onPaginationModelChange={setPaginationModel}
           pageSizeOptions={[5, 10, 20, 50]}
-
           disableRowSelectionOnClick
-
           sx={{
             border: "none",
             "& .MuiDataGrid-columnHeaders": {
@@ -140,5 +177,3 @@ const Users = () => {
 };
 
 export default Users;
-
-
