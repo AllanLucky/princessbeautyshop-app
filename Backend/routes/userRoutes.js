@@ -10,7 +10,7 @@ import {
   updateMyProfile,
   changePassword,
   uploadAvatar,
-  deleteMyAccount
+  deleteMyAccount,
 } from "../controllers/userController.js";
 
 import { protect, adminOnly } from "../middlewares/authMiddleware.js";
@@ -29,7 +29,7 @@ const router = express.Router();
 // GET MY PROFILE
 router.get("/me", protect, getMyProfile);
 
-// UPDATE MY PROFILE (name, email)
+// UPDATE MY PROFILE
 router.put("/update-profile", protect, updateMyProfile);
 
 // CHANGE PASSWORD
@@ -39,7 +39,7 @@ router.put("/change-password", protect, changePassword);
 router.put(
   "/upload-avatar",
   protect,
-  upload.single("avatar"), // field name must be avatar
+  upload.single("avatar"), // form-data field name = avatar
   uploadAvatar
 );
 
@@ -49,19 +49,19 @@ router.delete("/delete-account", protect, deleteMyAccount);
 
 
 // =======================================================
-// 👑 ADMIN ROUTES
+// 👑 ADMIN ROUTES (MUST BE BELOW /me ROUTES)
 // =======================================================
 
 // GET ALL USERS
 router.get("/", protect, adminOnly, getAllUsers);
 
-// GET SINGLE USER
+// GET SINGLE USER (FOR EDIT PAGE)
 router.get("/:id", protect, adminOnly, getSingleUser);
 
-// UPDATE USER BY ADMIN
+// 🔥 UPDATE USER (EDIT USER PAGE)
 router.put("/:id", protect, adminOnly, updateUser);
 
-// DELETE USER BY ADMIN
+// DELETE USER
 router.delete("/:id", protect, adminOnly, deleteUser);
 
 
