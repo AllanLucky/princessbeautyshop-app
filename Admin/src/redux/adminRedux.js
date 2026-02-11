@@ -7,28 +7,37 @@ const adminSlice = createSlice({
     isFetching: false,
     error: false,
   },
+
   reducers: {
+    // ================= LOGIN START =================
     loginStart: (state) => {
       state.isFetching = true;
       state.error = false;
     },
 
+    // ================= LOGIN SUCCESS =================
     loginSuccess: (state, action) => {
       state.isFetching = false;
       state.currentAdmin = action.payload;
       state.error = false;
+
+      // 🔐 persist admin
+      localStorage.setItem("admin", JSON.stringify(action.payload));
     },
 
+    // ================= LOGIN FAILURE =================
     loginFailure: (state) => {
       state.isFetching = false;
       state.error = true;
     },
 
+    // ================= LOGOUT =================
     logout: (state) => {
       state.currentAdmin = null;
       state.isFetching = false;
       state.error = false;
-      localStorage.removeItem("admin"); // 🔥 only this is needed
+
+      localStorage.removeItem("admin");
     },
   },
 });
