@@ -22,6 +22,7 @@ import AdminInvoices from "./pages/AdminInvoices";
 
 // Custom ProtectedRoute
 import ProtectedRoute from "./components/ProtectedRoute";
+import EditUser from "./pages/EditUser";
 
 // --- Admin Layout ---
 const Layout = () => (
@@ -64,6 +65,7 @@ const router = createBrowserRouter([
       { path: "admin-dashboard", element: <Home /> },
       { path: "profile", element: <Myaccounts /> },
       { path: "users", element: <Users /> },
+     { path: "user/:id", element: <EditUser /> },
       { path: "products", element: <Products /> },
       { path: "newproduct", element: <NewProduct /> },
       { path: "product/:productId", element: <Product /> },
