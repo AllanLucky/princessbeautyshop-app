@@ -1,6 +1,6 @@
 import { LineChart } from "@mui/x-charts/LineChart";
 import { useEffect, useState } from "react";
-import { FaUpload } from "react-icons/fa";
+import { FaUpload, FaTrash } from "react-icons/fa";
 import { Link, useLocation } from "react-router-dom";
 import { userRequest } from "../requestMethods";
 import { toast, ToastContainer } from "react-toastify";
@@ -9,39 +9,83 @@ import "react-toastify/dist/ReactToastify.css";
 const Product = () => {
   const location = useLocation();
   const id = location.pathname.split("/")[2];
+
   const [product, setProduct] = useState({});
   const [inputs, setInputs] = useState({});
   const [selectedImage, setSelectedImage] = useState(null);
+  const [loading, setLoading] = useState(false);
 
+  const [selectedOptions, setSelectedOptions] = useState({
+    categories: [],
+    skintype: [],
+    concern: [],
+  });
+
+  // ================= GET PRODUCT =================
   useEffect(() => {
     const getProduct = async () => {
       try {
-        const response = await userRequest.get("/products/find/" + id);
-        setProduct(response.data);
-      } catch (error) {
-        console.log(error);
+        const res = await userRequest.get(`/products/find/${id}`);
+        setProduct(res.data);
+
+        setSelectedOptions({
+          categories: res.data.categories || [],
+          skintype: res.data.skintype || [],
+          concern: res.data.concern || [],
+        });
+      } catch (err) {
+        console.log(err);
       }
     };
     getProduct();
   }, [id]);
 
+  // ================= INPUT =================
   const handleChange = (e) => {
+    const { name, value, type } = e.target;
+
     setInputs((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [name]: type === "number" ? Number(value) : value,
     }));
   };
 
+  // ================= IMAGE =================
   const handleImageChange = (e) => {
-    if (e.target.files && e.target.files.length > 0) {
+    if (e.target.files[0]) {
       setSelectedImage(e.target.files[0]);
     }
   };
 
+  // ================= MULTI SELECT =================
+  const handleSelectedChange = (e) => {
+    const { name, value } = e.target;
+    if (!value) return;
+
+    setSelectedOptions((prev) => ({
+      ...prev,
+      [name]: prev[name].includes(value)
+        ? prev[name]
+        : [...prev[name], value],
+    }));
+  };
+
+  const removeOption = (name, value) => {
+    setSelectedOptions((prev) => ({
+      ...prev,
+      [name]: prev[name].filter((v) => v !== value),
+    }));
+  };
+
+  // ================= UPDATE =================
   const handleUpdate = async (e) => {
     e.preventDefault();
+    setLoading(true);
+
     try {
-      let imgUrl = product.img;
+      let imgArr = product.img || [];
+
+      // upload image
       if (selectedImage) {
         const data = new FormData();
         data.append("file", selectedImage);
@@ -51,150 +95,122 @@ const Product = () => {
           "https://api.cloudinary.com/v1_1/dkdx7xytz/image/upload",
           { method: "POST", body: data }
         );
+
         const uploadData = await uploadRes.json();
-        imgUrl = uploadData.url;
+        imgArr = [uploadData.secure_url];
       }
 
-      await userRequest.put(`/products/${id}`, { ...inputs, img: imgUrl });
+      // ✅ STOCK LOGIC
+      const stockValue =
+        inputs.stock !== undefined ? inputs.stock : product.stock;
 
-      // Show success toast
-      toast.success("Product updated successfully!", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
+      const updatedProduct = {
+        ...product,
+        ...inputs,
+        ...selectedOptions,
+        stock: stockValue,
+        inStock: stockValue > 0, // 🔥 auto sync
+        img: imgArr,
+      };
 
-      // Optionally reset inputs
-      setInputs({});
+      await userRequest.put(`/products/${id}`, updatedProduct);
+
+      toast.success("🔥 Product updated successfully");
       setSelectedImage(null);
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to update product!", {
-        position: "top-right",
-        autoClose: 3000,
-      });
+      setInputs({});
+    } catch (err) {
+      console.log(err);
+      toast.error("❌ Failed to update product");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="p-5 w-[79vw]">
       <ToastContainer />
+
+      {/* HEADER */}
       <div className="flex items-center justify-between mb-5">
-        <h3 className="text-3xl font-semibold">Product</h3>
+        <h3 className="text-3xl font-semibold">Edit Product</h3>
         <Link to="/newproduct">
-          <button className="bg-slate-500 text-white py-2 px-4 rounded-lg">
+          <button className="bg-slate-700 text-white py-2 px-4 rounded-lg">
             Create
           </button>
         </Link>
       </div>
 
-      {/* CHART + PRODUCT CARD */}
+      {/* CHART + CARD */}
       <div className="flex flex-col md:flex-row gap-5">
-        {/* CHART */}
         <div className="flex-1">
           <LineChart
             xAxis={[{ data: [1, 2, 3, 4, 5, 6] }]}
             series={[{ data: [2, 5, 3, 7, 4, 6] }]}
             height={300}
-            margin={{ left: 30, right: 30, top: 30, bottom: 30 }}
-            grid={{ vertical: true, horizontal: true }}
           />
         </div>
 
-        {/* PRODUCT CARD */}
         <div className="flex-1 bg-white p-5 rounded-lg shadow-lg">
           <div className="flex items-center mb-5">
             <img
-              src={product.img?.[0] || product.img}
+              src={product.img?.[0]}
               alt=""
-              className="h-20 w-20 rounded-full mr-5"
+              className="h-20 w-20 rounded-full mr-5 object-cover"
             />
             <span className="text-2xl font-semibold">{product.title}</span>
           </div>
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="font-semibold">ID</span>
-              <span>{product._id}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-semibold">Sales</span>
-              <span>{product.sales || 0}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-semibold">In Stock</span>
-              <span>{product.inStock ? "Yes" : "No"}</span>
-            </div>
+
+          <div className="space-y-2">
+            <p><b>ID:</b> {product._id}</p>
+            <p><b>Quantity:</b> {product.stock}</p>
+            <p><b>Status:</b> {product.inStock ? "In Stock" : "Out of Stock"}</p>
           </div>
         </div>
       </div>
 
       {/* UPDATE FORM */}
-      <div className="mt-5 p-5 bg-white shadow-lg rounded-lg">
-        <form className="flex flex-col md:flex-row gap-5" onSubmit={handleUpdate}>
-          {/* LEFT SIDE */}
-          <div className="flex-1 space-y-5">
+      <div className="mt-6 bg-white p-6 rounded-xl shadow">
+        <form onSubmit={handleUpdate} className="grid md:grid-cols-2 gap-6">
+
+          {/* LEFT */}
+          <div className="space-y-4">
+            <input className="input" name="title" placeholder={product.title} onChange={handleChange} />
+            <input className="input" name="desc" placeholder={product.desc} onChange={handleChange} />
+
+            <input className="input" type="number" name="originalPrice" placeholder={product.originalPrice} onChange={handleChange} />
+            <input className="input" type="number" name="discountedPrice" placeholder={product.discountedPrice} onChange={handleChange} />
+
+            {/* 🔥 QUANTITY */}
             <input
-              type="text"
-              name="title"
-              placeholder={product.title}
-              onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded"
-              value={inputs.title || ""}
-            />
-            <input
-              type="text"
-              name="desc"
-              placeholder={product.desc}
-              onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded"
-              value={inputs.desc || ""}
-            />
-            <input
+              className="input"
               type="number"
-              name="originalPrice"
-              placeholder={product.originalPrice}
+              name="stock"
+              placeholder={`Quantity: ${product.stock}`}
               onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded"
-              value={inputs.originalPrice || ""}
             />
-            <input
-              type="number"
-              name="discountedPrice"
-              placeholder={product.discountedPrice}
-              onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded"
-              value={inputs.discountedPrice || ""}
-            />
-            <select
-              name="inStock"
-              className="w-full p-2 border border-gray-300 rounded"
-              onChange={handleChange}
-              value={inputs.inStock || product.inStock}
-            >
-              <option value={true}>Yes</option>
-              <option value={false}>No</option>
-            </select>
+
+            <Select label="Category" name="categories" options={["serum","cream","lotion","foundation"]} selectedOptions={selectedOptions} handleSelectedChange={handleSelectedChange} removeOption={removeOption} />
+            <Select label="Skin Type" name="skintype" options={["all","oily","dry"]} selectedOptions={selectedOptions} handleSelectedChange={handleSelectedChange} removeOption={removeOption} />
+            <Select label="Concern" name="concern" options={["acne","darkspots","aging"]} selectedOptions={selectedOptions} handleSelectedChange={handleSelectedChange} removeOption={removeOption} />
           </div>
 
-          {/* RIGHT SIDE */}
-          <div className="flex-1 flex flex-col items-center space-y-5">
+          {/* RIGHT */}
+          <div className="flex flex-col items-center gap-4">
             <img
-              src={selectedImage ? URL.createObjectURL(selectedImage) : product.img?.[0] || product.img}
-              alt=""
-              className="h-32 w-32 rounded-full"
+              src={selectedImage ? URL.createObjectURL(selectedImage) : product.img?.[0]}
+              className="h-40 w-40 object-cover rounded-lg"
             />
-            <input type="file" onChange={handleImageChange} className="hidden" id="fileInput" />
-            <label htmlFor="fileInput" className="cursor-pointer">
-              <FaUpload className="text-3xl text-gray-800" />
+
+            <input type="file" id="file" hidden onChange={handleImageChange} />
+            <label htmlFor="file">
+              <FaUpload className="text-3xl cursor-pointer" />
             </label>
+
             <button
-              type="submit"
-              className="bg-slate-600 text-white py-3 px-6 rounded-lg"
+              disabled={loading}
+              className="bg-indigo-600 text-white px-10 py-3 rounded-lg font-semibold"
             >
-              Update
+              {loading ? "Updating..." : "Update Product"}
             </button>
           </div>
         </form>
@@ -203,5 +219,29 @@ const Product = () => {
   );
 };
 
-export default Product;
+// ================= SELECT COMPONENT =================
+const Select = ({ label, name, options, selectedOptions, handleSelectedChange, removeOption }) => (
+  <div>
+    <label className="font-semibold">{label}</label>
+    <select name={name} onChange={handleSelectedChange} className="input">
+      <option value="">Select</option>
+      {options.map((o) => (
+        <option key={o} value={o}>{o}</option>
+      ))}
+    </select>
 
+    <div className="flex gap-2 mt-2 flex-wrap">
+      {selectedOptions[name]?.map((opt) => (
+        <span key={opt} className="bg-gray-200 px-2 py-1 rounded flex items-center">
+          {opt}
+          <FaTrash
+            className="ml-2 text-red-500 cursor-pointer"
+            onClick={() => removeOption(name, opt)}
+          />
+        </span>
+      ))}
+    </div>
+  </div>
+);
+
+export default Product;
