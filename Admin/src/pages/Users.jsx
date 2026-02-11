@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { userRequest } from "../requestMethods";
 import { FaTrash } from "react-icons/fa";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -21,7 +23,7 @@ const Users = () => {
         setLoading(true);
         const res = await userRequest.get("/users");
 
-        // 🔥 SHOW ONLY NORMAL USERS (hide admin & super_admin)
+        // show only normal users
         const onlyUsers = res.data.users.filter(
           (u) => u.role === "user" || u.role === "customer"
         );
@@ -29,6 +31,8 @@ const Users = () => {
         setUsers(onlyUsers);
       } catch (error) {
         console.error("Failed to fetch users:", error.response?.data || error);
+
+        toast.error("Failed to fetch users");
       } finally {
         setLoading(false);
       }
@@ -39,16 +43,24 @@ const Users = () => {
 
   // ================= DELETE USER =================
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this user?")) return;
-
     try {
       setDeletingId(id);
+
       await userRequest.delete(`/users/${id}`);
 
       setUsers((prev) => prev.filter((user) => user._id !== id));
+
+      toast.success("User deleted successfully 🗑️", {
+        position: "top-right",
+        autoClose: 2500,
+      });
     } catch (error) {
       console.error("Delete failed:", error.response?.data || error);
-      alert(error.response?.data?.message || "Delete failed");
+
+      toast.error(error.response?.data?.message || "Delete failed", {
+        position: "top-right",
+        autoClose: 3000,
+      });
     } finally {
       setDeletingId(null);
     }
@@ -64,10 +76,10 @@ const Users = () => {
       width: 280,
       renderCell: (params) => (
         <div className="flex items-center gap-3">
-          <img
+          {/* <img
             src={params.row.avatar || "/avatar.png"}
             className="h-9 w-9 rounded-full object-cover border"
-          />
+          /> */}
           <div className="flex flex-col">
             <span className="font-medium text-gray-800">
               {params.row.name}
@@ -108,7 +120,7 @@ const Users = () => {
       ),
     },
 
-    // ================= ACTION COLUMN =================
+    // ================= ACTION =================
     {
       field: "action",
       headerName: "Actions",
@@ -137,6 +149,8 @@ const Users = () => {
 
   return (
     <div className="p-6 w-[79vw] bg-gray-50 min-h-screen">
+      <ToastContainer />
+
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-2xl font-semibold text-gray-800">Users</h1>
         <span className="text-sm text-gray-500">

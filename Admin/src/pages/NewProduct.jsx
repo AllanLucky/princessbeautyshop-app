@@ -16,22 +16,23 @@ const NewProduct = () => {
   });
   const [loading, setLoading] = useState(false);
 
-  // Image selection
+  // ================= IMAGE =================
   const imageChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
       setSelectedImage(e.target.files[0]);
     }
   };
 
-  // Input change
+  // ================= INPUT =================
   const handleChange = (e) => {
     setInputs((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [e.target.name]:
+        e.target.type === "number" ? Number(e.target.value) : e.target.value,
     }));
   };
 
-  // Add selected option
+  // ================= SELECT =================
   const handleSelectedChange = (e) => {
     const { name, value } = e.target;
     if (!value) return;
@@ -41,7 +42,6 @@ const NewProduct = () => {
     }));
   };
 
-  // Remove selected option
   const handleRemoveOption = (name, value) => {
     setSelectedOptions((prev) => ({
       ...prev,
@@ -49,7 +49,7 @@ const NewProduct = () => {
     }));
   };
 
-  // Reset form
+  // ================= RESET =================
   const resetForm = () => {
     setSelectedImage(null);
     setInputs({});
@@ -57,41 +57,51 @@ const NewProduct = () => {
     setUploading("");
   };
 
-  // Upload and create product
+  // ================= CREATE PRODUCT =================
   const handleUpload = async (e) => {
     e.preventDefault();
+
     if (!selectedImage) {
       toast.error("Please select an image");
       return;
     }
 
-    const data = new FormData();
-    data.append("file", selectedImage);
-    data.append("upload_preset", "uploads");
+    if (!inputs.title || !inputs.desc) {
+      toast.error("Title and description required");
+      return;
+    }
 
     try {
       setLoading(true);
-      setUploading("Uploading...");
+      setUploading("Uploading image...");
 
-      // Upload to Cloudinary
+      // Upload to cloudinary
+      const data = new FormData();
+      data.append("file", selectedImage);
+      data.append("upload_preset", "uploads");
+
       const uploadRes = await axios.post(
         "https://api.cloudinary.com/v1_1/dkdx7xytz/image/upload",
         data
       );
-      const { url } = uploadRes.data;
 
-      // Send product to backend
-      await userRequest.post("/products", { img: url, ...inputs, ...selectedOptions });
+      // 🔥 FIX: cloudinary correct url
+      const imageUrl = uploadRes.data.secure_url;
 
+      // send to backend
+      await userRequest.post("/products", {
+        img: [imageUrl], // must be array for mongoose
+        ...inputs,
+        ...selectedOptions,
+      });
+
+      toast.success("Product created successfully 🔥");
       setUploading("Uploaded 100%");
-      toast.success("Product uploaded successfully!");
-
-      // Reset form
       resetForm();
     } catch (error) {
-      console.error("Upload failed:", error);
-      toast.error("Upload failed!");
-      setUploading("Upload failed!");
+      console.error(error);
+      toast.error(error.response?.data?.message || "Upload failed");
+      setUploading("Upload failed");
     } finally {
       setLoading(false);
     }
@@ -100,7 +110,7 @@ const NewProduct = () => {
   return (
     <div className="p-5 w-[79vw]">
       <ToastContainer position="top-right" autoClose={3000} />
-      {/* Header */}
+
       <div className="flex items-center justify-center mb-6">
         <h1 className="text-3xl font-semibold">Add New Product</h1>
       </div>
@@ -108,10 +118,10 @@ const NewProduct = () => {
       <div className="bg-white shadow-lg rounded-lg p-6">
         <form className="flex flex-col md:flex-row gap-6">
 
-          {/* LEFT SIDE */}
+          {/* LEFT */}
           <div className="flex-1 space-y-5">
 
-            {/* Product Image */}
+            {/* IMAGE */}
             <div>
               <label className="font-semibold mb-2">Product Image</label>
               <div className="relative">
@@ -129,126 +139,89 @@ const NewProduct = () => {
                     className="h-32 w-32 object-cover rounded-md border"
                   />
                 )}
-                <input type="file" id="file" onChange={imageChange} style={{ display: "none" }} />
+                <input type="file" id="file" onChange={imageChange} hidden />
               </div>
-              {uploading && <span className="text-green-500 mt-1">{uploading}</span>}
+              {uploading && <span className="text-green-600">{uploading}</span>}
             </div>
 
-            {/* Product Name */}
+            {/* NAME */}
             <div>
               <label className="block font-semibold mb-2">Product Name</label>
               <input
-                type="text"
                 name="title"
                 value={inputs.title || ""}
                 onChange={handleChange}
-                placeholder="Product Name"
-                className="w-full border border-gray-300 rounded px-3 py-2"
+                className="w-full border rounded px-3 py-2"
+                placeholder="Product name"
               />
             </div>
 
-            {/* Product Description */}
+            {/* DESC */}
             <div>
-              <label className="block font-semibold mb-2">Product Description</label>
+              <label className="block font-semibold mb-2">Description</label>
               <textarea
                 name="desc"
                 value={inputs.desc || ""}
                 onChange={handleChange}
-                placeholder="Product Description"
-                rows={6}
-                className="w-full border border-gray-300 rounded px-3 py-2"
+                rows={5}
+                className="w-full border rounded px-3 py-2"
               />
             </div>
 
-            {/* Price */}
+            {/* PRICE */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block font-semibold mb-2">Original Price (KES)</label>
+                <label className="font-semibold">Original Price</label>
                 <input
                   type="number"
                   name="originalPrice"
                   value={inputs.originalPrice || ""}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 rounded px-3 py-2"
-                  placeholder="20000"
+                  className="w-full border rounded px-3 py-2"
                 />
               </div>
+
               <div>
-                <label className="block font-semibold mb-2">Discounted Price (KES)</label>
+                <label className="font-semibold">Discount Price</label>
                 <input
                   type="number"
                   name="discountedPrice"
                   value={inputs.discountedPrice || ""}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 rounded px-3 py-2"
-                  placeholder="18000"
+                  className="w-full border rounded px-3 py-2"
                 />
               </div>
+            </div>
+
+            {/* 🔥 STOCK */}
+            <div>
+              <label className="font-semibold">Product Stock</label>
+              <input
+                type="number"
+                name="stock"
+                value={inputs.stock || ""}
+                onChange={handleChange}
+                className="w-full border rounded px-3 py-2"
+                placeholder="Enter stock quantity e.g 50"
+              />
             </div>
           </div>
 
-          {/* RIGHT SIDE */}
+          {/* RIGHT */}
           <div className="flex-1 space-y-5">
 
-            {/* Wholesale & Brand */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block font-semibold mb-2">Wholesale Price (KES)</label>
-                <input
-                  type="number"
-                  name="wholesalePrice"
-                  value={inputs.wholesalePrice || ""}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded px-3 py-2"
-                  placeholder="17000"
-                />
-              </div>
-              <div>
-                <label className="block font-semibold mb-2">Minimum Qty</label>
-                <input
-                  type="number"
-                  name="wholesaleMinimumQuantity"
-                  value={inputs.wholesaleMinimumQuantity || ""}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded px-3 py-2"
-                  placeholder="10"
-                />
-              </div>
-            </div>
-
+            {/* BRAND */}
             <div>
-              <label className="block font-semibold mb-2">Brand</label>
+              <label className="font-semibold">Brand</label>
               <input
-                type="text"
                 name="brand"
                 value={inputs.brand || ""}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded px-3 py-2"
-                placeholder="Kylie"
+                className="w-full border rounded px-3 py-2"
               />
             </div>
 
-            {/* Concern */}
-            <SelectOption
-              label="Concern"
-              name="concern"
-              options={["acne", "dry-skin", "oily-skin", "dark-spots", "aging", "sensitive-skin"]}
-              selectedOptions={selectedOptions}
-              handleSelectedChange={handleSelectedChange}
-              handleRemoveOption={handleRemoveOption}
-            />
-
-            {/* Skin Type */}
-            <SelectOption
-              label="Skin Type"
-              name="skintype"
-              options={["all", "oily", "dry", "sensitive", "normal"]}
-              selectedOptions={selectedOptions}
-              handleSelectedChange={handleSelectedChange}
-              handleRemoveOption={handleRemoveOption}
-            />
-
-            {/* Category */}
+            {/* CATEGORY */}
             <SelectOption
               label="Category"
               name="categories"
@@ -258,11 +231,30 @@ const NewProduct = () => {
               handleRemoveOption={handleRemoveOption}
             />
 
+            {/* SKIN */}
+            <SelectOption
+              label="Skin Type"
+              name="skintype"
+              options={["all", "oily", "dry", "sensitive"]}
+              selectedOptions={selectedOptions}
+              handleSelectedChange={handleSelectedChange}
+              handleRemoveOption={handleRemoveOption}
+            />
+
+            {/* CONCERN */}
+            <SelectOption
+              label="Concern"
+              name="concern"
+              options={["acne", "dark-spots", "aging"]}
+              selectedOptions={selectedOptions}
+              handleSelectedChange={handleSelectedChange}
+              handleRemoveOption={handleRemoveOption}
+            />
+
             <button
-              type="button"
               onClick={handleUpload}
               disabled={loading}
-              className={`w-full py-3 mt-4 bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-500 text-white font-semibold rounded-xl transition-all shadow-lg ${loading ? "opacity-70 cursor-not-allowed" : "hover:scale-[1.02]"}`}
+              className="w-full py-3 bg-gradient-to-r from-pink-500 to-indigo-600 text-white rounded-xl font-semibold"
             >
               {loading ? "Creating..." : "Create Product"}
             </button>
@@ -274,26 +266,27 @@ const NewProduct = () => {
   );
 };
 
-// Reusable select component
+// ================= SELECT COMPONENT =================
 const SelectOption = ({ label, name, options, selectedOptions, handleSelectedChange, handleRemoveOption }) => (
   <div>
-    <label className="block font-semibold mb-2">{label}</label>
+    <label className="font-semibold">{label}</label>
     <select
       name={name}
       onChange={handleSelectedChange}
-      className="w-full border border-gray-300 rounded px-3 py-2"
+      className="w-full border rounded px-3 py-2 mt-1"
     >
-      <option value="">Select {label.toLowerCase()}</option>
+      <option value="">Select {label}</option>
       {options.map((opt) => (
         <option key={opt} value={opt}>{opt}</option>
       ))}
     </select>
+
     <div className="flex flex-wrap gap-2 mt-2">
       {selectedOptions[name].map((option) => (
-        <span key={option} className="flex items-center bg-gray-200 px-2 py-1 rounded">
+        <span key={option} className="bg-gray-200 px-2 py-1 rounded flex items-center">
           {option}
           <FaTrash
-            className="ml-1 text-red-500 cursor-pointer"
+            className="ml-2 text-red-500 cursor-pointer"
             onClick={() => handleRemoveOption(name, option)}
           />
         </span>
@@ -303,5 +296,3 @@ const SelectOption = ({ label, name, options, selectedOptions, handleSelectedCha
 );
 
 export default NewProduct;
-
-
