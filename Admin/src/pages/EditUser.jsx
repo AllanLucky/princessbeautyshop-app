@@ -78,7 +78,7 @@ const EditUser = () => {
   };
 
   return (
-    <div className="p-5 w-[79vw]">
+    <div className="p-5 bg-gray-100 min-h-screen w-full">
       <ToastContainer />
 
       {/* HEADER */}

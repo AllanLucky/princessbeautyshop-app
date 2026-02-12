@@ -14,17 +14,13 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
       lowercase: true,
-<<<<<<< HEAD
       trim: true,
-=======
->>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
     },
 
     password: {
       type: String,
       required: true,
       minlength: 6,
-<<<<<<< HEAD
       select: false, 
     },
 
@@ -36,19 +32,6 @@ const userSchema = new mongoose.Schema(
     },
 
     
-=======
-      select: false,
-    },
-
-    // ✅ Role enum with default customer
-    role: {
-      type: String,
-      enum: ["customer", "admin"],
-      default: "customer",
-    },
-
-    // ================= EMAIL VERIFICATION =================
->>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
     isVerified: {
       type: Boolean,
       default: false,
@@ -56,19 +39,11 @@ const userSchema = new mongoose.Schema(
     verificationCode: String,
     verificationCodeExpire: Date,
 
-<<<<<<< HEAD
     // ===== PASSWORD RESET =====
     resetPasswordToken: String,
     resetPasswordExpire: Date,
 
     // ===== LOGIN SECURITY =====
-=======
-    // ================= RESET PASSWORD =================
-    resetPasswordToken: String,
-    resetPasswordExpire: Date,
-
-    // ================= LOGIN SECURITY =================
->>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
     loginAttempts: {
       type: Number,
       default: 0,
@@ -104,19 +79,13 @@ userSchema.methods.isLocked = function () {
 // ================= INCREASE LOGIN ATTEMPTS =================
 userSchema.methods.incLoginAttempts = async function () {
   if (this.lockUntil && this.lockUntil < Date.now()) {
-<<<<<<< HEAD
     // lock expired, reset attempts
-=======
->>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
     this.loginAttempts = 1;
     this.lockUntil = undefined;
   } else {
     this.loginAttempts += 1;
 
-<<<<<<< HEAD
     // lock account if attempts exceed limit
-=======
->>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
     if (this.loginAttempts >= 5) {
       this.lockUntil = Date.now() + 30 * 60 * 1000; // 30 mins
     }
@@ -133,13 +102,9 @@ userSchema.methods.resetLoginAttempts = async function () {
   await this.save({ validateBeforeSave: false });
 };
 
-<<<<<<< HEAD
 
 
 // ================= MODEL =================
 const User = mongoose.models.User || mongoose.model("User", userSchema);
-=======
-const User = mongoose.model("User", userSchema);
->>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
 
 export default User;
