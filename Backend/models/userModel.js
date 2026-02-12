@@ -14,23 +14,24 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
       lowercase: true,
+      trim: true,
     },
 
     password: {
       type: String,
       required: true,
       minlength: 6,
-      select: false,
+      select: false, 
     },
 
-    // ✅ Role enum with default customer
+   
     role: {
       type: String,
-      enum: ["customer", "admin"],
+      enum: ["customer", "admin", "superadmin"],
       default: "customer",
     },
 
-    // ================= EMAIL VERIFICATION =================
+    
     isVerified: {
       type: Boolean,
       default: false,
@@ -38,11 +39,11 @@ const userSchema = new mongoose.Schema(
     verificationCode: String,
     verificationCodeExpire: Date,
 
-    // ================= RESET PASSWORD =================
+    // ===== PASSWORD RESET =====
     resetPasswordToken: String,
     resetPasswordExpire: Date,
 
-    // ================= LOGIN SECURITY =================
+    // ===== LOGIN SECURITY =====
     loginAttempts: {
       type: Number,
       default: 0,
@@ -78,11 +79,13 @@ userSchema.methods.isLocked = function () {
 // ================= INCREASE LOGIN ATTEMPTS =================
 userSchema.methods.incLoginAttempts = async function () {
   if (this.lockUntil && this.lockUntil < Date.now()) {
+    // lock expired, reset attempts
     this.loginAttempts = 1;
     this.lockUntil = undefined;
   } else {
     this.loginAttempts += 1;
 
+    // lock account if attempts exceed limit
     if (this.loginAttempts >= 5) {
       this.lockUntil = Date.now() + 30 * 60 * 1000; // 30 mins
     }
@@ -99,6 +102,9 @@ userSchema.methods.resetLoginAttempts = async function () {
   await this.save({ validateBeforeSave: false });
 };
 
-const User = mongoose.model("User", userSchema);
+
+
+// ================= MODEL =================
+const User = mongoose.models.User || mongoose.model("User", userSchema);
 
 export default User;
