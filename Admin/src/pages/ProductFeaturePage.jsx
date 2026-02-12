@@ -9,6 +9,7 @@ const ProductFeaturePage = () => {
   const { id } = useParams();
 
   const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   // ===== FEATURES =====
   const [featureInput, setFeatureInput] = useState("");
@@ -19,15 +20,12 @@ const ProductFeaturePage = () => {
   const [specValue, setSpecValue] = useState("");
   const [specs, setSpecs] = useState([]);
 
-  const [loading, setLoading] = useState(true);
-
   //////////////////////////////////////////////////////
   // 🔥 FETCH PRODUCT
   //////////////////////////////////////////////////////
   const fetchProduct = async () => {
     try {
       setLoading(true);
-
       const res = await userRequest.get(`/products/find/${id}`);
       const data = res.data;
 
@@ -35,7 +33,7 @@ const ProductFeaturePage = () => {
       setFeatures(data.features || []);
       setSpecs(data.specifications || []);
     } catch (err) {
-      console.log(err);
+      console.error(err);
       toast.error("Failed to load product");
     } finally {
       setLoading(false);
@@ -50,35 +48,34 @@ const ProductFeaturePage = () => {
   // 🔥 ADD FEATURE
   //////////////////////////////////////////////////////
   const addFeature = () => {
-    if (!featureInput.trim()) {
-      return toast.error("Write feature first");
-    }
+    if (!featureInput.trim()) return toast.error("Write feature first");
 
-    setFeatures([...features, featureInput]);
+    setFeatures((prev) => [...prev, featureInput.trim()]);
+    toast.success("Feature added");
     setFeatureInput("");
   };
 
   const removeFeature = (item) => {
-    setFeatures(features.filter((f) => f !== item));
+    setFeatures((prev) => prev.filter((f) => f !== item));
+    toast.info("Feature removed");
   };
 
   //////////////////////////////////////////////////////
   // 🔥 ADD SPECIFICATION
   //////////////////////////////////////////////////////
   const addSpec = () => {
-    if (!specKey.trim() || !specValue.trim()) {
+    if (!specKey.trim() || !specValue.trim())
       return toast.error("Add title and description");
-    }
 
-    setSpecs([...specs, { key: specKey, value: specValue }]);
+    setSpecs((prev) => [...prev, { key: specKey.trim(), value: specValue.trim() }]);
+    toast.success("Specification added");
     setSpecKey("");
     setSpecValue("");
   };
 
   const removeSpec = (index) => {
-    const newSpecs = [...specs];
-    newSpecs.splice(index, 1);
-    setSpecs(newSpecs);
+    setSpecs((prev) => prev.filter((_, i) => i !== index));
+    toast.info("Specification removed");
   };
 
   //////////////////////////////////////////////////////
@@ -86,20 +83,21 @@ const ProductFeaturePage = () => {
   //////////////////////////////////////////////////////
   const saveData = async () => {
     try {
-      await userRequest.put(`/products/${id}`, {
+      if (!product) return;
+
+      const res = await userRequest.put(`/products/${id}`, {
         features,
         specifications: specs,
       });
 
-      toast.success("Product updated successfully 🔥");
+      setProduct(res.data);
+      setFeatures(res.data.features || []);
+      setSpecs(res.data.specifications || []);
 
-      // reload product
-      fetchProduct();
+      toast.success("Product features & specifications updated successfully 🔥");
     } catch (err) {
-      console.log(err);
-      toast.error(
-        err.response?.data?.message || "Update failed or not authorized"
-      );
+      console.error(err);
+      toast.error(err.response?.data?.message || "Update failed or not authorized");
     }
   };
 
@@ -108,16 +106,12 @@ const ProductFeaturePage = () => {
   //////////////////////////////////////////////////////
   if (loading)
     return (
-      <div className="p-10 text-lg font-semibold">
-        ⏳ Loading product...
-      </div>
+      <div className="p-10 text-lg font-semibold">⏳ Loading product...</div>
     );
 
   if (!product)
     return (
-      <div className="p-10 text-red-500 font-semibold">
-        ❌ Product not found
-      </div>
+      <div className="p-10 text-red-500 font-semibold">❌ Product not found</div>
     );
 
   return (
@@ -166,7 +160,7 @@ const ProductFeaturePage = () => {
 
         {/* FEATURE LIST */}
         <div className="flex flex-wrap gap-3 mt-5">
-          {features.map((f, i) => (
+          {features?.map((f, i) => (
             <span
               key={i}
               className="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-full flex items-center"
@@ -210,7 +204,7 @@ const ProductFeaturePage = () => {
 
         {/* SPEC LIST */}
         <div className="mt-6 space-y-3">
-          {specs.map((s, i) => (
+          {specs?.map((s, i) => (
             <div
               key={i}
               className="flex justify-between items-center bg-gray-50 p-4 rounded-lg"

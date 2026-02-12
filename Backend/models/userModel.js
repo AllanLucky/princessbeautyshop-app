@@ -107,11 +107,4 @@ userSchema.methods.resetLoginAttempts = async function () {
 // ================= MODEL =================
 const User = mongoose.models.User || mongoose.model("User", userSchema);
 
-<<<<<<< HEAD
-const Product =
-  mongoose.models.Product || mongoose.model("Product", ProductSchema);
-
-export default Product;
-=======
 export default User;
->>>>>>> Backend

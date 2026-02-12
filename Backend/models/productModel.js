@@ -161,13 +161,6 @@ ProductSchema.pre("save", function () {
   this.inStock = this.stock > 0;
 });
 
-// 🔥 ALSO UPDATE WHEN USING findByIdAndUpdate
-ProductSchema.pre("findOneAndUpdate", function () {
-  const update = this.getUpdate();
-
-  if (update.stock !== undefined) {
-    update.inStock = update.stock > 0;
-  }
 // 🔥 UPDATE STOCK WHEN USING findOneAndUpdate
 ProductSchema.pre("findOneAndUpdate", function (next) {
   const update = this.getUpdate();
