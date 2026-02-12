@@ -95,16 +95,13 @@ const getALLproducts = asyncHandler(async (req, res) => {
   if (category) query.categories = { $in: [category] };
   if (brand) query.brand = brand;
   if (concern) query.concern = { $in: [concern] };
-  if (search)
-    query.$text = { $search: search, $caseSensitive: false, $diacriticSensitive: false };
+  if (search) query.$text = { $search: search, $caseSensitive: false, $diacriticSensitive: false };
 
   let productsQuery = Product.find(query);
 
   if (qNew) productsQuery = productsQuery.sort({ createdAt: -1 });
-  if (sort === "asc")
-    productsQuery = productsQuery.sort({ discountedPrice: 1, originalPrice: 1 });
-  if (sort === "desc")
-    productsQuery = productsQuery.sort({ discountedPrice: -1, originalPrice: -1 });
+  if (sort === "asc") productsQuery = productsQuery.sort({ discountedPrice: 1, originalPrice: 1 });
+  if (sort === "desc") productsQuery = productsQuery.sort({ discountedPrice: -1, originalPrice: -1 });
 
   const products = await productsQuery;
 

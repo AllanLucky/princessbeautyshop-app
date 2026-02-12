@@ -35,6 +35,7 @@ const Product = () => {
         });
       } catch (err) {
         console.log(err);
+        toast.error("Failed to fetch product");
       }
     };
     getProduct();
@@ -43,7 +44,6 @@ const Product = () => {
   // ================= INPUT =================
   const handleChange = (e) => {
     const { name, value, type } = e.target;
-
     setInputs((prev) => ({
       ...prev,
       [name]: type === "number" ? Number(value) : value,
@@ -52,9 +52,7 @@ const Product = () => {
 
   // ================= IMAGE =================
   const handleImageChange = (e) => {
-    if (e.target.files[0]) {
-      setSelectedImage(e.target.files[0]);
-    }
+    if (e.target.files[0]) setSelectedImage(e.target.files[0]);
   };
 
   // ================= MULTI SELECT =================
@@ -64,9 +62,7 @@ const Product = () => {
 
     setSelectedOptions((prev) => ({
       ...prev,
-      [name]: prev[name].includes(value)
-        ? prev[name]
-        : [...prev[name], value],
+      [name]: prev[name].includes(value) ? prev[name] : [...prev[name], value],
     }));
   };
 
@@ -85,7 +81,7 @@ const Product = () => {
     try {
       let imgArr = product.img || [];
 
-      // upload image
+      // upload image if new selected
       if (selectedImage) {
         const data = new FormData();
         data.append("file", selectedImage);
@@ -100,16 +96,15 @@ const Product = () => {
         imgArr = [uploadData.secure_url];
       }
 
-      // ✅ STOCK LOGIC
-      const stockValue =
-        inputs.stock !== undefined ? inputs.stock : product.stock;
+      // stock logic
+      const stockValue = inputs.stock !== undefined ? inputs.stock : product.stock;
 
       const updatedProduct = {
         ...product,
         ...inputs,
         ...selectedOptions,
         stock: stockValue,
-        inStock: stockValue > 0, // 🔥 auto sync
+        inStock: stockValue > 0,
         img: imgArr,
       };
 
@@ -127,11 +122,11 @@ const Product = () => {
   };
 
   return (
-    <div className="p-5 w-[79vw]">
-      <ToastContainer />
+    <div className="p-4 md:p-6 w-full min-w-[300px] bg-gray-50 min-h-screen overflow-x-hidden">
+      <ToastContainer position="top-right" autoClose={2000} />
 
       {/* HEADER */}
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
         <h3 className="text-3xl font-semibold">Edit Product</h3>
         <Link to="/newproduct">
           <button className="bg-slate-700 text-white py-2 px-4 rounded-lg">
@@ -141,7 +136,7 @@ const Product = () => {
       </div>
 
       {/* CHART + CARD */}
-      <div className="flex flex-col md:flex-row gap-5">
+      <div className="flex flex-col md:flex-row gap-5 overflow-hidden">
         <div className="flex-1">
           <LineChart
             xAxis={[{ data: [1, 2, 3, 4, 5, 6] }]}
@@ -150,7 +145,7 @@ const Product = () => {
           />
         </div>
 
-        <div className="flex-1 bg-white p-5 rounded-lg shadow-lg">
+        <div className="flex-1 bg-white p-5 rounded-lg shadow-lg overflow-hidden">
           <div className="flex items-center mb-5">
             <img
               src={product.img?.[0]}
@@ -169,18 +164,39 @@ const Product = () => {
       </div>
 
       {/* UPDATE FORM */}
-      <div className="mt-6 bg-white p-6 rounded-xl shadow">
+      <div className="mt-6 bg-white p-6 rounded-xl shadow overflow-hidden">
         <form onSubmit={handleUpdate} className="grid md:grid-cols-2 gap-6">
 
           {/* LEFT */}
           <div className="space-y-4">
-            <input className="input" name="title" placeholder={product.title} onChange={handleChange} />
-            <input className="input" name="desc" placeholder={product.desc} onChange={handleChange} />
+            <input
+              className="input"
+              name="title"
+              placeholder={product.title}
+              onChange={handleChange}
+            />
+            <input
+              className="input"
+              name="desc"
+              placeholder={product.desc}
+              onChange={handleChange}
+            />
 
-            <input className="input" type="number" name="originalPrice" placeholder={product.originalPrice} onChange={handleChange} />
-            <input className="input" type="number" name="discountedPrice" placeholder={product.discountedPrice} onChange={handleChange} />
+            <input
+              className="input"
+              type="number"
+              name="originalPrice"
+              placeholder={product.originalPrice}
+              onChange={handleChange}
+            />
+            <input
+              className="input"
+              type="number"
+              name="discountedPrice"
+              placeholder={product.discountedPrice}
+              onChange={handleChange}
+            />
 
-            {/* 🔥 QUANTITY */}
             <input
               className="input"
               type="number"
@@ -189,9 +205,30 @@ const Product = () => {
               onChange={handleChange}
             />
 
-            <Select label="Category" name="categories" options={["serum","cream","lotion","foundation"]} selectedOptions={selectedOptions} handleSelectedChange={handleSelectedChange} removeOption={removeOption} />
-            <Select label="Skin Type" name="skintype" options={["all","oily","dry"]} selectedOptions={selectedOptions} handleSelectedChange={handleSelectedChange} removeOption={removeOption} />
-            <Select label="Concern" name="concern" options={["acne","darkspots","aging"]} selectedOptions={selectedOptions} handleSelectedChange={handleSelectedChange} removeOption={removeOption} />
+            <Select
+              label="Category"
+              name="categories"
+              options={["serum","cream","lotion","foundation"]}
+              selectedOptions={selectedOptions}
+              handleSelectedChange={handleSelectedChange}
+              removeOption={removeOption}
+            />
+            <Select
+              label="Skin Type"
+              name="skintype"
+              options={["all","oily","dry"]}
+              selectedOptions={selectedOptions}
+              handleSelectedChange={handleSelectedChange}
+              removeOption={removeOption}
+            />
+            <Select
+              label="Concern"
+              name="concern"
+              options={["acne","darkspots","aging"]}
+              selectedOptions={selectedOptions}
+              handleSelectedChange={handleSelectedChange}
+              removeOption={removeOption}
+            />
           </div>
 
           {/* RIGHT */}
