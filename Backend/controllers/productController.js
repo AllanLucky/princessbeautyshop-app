@@ -14,23 +14,37 @@ const createProduct = asyncHandler(async (req, res) => {
   res.status(201).json(product);
 });
 
-
 // ================= UPDATE PRODUCT =================
 const updateProduct = asyncHandler(async (req, res) => {
-  const updatedProduct = await Product.findByIdAndUpdate(
-    req.params.id,
-    { $set: req.body },
-    { new: true }
-  );
+  const updateData = { ...req.body };
 
-  if (!updatedProduct) {
-    res.status(400);
-    throw new Error("Product not updated");
+  const product = await Product.findById(req.params.id);
+  if (!product) {
+    res.status(404);
+    throw new Error("Product not found");
   }
 
-  res.status(200).json(updatedProduct);
-});
+  // Merge features if provided
+  if (updateData.features) {
+    product.features = updateData.features;
+    delete updateData.features;
+  }
 
+  // Merge specifications if provided
+  if (updateData.specifications) {
+    product.specifications = updateData.specifications;
+    delete updateData.specifications;
+  }
+
+  // Merge other fields
+  Object.keys(updateData).forEach((key) => {
+    product[key] = updateData[key];
+  });
+
+  await product.save({ validateBeforeSave: true });
+
+  res.status(200).json(product);
+});
 
 // ================= DELETE PRODUCT =================
 const deleteProduct = asyncHandler(async (req, res) => {
@@ -56,9 +70,9 @@ const getProduct = asyncHandler(async (req, res) => {
     throw new Error("Product not found");
   }
 
-  // ⭐ CALCULATE AVERAGE RATING (backend professional way)
+  // ⭐ CALCULATE AVERAGE RATING
   let avgRating = 0;
-  let totalReviews = product.ratings.length;
+  const totalReviews = product.ratings.length;
 
   if (totalReviews > 0) {
     const total = product.ratings.reduce((sum, r) => sum + r.star, 0);
@@ -72,59 +86,25 @@ const getProduct = asyncHandler(async (req, res) => {
   });
 });
 
-
 // ================= GET ALL PRODUCTS (WITH FILTER) =================
 const getALLproducts = asyncHandler(async (req, res) => {
-  const {
-    new: qNew,
-    category,
-    brand,
-    concern,
-    search,
-    sort,
-  } = req.query;
+  const { new: qNew, category, brand, concern, search, sort } = req.query;
 
   let query = {};
 
-  // category filter
-  if (category) {
-    query.categories = { $in: [category] };
-  }
-
-  // brand filter
-  if (brand) {
-    query.brand = brand;
-  }
-
-  // concern filter
-  if (concern) {
-    query.concern = { $in: [concern] };
-  }
-
-  // search filter
-  if (search) {
-    query.$text = {
-      $search: search,
-      $caseSensitive: false,
-      $diacriticSensitive: false,
-    };
-  }
+  if (category) query.categories = { $in: [category] };
+  if (brand) query.brand = brand;
+  if (concern) query.concern = { $in: [concern] };
+  if (search)
+    query.$text = { $search: search, $caseSensitive: false, $diacriticSensitive: false };
 
   let productsQuery = Product.find(query);
 
-  // newest
-  if (qNew) {
-    productsQuery = productsQuery.sort({ createdAt: -1 });
-  }
-
-  // price sorting
-  if (sort === "asc") {
+  if (qNew) productsQuery = productsQuery.sort({ createdAt: -1 });
+  if (sort === "asc")
     productsQuery = productsQuery.sort({ discountedPrice: 1, originalPrice: 1 });
-  }
-
-  if (sort === "desc") {
+  if (sort === "desc")
     productsQuery = productsQuery.sort({ discountedPrice: -1, originalPrice: -1 });
-  }
 
   const products = await productsQuery;
 
@@ -142,7 +122,7 @@ const ratingProduct = asyncHandler(async (req, res) => {
     throw new Error("Product not found");
   }
 
-  // check if already reviewed
+  // Check if user already reviewed
   const existingReview = product.ratings.find(
     (r) => r.postedBy.toString() === userId.toString()
   );
@@ -161,7 +141,7 @@ const ratingProduct = asyncHandler(async (req, res) => {
 
   await product.save();
 
-  // ⭐ recalc average
+  // ⭐ Recalculate average rating
   const total = product.ratings.reduce((sum, r) => sum + r.star, 0);
   const avgRating = (total / product.ratings.length).toFixed(1);
 
@@ -172,12 +152,11 @@ const ratingProduct = asyncHandler(async (req, res) => {
   });
 });
 
-
 export {
-  ratingProduct,
-  getALLproducts,
-  getProduct,
   createProduct,
   updateProduct,
   deleteProduct,
+  getProduct,
+  getALLproducts,
+  ratingProduct,
 };
