@@ -108,7 +108,7 @@ const NewProduct = () => {
   };
 
   return (
-    <div className="p-5 w-[79vw]">
+    <div className="p-5 w-[77vw] overflow-hidden">
       <ToastContainer position="top-right" autoClose={3000} />
 
       <div className="flex items-center justify-center mb-6">

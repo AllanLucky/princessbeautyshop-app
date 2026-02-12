@@ -11,9 +11,7 @@ const Products = () => {
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
 
-  
-  // FETCH PRODUCTS
- 
+  // ================= FETCH PRODUCTS =================
   useEffect(() => {
     const getProducts = async () => {
       try {
@@ -27,13 +25,10 @@ const Products = () => {
         setLoading(false);
       }
     };
-
     getProducts();
   }, []);
 
-  
-  // DELETE PRODUCT
- 
+  // ================= DELETE PRODUCT =================
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this product?")) return;
 
@@ -53,9 +48,7 @@ const Products = () => {
     }
   };
 
-  
-  // TABLE COLUMNS
-  
+  // ================= TABLE COLUMNS =================
   const columns = [
     { field: "_id", headerName: "ID", width: 100 },
 
@@ -104,9 +97,6 @@ const Products = () => {
       ),
     },
 
-    //////////////////////////////////////////////////////
-    // 👁 VIEW
-    //////////////////////////////////////////////////////
     {
       field: "view",
       headerName: "View",
@@ -118,9 +108,6 @@ const Products = () => {
       ),
     },
 
-    //////////////////////////////////////////////////////
-    // ⭐ FEATURES SECTION ICON
-    //////////////////////////////////////////////////////
     {
       field: "features",
       headerName: "Sections",
@@ -134,9 +121,6 @@ const Products = () => {
       ),
     },
 
-    //////////////////////////////////////////////////////
-    // 🗑 DELETE
-    //////////////////////////////////////////////////////
     {
       field: "delete",
       headerName: "Delete",
@@ -155,13 +139,12 @@ const Products = () => {
   ];
 
   return (
-    <div className="p-6 w-[79vw] bg-gray-50 min-h-screen">
+    <div className="p-8 bg-gray-100 w-[77vw] overflow-hidden">
       <ToastContainer position="top-right" autoClose={2000} />
 
       {/* HEADER */}
-      <div className="flex justify-between mb-6">
+      <div className="flex flex-col md:flex-row justify-between mb-6 gap-3">
         <h1 className="text-2xl font-bold">All Products</h1>
-
         <Link to="/newproduct">
           <button className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg">
             + Create Product
@@ -170,7 +153,7 @@ const Products = () => {
       </div>
 
       {/* TABLE */}
-      <div className="bg-white rounded-xl shadow p-4">
+      <div className="bg-white rounded-xl shadow p-4 w-full overflow-hidden">
         <DataGrid
           rows={products}
           columns={columns}
@@ -179,6 +162,10 @@ const Products = () => {
           autoHeight
           pageSizeOptions={[5, 10, 20]}
           disableRowSelectionOnClick
+          sx={{
+            "& .MuiDataGrid-root": { border: "none" },
+            "& .MuiDataGrid-cell": { outline: "none" },
+          }}
         />
       </div>
     </div>
