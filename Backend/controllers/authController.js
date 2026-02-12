@@ -29,7 +29,7 @@ const registerUser = asyncHandler(async (req, res) => {
     name,
     email,
     password,
-    role: role || "user",
+    role: role || "customer", // ✅ default role is now 'customer'
     isVerified: false, // default false for all
     verificationCode: hashedCode,
     verificationCodeExpire: Date.now() + 10 * 60 * 1000,
