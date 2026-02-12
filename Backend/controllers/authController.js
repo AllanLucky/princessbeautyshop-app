@@ -3,7 +3,11 @@ import asyncHandler from "express-async-handler";
 import generateToken from "../util/generateToken.js";
 import crypto from "crypto";
 
+<<<<<<< HEAD
 // Helper: generate 6-digit code
+=======
+// helper: generate 6 digit code
+>>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
 const generateCode = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -13,7 +17,11 @@ const registerUser = asyncHandler(async (req, res) => {
 
   if (!name || !email || !password) {
     res.status(400);
+<<<<<<< HEAD
     throw new Error("Please provide name, email, and password");
+=======
+    throw new Error("Please provide name, email and password");
+>>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
   }
 
   const userExists = await User.findOne({ email });
@@ -23,15 +31,20 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   const verificationCode = generateCode();
+<<<<<<< HEAD
   const hashedCode = crypto
     .createHash("sha256")
     .update(verificationCode)
     .digest("hex");
+=======
+  const hashedCode = crypto.createHash("sha256").update(verificationCode).digest("hex");
+>>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
 
   const user = await User.create({
     name,
     email,
     password,
+<<<<<<< HEAD
     role: role || "customer", // Default role
     isVerified: false, // Default unverified
     verificationCode: hashedCode,
@@ -39,6 +52,15 @@ const registerUser = asyncHandler(async (req, res) => {
   });
 
   console.log("Verification code:", verificationCode); // For dev/testing
+=======
+    role: role || "customer", // ✅ default role is now 'customer'
+    isVerified: false, // default false for all
+    verificationCode: hashedCode,
+    verificationCodeExpire: Date.now() + 10 * 60 * 1000,
+  });
+
+  console.log("Verification code:", verificationCode);
+>>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
 
   res.status(201).json({
     success: true,
@@ -53,7 +75,11 @@ const verifyEmailCode = asyncHandler(async (req, res) => {
 
   if (!email || !code) {
     res.status(400);
+<<<<<<< HEAD
     throw new Error("Email and verification code are required");
+=======
+    throw new Error("Email and code required");
+>>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
   }
 
   const user = await User.findOne({ email });
@@ -72,7 +98,14 @@ const verifyEmailCode = asyncHandler(async (req, res) => {
 
   const hashedCode = crypto.createHash("sha256").update(code).digest("hex");
 
+<<<<<<< HEAD
   if (user.verificationCode !== hashedCode || user.verificationCodeExpire < Date.now()) {
+=======
+  if (
+    user.verificationCode !== hashedCode ||
+    user.verificationCodeExpire < Date.now()
+  ) {
+>>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
     res.status(400);
     throw new Error("Invalid or expired verification code");
   }
@@ -80,6 +113,10 @@ const verifyEmailCode = asyncHandler(async (req, res) => {
   user.isVerified = true;
   user.verificationCode = undefined;
   user.verificationCodeExpire = undefined;
+<<<<<<< HEAD
+=======
+
+>>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
   await user.save();
 
   res.json({
@@ -88,7 +125,11 @@ const verifyEmailCode = asyncHandler(async (req, res) => {
   });
 });
 
+<<<<<<< HEAD
 // ================= RESEND VERIFICATION CODE =================
+=======
+// ================= RESEND CODE =================
+>>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
 const resendVerificationCode = asyncHandler(async (req, res) => {
   const { email } = req.body;
 
@@ -114,9 +155,16 @@ const resendVerificationCode = asyncHandler(async (req, res) => {
 
   user.verificationCode = hashedCode;
   user.verificationCodeExpire = Date.now() + 10 * 60 * 1000;
+<<<<<<< HEAD
   await user.save();
 
   console.log("New verification code:", newCode); // For dev/testing
+=======
+
+  await user.save();
+
+  console.log("New verification code:", newCode);
+>>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
 
   res.json({
     success: true,
@@ -140,16 +188,27 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new Error("Invalid email or password");
   }
 
+<<<<<<< HEAD
   // Only admins can skip verification
+=======
+  // 🔥 CHECK VERIFIED (skip for admins)
+>>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
   if (!user.isVerified && user.role !== "admin") {
     res.status(403);
     throw new Error("Please verify your email first");
   }
 
+<<<<<<< HEAD
   // Account lock check
   if (user.isLocked()) {
     res.status(403);
     throw new Error("Account locked due to multiple failed login attempts. Try later.");
+=======
+  // 🔥 LOCK CHECK
+  if (user.isLocked()) {
+    res.status(403);
+    throw new Error("Account locked. Try later.");
+>>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
   }
 
   const isMatch = await user.matchPassword(password);
@@ -159,7 +218,10 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new Error("Invalid email or password");
   }
 
+<<<<<<< HEAD
   // Reset failed login attempts
+=======
+>>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
   await user.resetLoginAttempts();
   user.lastLogin = new Date();
   user.lastLoginIP = req.ip;
@@ -210,8 +272,17 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
   const resetToken = crypto.randomBytes(32).toString("hex");
 
+<<<<<<< HEAD
   user.resetPasswordToken = crypto.createHash("sha256").update(resetToken).digest("hex");
   user.resetPasswordExpire = Date.now() + 15 * 60 * 1000; // 15 minutes
+=======
+  user.resetPasswordToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  user.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
+>>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
 
   await user.save({ validateBeforeSave: false });
 
@@ -226,7 +297,14 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
 // ================= RESET PASSWORD =================
 const resetPassword = asyncHandler(async (req, res) => {
+<<<<<<< HEAD
   const hashedToken = crypto.createHash("sha256").update(req.params.resetToken).digest("hex");
+=======
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(req.params.resetToken)
+    .digest("hex");
+>>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
 
   const user = await User.findOne({
     resetPasswordToken: hashedToken,

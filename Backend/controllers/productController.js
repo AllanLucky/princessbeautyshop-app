@@ -18,25 +18,41 @@ const createProduct = asyncHandler(async (req, res) => {
 const updateProduct = asyncHandler(async (req, res) => {
   const updateData = { ...req.body };
 
+<<<<<<< HEAD
+=======
+  // Merge arrays instead of overwriting
+>>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
   const product = await Product.findById(req.params.id);
   if (!product) {
     res.status(404);
     throw new Error("Product not found");
   }
 
+<<<<<<< HEAD
   // Merge features if provided
+=======
+  // Merge features array if provided
+>>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
   if (updateData.features) {
     product.features = updateData.features;
     delete updateData.features;
   }
 
+<<<<<<< HEAD
   // Merge specifications if provided
+=======
+  // Merge specifications array if provided
+>>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
   if (updateData.specifications) {
     product.specifications = updateData.specifications;
     delete updateData.specifications;
   }
 
+<<<<<<< HEAD
   // Merge other fields
+=======
+  // Update the rest of the fields
+>>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
   Object.keys(updateData).forEach((key) => {
     product[key] = updateData[key];
   });
@@ -95,16 +111,25 @@ const getALLproducts = asyncHandler(async (req, res) => {
   if (category) query.categories = { $in: [category] };
   if (brand) query.brand = brand;
   if (concern) query.concern = { $in: [concern] };
+<<<<<<< HEAD
   if (search)
     query.$text = { $search: search, $caseSensitive: false, $diacriticSensitive: false };
+=======
+  if (search) query.$text = { $search: search, $caseSensitive: false, $diacriticSensitive: false };
+>>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
 
   let productsQuery = Product.find(query);
 
   if (qNew) productsQuery = productsQuery.sort({ createdAt: -1 });
+<<<<<<< HEAD
   if (sort === "asc")
     productsQuery = productsQuery.sort({ discountedPrice: 1, originalPrice: 1 });
   if (sort === "desc")
     productsQuery = productsQuery.sort({ discountedPrice: -1, originalPrice: -1 });
+=======
+  if (sort === "asc") productsQuery = productsQuery.sort({ discountedPrice: 1, originalPrice: 1 });
+  if (sort === "desc") productsQuery = productsQuery.sort({ discountedPrice: -1, originalPrice: -1 });
+>>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
 
   const products = await productsQuery;
 
@@ -141,7 +166,11 @@ const ratingProduct = asyncHandler(async (req, res) => {
 
   await product.save();
 
+<<<<<<< HEAD
   // ⭐ Recalculate average rating
+=======
+  // ⭐ recalc average
+>>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
   const total = product.ratings.reduce((sum, r) => sum + r.star, 0);
   const avgRating = (total / product.ratings.length).toFixed(1);
 

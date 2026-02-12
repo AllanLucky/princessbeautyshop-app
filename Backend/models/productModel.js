@@ -28,6 +28,7 @@ const ProductSchema = new mongoose.Schema(
       trim: true,
     },
 
+<<<<<<< HEAD
     // 🔥 WHAT IN BOX (array of objects with item and qty)
     whatinbox: [
       {
@@ -36,6 +37,8 @@ const ProductSchema = new mongoose.Schema(
       },
     ],
 
+=======
+>>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
     // 🔥 FEATURES LIST
     features: [
       {
@@ -68,6 +71,7 @@ const ProductSchema = new mongoose.Schema(
     categories: [String],
     concern: [String],
     skintype: [String],
+<<<<<<< HEAD
     video: {
       type: String,
       trim: true,
@@ -96,6 +100,8 @@ const ProductSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+=======
+>>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
 
     brand: {
       type: String,
@@ -113,6 +119,7 @@ const ProductSchema = new mongoose.Schema(
       min: 0,
     },
 
+<<<<<<< HEAD
     originalPrice: {
       type: Number,
       min: 0,
@@ -130,6 +137,8 @@ const ProductSchema = new mongoose.Schema(
       min: 0,
     },
 
+=======
+>>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
     inStock: {
       type: Boolean,
       default: true,
@@ -142,11 +151,14 @@ const ProductSchema = new mongoose.Schema(
         name: { type: String, trim: true },
         comment: { type: String, trim: true },
         postedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+<<<<<<< HEAD
         star: { type: Number, required: true, min: 0, max: 5 },
         name: { type: String, trim: true },
         comment: { type: String, trim: true },
         postedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
         createdAt: { type: Date, default: Date.now },
+=======
+>>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
       },
     ],
   },
@@ -156,11 +168,15 @@ const ProductSchema = new mongoose.Schema(
 );
 
 // 🔥 AUTO UPDATE STOCK STATUS
+<<<<<<< HEAD
 // 🔥 AUTO UPDATE STOCK STATUS BEFORE SAVE
+=======
+>>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
 ProductSchema.pre("save", function () {
   this.inStock = this.stock > 0;
 });
 
+<<<<<<< HEAD
 // 🔥 UPDATE STOCK WHEN USING findOneAndUpdate
 ProductSchema.pre("findOneAndUpdate", function (next) {
   const update = this.getUpdate();
@@ -168,6 +184,15 @@ ProductSchema.pre("findOneAndUpdate", function (next) {
     update.inStock = update.stock > 0;
   }
   next();
+=======
+// 🔥 ALSO UPDATE WHEN USING findByIdAndUpdate
+ProductSchema.pre("findOneAndUpdate", function () {
+  const update = this.getUpdate();
+
+  if (update.stock !== undefined) {
+    update.inStock = update.stock > 0;
+  }
+>>>>>>> 394ec647ed6702b78cfac3a11951ae5e12d7ea0d
 });
 
 // 🔥 FULL TEXT SEARCH
