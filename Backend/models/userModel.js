@@ -1,129 +1,104 @@
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 
-const ProductSchema = mongoose.Schema(
+const userSchema = new mongoose.Schema(
   {
-    // ===== BASIC INFO =====
-    title: {
+    name: {
       type: String,
       required: true,
       trim: true,
     },
 
-    // 🔥 SHORT DESCRIPTION (card/product list)
-    desc: {
+    email: {
       type: String,
       required: true,
-      trim: true,
+      unique: true,
+      lowercase: true,
     },
 
-    // 🔥 LONG PROFESSIONAL DESCRIPTION (details page)
-    longDesc: {
+    password: {
       type: String,
-      trim: true,
-    },
-
-    // 🔥 WHAT IN BOX
-    whatinbox: {
-      type: String,
-      trim: true,
-    },
-
-    // 🔥 FEATURES LIST
-    features: [
-      {
-        type: String,
-        trim: true,
-      },
-    ],
-
-    // 🔥 SPECIFICATIONS
-    specifications: [
-      {
-        key: { type: String, trim: true },
-        value: { type: String, trim: true },
-      },
-    ],
-
-    // ===== MEDIA =====
-    img: {
-      type: [String],
       required: true,
+      minlength: 6,
+      select: false,
     },
 
-    video: String,
-
-    // ===== WHOLESALE =====
-    wholesalePrice: Number,
-    wholesaleMinimumQuantity: Number,
-
-    // ===== CATEGORY =====
-    categories: [String],
-    concern: [String],
-    skintype: [String],
-
-    brand: {
+    // ✅ Role enum with default customer
+    role: {
       type: String,
-      trim: true,
+      enum: ["customer", "admin"],
+      default: "customer",
     },
 
-    // ===== PRICES =====
-    originalPrice: Number,
-    discountedPrice: Number,
+    // ================= EMAIL VERIFICATION =================
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationCode: String,
+    verificationCodeExpire: Date,
 
-    // ===== STOCK SYSTEM 🔥 =====
-    stock: {
+    // ================= RESET PASSWORD =================
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
+
+    // ================= LOGIN SECURITY =================
+    loginAttempts: {
       type: Number,
       default: 0,
-      min: 0,
     },
+    lockUntil: Date,
 
-    inStock: {
-      type: Boolean,
-      default: true,
-    },
-
-    // ===== RATINGS =====
-    ratings: [
-      {
-        star: { type: Number, required: true },
-        name: { type: String, trim: true },
-        comment: { type: String, trim: true },
-        postedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-      },
-    ],
+    lastLogin: Date,
+    lastLoginIP: String,
   },
   {
     timestamps: true,
   }
 );
 
+// ================= PASSWORD HASH =================
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
 
-// 🔥 AUTO UPDATE STOCK STATUS
-
-ProductSchema.pre("save", function (next) {
-  this.inStock = this.stock > 0;
-  next();
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
 });
 
+// ================= MATCH PASSWORD =================
+userSchema.methods.matchPassword = async function (enteredPassword) {
+  return bcrypt.compare(enteredPassword, this.password);
+};
 
-// 🔥 ALSO UPDATE WHEN USING findByIdAndUpdate
+// ================= ACCOUNT LOCK CHECK =================
+userSchema.methods.isLocked = function () {
+  return this.lockUntil && this.lockUntil > Date.now();
+};
 
-ProductSchema.pre("findOneAndUpdate", function (next) {
-  const update = this.getUpdate();
+// ================= INCREASE LOGIN ATTEMPTS =================
+userSchema.methods.incLoginAttempts = async function () {
+  if (this.lockUntil && this.lockUntil < Date.now()) {
+    this.loginAttempts = 1;
+    this.lockUntil = undefined;
+  } else {
+    this.loginAttempts += 1;
 
-  if (update.stock !== undefined) {
-    update.inStock = update.stock > 0;
+    if (this.loginAttempts >= 5) {
+      this.lockUntil = Date.now() + 30 * 60 * 1000; // 30 mins
+    }
   }
 
-  next();
-});
+  await this.save({ validateBeforeSave: false });
+};
 
+// ================= RESET LOGIN ATTEMPTS =================
+userSchema.methods.resetLoginAttempts = async function () {
+  this.loginAttempts = 0;
+  this.lockUntil = undefined;
 
-// 🔥 FULL TEXT SEARCH
-ProductSchema.index({ "$**": "text" });
+  await this.save({ validateBeforeSave: false });
+};
 
+const User = mongoose.model("User", userSchema);
 
-const Product =
-  mongoose.models.Product || mongoose.model("Product", ProductSchema);
-
-export default Product;
+export default User;
