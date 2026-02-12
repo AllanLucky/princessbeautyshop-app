@@ -3,7 +3,7 @@ import asyncHandler from "express-async-handler";
 import generateToken from "../util/generateToken.js";
 import crypto from "crypto";
 
-// helper: generate 6 digit code
+// Helper: generate 6-digit code
 const generateCode = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -13,7 +13,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
   if (!name || !email || !password) {
     res.status(400);
-    throw new Error("Please provide name, email and password");
+    throw new Error("Please provide name, email, and password");
   }
 
   const userExists = await User.findOne({ email });
@@ -23,19 +23,22 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   const verificationCode = generateCode();
-  const hashedCode = crypto.createHash("sha256").update(verificationCode).digest("hex");
+  const hashedCode = crypto
+    .createHash("sha256")
+    .update(verificationCode)
+    .digest("hex");
 
   const user = await User.create({
     name,
     email,
     password,
-    role: role || "customer", // ✅ default role is now 'customer'
-    isVerified: false, // default false for all
+    role: role || "customer", // Default role
+    isVerified: false, // Default unverified
     verificationCode: hashedCode,
-    verificationCodeExpire: Date.now() + 10 * 60 * 1000,
+    verificationCodeExpire: Date.now() + 10 * 60 * 1000, // 10 minutes
   });
 
-  console.log("Verification code:", verificationCode);
+  console.log("Verification code:", verificationCode); // For dev/testing
 
   res.status(201).json({
     success: true,
@@ -50,7 +53,7 @@ const verifyEmailCode = asyncHandler(async (req, res) => {
 
   if (!email || !code) {
     res.status(400);
-    throw new Error("Email and code required");
+    throw new Error("Email and verification code are required");
   }
 
   const user = await User.findOne({ email });
@@ -69,10 +72,7 @@ const verifyEmailCode = asyncHandler(async (req, res) => {
 
   const hashedCode = crypto.createHash("sha256").update(code).digest("hex");
 
-  if (
-    user.verificationCode !== hashedCode ||
-    user.verificationCodeExpire < Date.now()
-  ) {
+  if (user.verificationCode !== hashedCode || user.verificationCodeExpire < Date.now()) {
     res.status(400);
     throw new Error("Invalid or expired verification code");
   }
@@ -80,7 +80,6 @@ const verifyEmailCode = asyncHandler(async (req, res) => {
   user.isVerified = true;
   user.verificationCode = undefined;
   user.verificationCodeExpire = undefined;
-
   await user.save();
 
   res.json({
@@ -89,7 +88,7 @@ const verifyEmailCode = asyncHandler(async (req, res) => {
   });
 });
 
-// ================= RESEND CODE =================
+// ================= RESEND VERIFICATION CODE =================
 const resendVerificationCode = asyncHandler(async (req, res) => {
   const { email } = req.body;
 
@@ -115,10 +114,9 @@ const resendVerificationCode = asyncHandler(async (req, res) => {
 
   user.verificationCode = hashedCode;
   user.verificationCodeExpire = Date.now() + 10 * 60 * 1000;
-
   await user.save();
 
-  console.log("New verification code:", newCode);
+  console.log("New verification code:", newCode); // For dev/testing
 
   res.json({
     success: true,
@@ -142,16 +140,16 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new Error("Invalid email or password");
   }
 
-  // 🔥 CHECK VERIFIED (skip for admins)
+  // Only admins can skip verification
   if (!user.isVerified && user.role !== "admin") {
     res.status(403);
     throw new Error("Please verify your email first");
   }
 
-  // 🔥 LOCK CHECK
+  // Account lock check
   if (user.isLocked()) {
     res.status(403);
-    throw new Error("Account locked. Try later.");
+    throw new Error("Account locked due to multiple failed login attempts. Try later.");
   }
 
   const isMatch = await user.matchPassword(password);
@@ -161,6 +159,7 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new Error("Invalid email or password");
   }
 
+  // Reset failed login attempts
   await user.resetLoginAttempts();
   user.lastLogin = new Date();
   user.lastLoginIP = req.ip;
@@ -211,12 +210,8 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
   const resetToken = crypto.randomBytes(32).toString("hex");
 
-  user.resetPasswordToken = crypto
-    .createHash("sha256")
-    .update(resetToken)
-    .digest("hex");
-
-  user.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
+  user.resetPasswordToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+  user.resetPasswordExpire = Date.now() + 15 * 60 * 1000; // 15 minutes
 
   await user.save({ validateBeforeSave: false });
 
@@ -231,10 +226,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
 // ================= RESET PASSWORD =================
 const resetPassword = asyncHandler(async (req, res) => {
-  const hashedToken = crypto
-    .createHash("sha256")
-    .update(req.params.resetToken)
-    .digest("hex");
+  const hashedToken = crypto.createHash("sha256").update(req.params.resetToken).digest("hex");
 
   const user = await User.findOne({
     resetPasswordToken: hashedToken,

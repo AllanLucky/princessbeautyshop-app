@@ -18,26 +18,25 @@ const createProduct = asyncHandler(async (req, res) => {
 const updateProduct = asyncHandler(async (req, res) => {
   const updateData = { ...req.body };
 
-  // Merge arrays instead of overwriting
   const product = await Product.findById(req.params.id);
   if (!product) {
     res.status(404);
     throw new Error("Product not found");
   }
 
-  // Merge features array if provided
+  // Merge features if provided
   if (updateData.features) {
     product.features = updateData.features;
     delete updateData.features;
   }
 
-  // Merge specifications array if provided
+  // Merge specifications if provided
   if (updateData.specifications) {
     product.specifications = updateData.specifications;
     delete updateData.specifications;
   }
 
-  // Update the rest of the fields
+  // Merge other fields
   Object.keys(updateData).forEach((key) => {
     product[key] = updateData[key];
   });
@@ -96,13 +95,16 @@ const getALLproducts = asyncHandler(async (req, res) => {
   if (category) query.categories = { $in: [category] };
   if (brand) query.brand = brand;
   if (concern) query.concern = { $in: [concern] };
-  if (search) query.$text = { $search: search, $caseSensitive: false, $diacriticSensitive: false };
+  if (search)
+    query.$text = { $search: search, $caseSensitive: false, $diacriticSensitive: false };
 
   let productsQuery = Product.find(query);
 
   if (qNew) productsQuery = productsQuery.sort({ createdAt: -1 });
-  if (sort === "asc") productsQuery = productsQuery.sort({ discountedPrice: 1, originalPrice: 1 });
-  if (sort === "desc") productsQuery = productsQuery.sort({ discountedPrice: -1, originalPrice: -1 });
+  if (sort === "asc")
+    productsQuery = productsQuery.sort({ discountedPrice: 1, originalPrice: 1 });
+  if (sort === "desc")
+    productsQuery = productsQuery.sort({ discountedPrice: -1, originalPrice: -1 });
 
   const products = await productsQuery;
 
@@ -139,7 +141,7 @@ const ratingProduct = asyncHandler(async (req, res) => {
 
   await product.save();
 
-  // ⭐ recalc average
+  // ⭐ Recalculate average rating
   const total = product.ratings.reduce((sum, r) => sum + r.star, 0);
   const avgRating = (total / product.ratings.length).toFixed(1);
 
