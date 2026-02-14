@@ -8,27 +8,17 @@ const ProductSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-
-    // 🔥 SHORT DESCRIPTION (card/product list)
     desc: {
       type: String,
       required: true,
       trim: true,
     },
-
-    // 🔥 LONG PROFESSIONAL DESCRIPTION (details page)
     longDesc: {
       type: String,
       trim: true,
     },
 
-    // 🔥 WHAT IN BOX
-    whatinbox: {
-      type: String,
-      trim: true,
-    },
-
-    // 🔥 WHAT IN BOX (array of objects with item and qty)
+    // ===== WHAT IN BOX =====
     whatinbox: [
       {
         item: { type: String, trim: true },
@@ -36,7 +26,7 @@ const ProductSchema = new mongoose.Schema(
       },
     ],
 
-    // 🔥 FEATURES LIST
+    // ===== FEATURES =====
     features: [
       {
         type: String,
@@ -44,7 +34,7 @@ const ProductSchema = new mongoose.Schema(
       },
     ],
 
-    // 🔥 SPECIFICATIONS
+    // ===== SPECIFICATIONS =====
     specifications: [
       {
         key: { type: String, trim: true },
@@ -57,17 +47,6 @@ const ProductSchema = new mongoose.Schema(
       type: [String],
       required: true,
     },
-
-    video: String,
-
-    // ===== WHOLESALE =====
-    wholesalePrice: Number,
-    wholesaleMinimumQuantity: Number,
-
-    // ===== CATEGORY =====
-    categories: [String],
-    concern: [String],
-    skintype: [String],
     video: {
       type: String,
       trim: true,
@@ -96,23 +75,12 @@ const ProductSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
-
     brand: {
       type: String,
       trim: true,
     },
 
     // ===== PRICES =====
-    originalPrice: Number,
-    discountedPrice: Number,
-
-    // ===== STOCK SYSTEM 🔥 =====
-    stock: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-
     originalPrice: {
       type: Number,
       min: 0,
@@ -123,13 +91,12 @@ const ProductSchema = new mongoose.Schema(
       min: 0,
     },
 
-    // ===== STOCK SYSTEM 🔥 =====
+    // ===== STOCK SYSTEM =====
     stock: {
       type: Number,
       default: 0,
       min: 0,
     },
-
     inStock: {
       type: Boolean,
       default: true,
@@ -138,10 +105,6 @@ const ProductSchema = new mongoose.Schema(
     // ===== RATINGS =====
     ratings: [
       {
-        star: { type: Number, required: true },
-        name: { type: String, trim: true },
-        comment: { type: String, trim: true },
-        postedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
         star: { type: Number, required: true, min: 0, max: 5 },
         name: { type: String, trim: true },
         comment: { type: String, trim: true },
@@ -155,7 +118,6 @@ const ProductSchema = new mongoose.Schema(
   }
 );
 
-// 🔥 AUTO UPDATE STOCK STATUS
 // 🔥 AUTO UPDATE STOCK STATUS BEFORE SAVE
 ProductSchema.pre("save", function () {
   this.inStock = this.stock > 0;

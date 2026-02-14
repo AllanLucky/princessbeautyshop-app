@@ -4,7 +4,6 @@ import User from "../models/userModel.js";
 import dotenv from "dotenv";
 dotenv.config();
 
-
 // =======================================================
 // 🔐 PROTECT ROUTES (LOGIN REQUIRED)
 // =======================================================
@@ -34,13 +33,11 @@ const protect = asyncHandler(async (req, res, next) => {
     // attach user to request
     req.user = user;
     next();
-
   } catch (error) {
     res.status(401);
     throw new Error("Not authorized, invalid token");
   }
 });
-
 
 // =======================================================
 // 👑 ADMIN ONLY
@@ -51,7 +48,7 @@ const adminOnly = (req, res, next) => {
     throw new Error("Not authorized");
   }
 
-  if (req.user.role === "admin" || req.user.role === "super_admin") {
+  if (req.user.role === "admin" || req.user.role === "superadmin") {
     next();
   } else {
     res.status(403);
@@ -59,9 +56,8 @@ const adminOnly = (req, res, next) => {
   }
 };
 
-
 // =======================================================
-// 🧠 SUPER ADMIN ONLY (OPTIONAL)
+// 🧠 SUPER ADMIN ONLY
 // =======================================================
 const superAdminOnly = (req, res, next) => {
   if (!req.user) {
@@ -69,7 +65,7 @@ const superAdminOnly = (req, res, next) => {
     throw new Error("Not authorized");
   }
 
-  if (req.user.role === "super_admin") {
+  if (req.user.role === "superadmin") {
     next();
   } else {
     res.status(403);
