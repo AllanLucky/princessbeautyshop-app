@@ -2,8 +2,9 @@ import User from "../models/userModel.js";
 import asyncHandler from "express-async-handler";
 import generateToken from "../util/generateToken.js";
 import crypto from "crypto";
+import sendEmail from "../util/sendEmail.js"; // <-- your email helper
 
-// helper: generate 6 digit code
+// Helper: generate 6-digit verification code
 const generateCode = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -13,7 +14,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
   if (!name || !email || !password) {
     res.status(400);
-    throw new Error("Please provide name, email and password");
+    throw new Error("Please provide name, email, and password");
   }
 
   const userExists = await User.findOne({ email });
@@ -29,13 +30,18 @@ const registerUser = asyncHandler(async (req, res) => {
     name,
     email,
     password,
-    role: role || "customer", // ✅ default role is now 'customer'
-    isVerified: false, // default false for all
+    role: role || "customer",
+    isVerified: false,
     verificationCode: hashedCode,
-    verificationCodeExpire: Date.now() + 10 * 60 * 1000,
+    verificationCodeExpire: Date.now() + 10 * 60 * 1000, // 10 minutes
   });
 
-  console.log("Verification code:", verificationCode);
+  // Send verification email
+  await sendEmail(
+    user.email,
+    "Verify Your Email",
+    `Hello ${user.name},\n\nYour verification code is: ${verificationCode}\nIt expires in 10 minutes.\n\nThank you!`
+  );
 
   res.status(201).json({
     success: true,
@@ -50,18 +56,17 @@ const verifyEmailCode = asyncHandler(async (req, res) => {
 
   if (!email || !code) {
     res.status(400);
-    throw new Error("Email and code required");
+    throw new Error("Email and code are required");
   }
 
   const user = await User.findOne({ email });
-
   if (!user) {
     res.status(404);
     throw new Error("User not found");
   }
 
   if (user.isVerified) {
-    return res.json({
+    return res.status(200).json({
       success: true,
       message: "Email already verified",
     });
@@ -69,10 +74,7 @@ const verifyEmailCode = asyncHandler(async (req, res) => {
 
   const hashedCode = crypto.createHash("sha256").update(code).digest("hex");
 
-  if (
-    user.verificationCode !== hashedCode ||
-    user.verificationCodeExpire < Date.now()
-  ) {
+  if (user.verificationCode !== hashedCode || user.verificationCodeExpire < Date.now()) {
     res.status(400);
     throw new Error("Invalid or expired verification code");
   }
@@ -82,23 +84,22 @@ const verifyEmailCode = asyncHandler(async (req, res) => {
   user.verificationCodeExpire = undefined;
   await user.save();
 
-  res.json({
+  res.status(200).json({
     success: true,
     message: "Email verified successfully. You can now login",
   });
 });
 
-// ================= RESEND CODE =================
+// ================= RESEND VERIFICATION CODE =================
 const resendVerificationCode = asyncHandler(async (req, res) => {
   const { email } = req.body;
 
   if (!email) {
     res.status(400);
-    throw new Error("Email required");
+    throw new Error("Email is required");
   }
 
   const user = await User.findOne({ email });
-
   if (!user) {
     res.status(404);
     throw new Error("User not found");
@@ -117,9 +118,14 @@ const resendVerificationCode = asyncHandler(async (req, res) => {
 
   await user.save();
 
-  console.log("New verification code:", newCode);
+  // Send verification email
+  await sendEmail(
+    user.email,
+    "Resend Verification Code",
+    `Hello ${user.name},\n\nYour new verification code is: ${newCode}\nIt expires in 10 minutes.\n\nThank you!`
+  );
 
-  res.json({
+  res.status(200).json({
     success: true,
     message: "New verification code sent",
   });
@@ -131,26 +137,23 @@ const loginUser = asyncHandler(async (req, res) => {
 
   if (!email || !password) {
     res.status(400);
-    throw new Error("Email and password required");
+    throw new Error("Email and password are required");
   }
 
   const user = await User.findOne({ email }).select("+password");
-
   if (!user) {
     res.status(401);
     throw new Error("Invalid email or password");
   }
 
-  // 🔥 CHECK VERIFIED (skip for admins)
   if (!user.isVerified && user.role !== "admin") {
     res.status(403);
     throw new Error("Please verify your email first");
   }
 
-  // 🔥 LOCK CHECK
   if (user.isLocked()) {
     res.status(403);
-    throw new Error("Account locked. Try later.");
+    throw new Error("Account locked. Try again later.");
   }
 
   const isMatch = await user.matchPassword(password);
@@ -165,9 +168,10 @@ const loginUser = asyncHandler(async (req, res) => {
   user.lastLoginIP = req.ip;
   await user.save();
 
-  generateToken(res, user._id);
+  // Include role in JWT for role-based access
+  generateToken(res, user._id, user.role);
 
-  res.json({
+  res.status(200).json({
     success: true,
     message: "Login successful",
     user: {
@@ -186,7 +190,7 @@ const logoutUser = asyncHandler(async (req, res) => {
     expires: new Date(0),
   });
 
-  res.json({
+  res.status(200).json({
     success: true,
     message: "Logged out successfully",
   });
@@ -198,31 +202,31 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
   if (!email) {
     res.status(400);
-    throw new Error("Email required");
+    throw new Error("Email is required");
   }
 
   const user = await User.findOne({ email });
-
   if (!user) {
     res.status(404);
     throw new Error("No user found with that email");
   }
 
   const resetToken = crypto.randomBytes(32).toString("hex");
-
-  user.resetPasswordToken = crypto
-    .createHash("sha256")
-    .update(resetToken)
-    .digest("hex");
-
+  user.resetPasswordToken = crypto.createHash("sha256").update(resetToken).digest("hex");
   user.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
 
   await user.save({ validateBeforeSave: false });
 
-  const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
-  console.log("Reset URL:", resetUrl);
+  const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
 
-  res.json({
+  // Send password reset email
+  await sendEmail(
+    user.email,
+    "Password Reset Request",
+    `Hello ${user.name},\n\nYou requested a password reset. Click the link below or use the token:\n\n${resetUrl}\n\nThis link expires in 15 minutes.\n\nIf you did not request this, ignore this email.`
+  );
+
+  res.status(200).json({
     success: true,
     message: "Password reset link sent to email",
   });
@@ -230,10 +234,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
 // ================= RESET PASSWORD =================
 const resetPassword = asyncHandler(async (req, res) => {
-  const hashedToken = crypto
-    .createHash("sha256")
-    .update(req.params.resetToken)
-    .digest("hex");
+  const hashedToken = crypto.createHash("sha256").update(req.params.resetToken).digest("hex");
 
   const user = await User.findOne({
     resetPasswordToken: hashedToken,
@@ -246,10 +247,9 @@ const resetPassword = asyncHandler(async (req, res) => {
   }
 
   const { password } = req.body;
-
   if (!password) {
     res.status(400);
-    throw new Error("New password required");
+    throw new Error("New password is required");
   }
 
   user.password = password;
@@ -258,7 +258,7 @@ const resetPassword = asyncHandler(async (req, res) => {
 
   await user.save({ validateBeforeSave: false });
 
-  res.json({
+  res.status(200).json({
     success: true,
     message: "Password reset successful. You can now login",
   });
