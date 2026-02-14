@@ -4,7 +4,7 @@ const OrderSchema = new mongoose.Schema(
   {
     // Customer info
     name: { type: String, required: true },
-    userId: { type: String, required: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     email: { type: String, required: true },
     phone: { type: String },
     address: { type: String },
@@ -12,11 +12,11 @@ const OrderSchema = new mongoose.Schema(
     // Products
     products: [
       {
-        productId: String,
+        productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
         title: String,
         desc: String, // optional: keep product description
         price: Number,
-        quantity: Number,
+        quantity: { type: Number, required: true, min: 1 },
         img: String,
       },
     ],
@@ -35,7 +35,7 @@ const OrderSchema = new mongoose.Schema(
       enum: ["pending", "paid", "failed", "refunded"],
       default: "pending",
     },
-    declineReason: { type: String }, // ✅ capture failed payment reason
+    declineReason: { type: String }, // capture failed payment reason
 
     // Order lifecycle
     orderStatus: {
@@ -46,12 +46,12 @@ const OrderSchema = new mongoose.Schema(
 
     isDelivered: { type: Boolean, default: false },
     deliveredAt: { type: Date },
-    refundedAt: { type: Date }, // ✅ capture refund date
+    refundedAt: { type: Date }, // capture refund date
   },
   { timestamps: true }
 );
 
-// ✅ Prevent OverwriteModelError in dev hot-reload
+// Prevent OverwriteModelError in dev hot-reload
 const Order = mongoose.models.Order || mongoose.model("Order", OrderSchema);
 
 export default Order;
