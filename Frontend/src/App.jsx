@@ -142,7 +142,7 @@ function App() {
 
         // 🔐 User Pages
         {
-          path: "/profile",
+          path: "/customer-dashboard/profile",
           element: (
             <ProtectedRoute>
               <MyAccount />
@@ -150,7 +150,7 @@ function App() {
           ),
         },
         {
-          path: "/myorders",
+          path: "/customer-dashboard/my-orders",
           element: (
             <ProtectedRoute>
               <Orders />
