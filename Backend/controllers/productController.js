@@ -70,7 +70,7 @@ const getProduct = asyncHandler(async (req, res) => {
     throw new Error("Product not found");
   }
 
-  // ⭐ CALCULATE AVERAGE RATING
+  // ⭐ Calculate average rating
   let avgRating = 0;
   const totalReviews = product.ratings.length;
 
@@ -91,11 +91,11 @@ const getALLproducts = asyncHandler(async (req, res) => {
   const { new: qNew, category, brand, concern, search, sort } = req.query;
 
   let query = {};
-
   if (category) query.categories = { $in: [category] };
   if (brand) query.brand = brand;
   if (concern) query.concern = { $in: [concern] };
-  if (search) query.$text = { $search: search, $caseSensitive: false, $diacriticSensitive: false };
+  if (search)
+    query.$text = { $search: search, $caseSensitive: false, $diacriticSensitive: false };
 
   let productsQuery = Product.find(query);
 
@@ -108,7 +108,7 @@ const getALLproducts = asyncHandler(async (req, res) => {
   res.status(200).json(products);
 });
 
-// ================= RATE PRODUCT =================
+// ================= RATE / REVIEW PRODUCT =================
 const ratingProduct = asyncHandler(async (req, res) => {
   const { star, comment } = req.body;
   const userId = req.user._id;
@@ -138,7 +138,6 @@ const ratingProduct = asyncHandler(async (req, res) => {
 
   await product.save();
 
-  // ⭐ Recalculate average rating
   const total = product.ratings.reduce((sum, r) => sum + r.star, 0);
   const avgRating = (total / product.ratings.length).toFixed(1);
 
@@ -149,6 +148,31 @@ const ratingProduct = asyncHandler(async (req, res) => {
   });
 });
 
+// ================= ADD / REMOVE WISHLIST =================
+const toggleWishlist = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const product = await Product.findById(req.params.id);
+
+  if (!product) {
+    res.status(404);
+    throw new Error("Product not found");
+  }
+
+  const index = product.wishlistUsers.findIndex(
+    (id) => id.toString() === userId.toString()
+  );
+
+  if (index > -1) {
+    product.wishlistUsers.splice(index, 1); // remove from wishlist
+    await product.save();
+    return res.json({ message: "Removed from wishlist" });
+  }
+
+  product.wishlistUsers.push(userId); // add to wishlist
+  await product.save();
+  res.json({ message: "Added to wishlist" });
+});
+
 export {
   createProduct,
   updateProduct,
@@ -156,4 +180,5 @@ export {
   getProduct,
   getALLproducts,
   ratingProduct,
+  toggleWishlist,
 };
