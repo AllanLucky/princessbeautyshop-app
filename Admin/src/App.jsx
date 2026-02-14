@@ -19,27 +19,27 @@ import Myaccounts from "./pages/Myaccounts";
 import Login from "./pages/Login";
 import Alllogs from "./pages/Alllogs";
 import AdminInvoices from "./pages/AdminInvoices";
-
-// Custom ProtectedRoute
-import ProtectedRoute from "./components/ProtectedRoute";
 import EditUser from "./pages/EditUser";
 import ProductFeaturePage from "./pages/ProductFeaturePage";
 
+// Custom ProtectedRoute
+import ProtectedRoute from "./components/ProtectedRoute";
+
 // --- Admin Layout ---
 const Layout = () => (
-  <div className="min-h-screen flex flex-col">
+  <div className="flex flex-col h-screen overflow-hidden">
     {/* Header */}
     <Headers />
 
-    {/* Body: Sidebar + Main */}
-    <div className="flex flex-1">
+    {/* Body: Sidebar + Main content */}
+    <div className="flex flex-1 h-full overflow-hidden">
       {/* Sidebar */}
-      <div className="w-64 bg-gray-100">
+      <div className="w-64 flex-shrink-0 h-full bg-gray-100 border-r border-gray-300">
         <Menu />
       </div>
 
       {/* Main content */}
-      <div className="flex-1 bg-white p-5 overflow-auto">
+      <div className="flex-1 h-full overflow-auto bg-gray-50 p-5">
         <Outlet />
       </div>
     </div>
@@ -62,11 +62,11 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { path: "", element: <Navigate to="/admin-dashboard" /> }, // Default redirect
+      { path: "", element: <Navigate to="/admin-dashboard" /> },
       { path: "admin-dashboard", element: <Home /> },
       { path: "profile", element: <Myaccounts /> },
       { path: "users", element: <Users /> },
-     { path: "user/:id", element: <EditUser /> },
+      { path: "user/:id", element: <EditUser /> },
       { path: "products", element: <Products /> },
       { path: "newproduct", element: <NewProduct /> },
       { path: "product/:productId", element: <Product /> },
@@ -96,6 +96,3 @@ const router = createBrowserRouter([
 const App = () => <RouterProvider router={router} />;
 
 export default App;
-
-
-
