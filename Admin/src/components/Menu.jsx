@@ -12,7 +12,7 @@ import {
   FaTachometerAlt,
 } from "react-icons/fa";
 import { NavLink } from "react-router-dom";
-import { logout } from "../redux/adminRedux"; 
+import { logout } from "../redux/adminRedux";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 
@@ -35,79 +35,80 @@ const Menu = () => {
      }`;
 
   return (
-    <div className="h-screen w-[260px] bg-white border-r-2 border-gray-300 px-4 py-6 shadow-sm">
-      
+    <div className="h-screen w-[260px] bg-white border-r-2 border-gray-300 shadow-sm flex flex-col">
       {/* Logo and Admin Info */}
-      <div className="flex items-center gap-3 px-4 mb-8">
+      <div className="flex items-center gap-3 px-4 py-4 flex-shrink-0">
         <FaTachometerAlt className="text-pink-500 text-2xl" />
         <div>
           <h1 className="text-xl font-bold text-gray-800">Admin Panel</h1>
-          {admin && (
-            <p className="text-gray-500 text-sm">{admin.name}</p>
-          )}
+          {admin && <p className="text-gray-500 text-sm">{admin.name}</p>}
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="space-y-2">
-        <NavLink to="/admin-dashboard" className={navStyle}>
-          <FaHome /> Dashboard
-        </NavLink>
+      {/* Scrollable navigation links */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <nav className="flex-1 overflow-y-auto px-2 space-y-2 scrollbar-thin scrollbar-thumb-pink-300 scrollbar-track-gray-100">
+          <NavLink to="/admin-dashboard" className={navStyle}>
+            <FaHome /> Dashboard
+          </NavLink>
 
-        <NavLink to="/profile" className={navStyle}>
-          <FaUsers /> Profile
-        </NavLink>
+          <NavLink to="/profile" className={navStyle}>
+            <FaUsers /> Profile
+          </NavLink>
 
-        <hr className="my-4" />
+          <hr className="my-4 border-gray-200" />
 
-        <NavLink to="/users" className={navStyle}>
-          <FaUsers /> Users
-        </NavLink>
+          <NavLink to="/users" className={navStyle}>
+            <FaUsers /> Users
+          </NavLink>
 
-        <NavLink to="/products" className={navStyle}>
-          <FaBox /> Products
-        </NavLink>
+          <NavLink to="/products" className={navStyle}>
+            <FaBox /> Products
+          </NavLink>
 
-        <NavLink to="/orders" className={navStyle}>
-          <FaClipboardList /> Orders
-        </NavLink>
+          <NavLink to="/orders" className={navStyle}>
+            <FaClipboardList /> Orders
+          </NavLink>
 
-        <NavLink to="/invoices" className={navStyle}>
-          <FaClipboardList /> Invoices
-        </NavLink>
+          <NavLink to="/invoices" className={navStyle}>
+            <FaClipboardList /> Invoices
+          </NavLink>
 
-        <hr className="my-4" />
+          <hr className="my-4 border-gray-200" />
 
-        <NavLink to="/banners" className={navStyle}>
-          <FaElementor /> Banners
-        </NavLink>
+          <NavLink to="/banners" className={navStyle}>
+            <FaElementor /> Banners
+          </NavLink>
 
-        <NavLink to="/settings" className={navStyle}>
-          <FaCog /> Settings
-        </NavLink>
+          <NavLink to="/settings" className={navStyle}>
+            <FaCog /> Settings
+          </NavLink>
 
-        <NavLink to="/backups" className={navStyle}>
-          <FaHdd /> Backups
-        </NavLink>
+          <NavLink to="/backups" className={navStyle}>
+            <FaHdd /> Backups
+          </NavLink>
 
-        <hr className="my-4" />
+          <hr className="my-4 border-gray-200" />
 
-        <NavLink to="/charts" className={navStyle}>
-          <FaChartBar /> Charts
-        </NavLink>
+          <NavLink to="/charts" className={navStyle}>
+            <FaChartBar /> Charts
+          </NavLink>
 
-        <NavLink to="/all-logs" className={navStyle}>
-          <FaClipboard /> All Logs
-        </NavLink>
+          <NavLink to="/all-logs" className={navStyle}>
+            <FaClipboard /> All Logs
+          </NavLink>
+        </nav>
 
-        {/* Logout Button */}
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-3 px-4 py-3 mt-6 rounded-lg text-red-500 hover:bg-red-50 transition w-full"
-        >
-          <FaSignOutAlt /> Logout
-        </button>
-      </nav>
+        {/* Logout button fixed at bottom */}
+        <div className="flex-shrink-0 p-4 border-t border-gray-200">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-4 py-3 rounded-lg text-red-500 hover:bg-red-50 transition w-full"
+          >
+            <FaSignOutAlt /> Logout
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

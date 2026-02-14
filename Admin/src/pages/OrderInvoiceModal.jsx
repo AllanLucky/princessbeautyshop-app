@@ -2,8 +2,8 @@ import React, { useRef, useState } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { userRequest } from "../requestMethods";
-import { toast } from "react-toastify";
-
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const OrderInvoiceModal = ({ order, invoice, onClose }) => {
   const invoiceRef = useRef();
@@ -11,6 +11,24 @@ const OrderInvoiceModal = ({ order, invoice, onClose }) => {
 
   if (!order) return null;
 
+  // Calculate total amount
+  const totalAmount =
+    invoice?.amount ||
+    (order.products || []).reduce(
+      (sum, item) => sum + (item.price || 0) * (item.quantity || 0),
+      0
+    );
+
+  const invoiceNumber =
+    invoice?.invoiceNumber || `INV-${order._id?.slice(-6) || "000000"}`;
+
+  const invoiceDate = invoice?.createdAt
+    ? new Date(invoice.createdAt).toLocaleDateString()
+    : new Date().toLocaleDateString();
+
+  const paymentMethod = invoice?.paymentMethod || "Not specified";
+
+  // ================= Generate Invoice =================
   const handleGenerateInvoice = async () => {
     try {
       setLoading(true);
@@ -24,6 +42,7 @@ const OrderInvoiceModal = ({ order, invoice, onClose }) => {
     }
   };
 
+  // ================= Download PDF =================
   const handleDownloadPDF = async () => {
     if (!invoiceRef.current) return;
     const canvas = await html2canvas(invoiceRef.current, { scale: 2 });
@@ -32,24 +51,16 @@ const OrderInvoiceModal = ({ order, invoice, onClose }) => {
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
     pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-    pdf.save(`Invoice-${invoice?.invoiceNumber || order._id || "NA"}.pdf`);
+    pdf.save(`Invoice-${invoiceNumber}.pdf`);
   };
 
-  const totalAmount =
-    invoice?.amount ||
-    (order.products || []).reduce(
-      (sum, item) => sum + (item.price || 0) * (item.quantity || 0),
-      0
-    );
-
-  const invoiceNumber = invoice?.invoiceNumber || `INV-${order._id?.slice(-6) || "000000"}`;
-  const invoiceDate = invoice?.createdAt
-    ? new Date(invoice.createdAt).toLocaleDateString()
-    : new Date().toLocaleDateString();
-  const paymentMethod = invoice?.paymentMethod || "Not specified";
+  // Use customer info from order.customer or fallback
+  const customer = order.customer || {};
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <ToastContainer position="top-right" autoClose={3000} />
+
       <div className="bg-white rounded-xl shadow-lg w-full max-w-4xl overflow-auto max-h-[90vh]">
         {/* Header */}
         <div className="flex justify-between items-center p-4 border-b">
@@ -67,10 +78,16 @@ const OrderInvoiceModal = ({ order, invoice, onClose }) => {
           {/* Logo + Shop Info */}
           <div className="flex justify-between items-start mb-6">
             <div className="flex flex-col items-start">
-              <img src={"/blisslogo1.png"} alt="Logo" className="h-16 object-contain mb-2" />
+              <img
+                src={"/blisslogo1.png"}
+                alt="Logo"
+                className="h-16 object-contain mb-2"
+              />
               <p className="text-gray-500 text-sm">TIN: 12345678 | Reg No: BBS-2026</p>
               <p className="text-gray-500 text-sm">www.beautybliss.com | @beautyblissshop</p>
-              <p className="text-gray-500 text-sm italic">“Bringing beauty to your doorstep!”</p>
+              <p className="text-gray-500 text-sm italic">
+                “Bringing beauty to your doorstep!”
+              </p>
             </div>
             <div className="text-right">
               <h1 className="text-2xl font-bold text-pink-600">BEAUTY BLISS SHOP</h1>
@@ -83,22 +100,38 @@ const OrderInvoiceModal = ({ order, invoice, onClose }) => {
           {/* Invoice Info */}
           <div className="grid grid-cols-2 gap-4 mb-6 bg-gray-100 p-4 rounded">
             <div>
-              <p><strong>Invoice Number:</strong> {invoiceNumber}</p>
-              <p><strong>Date:</strong> {invoiceDate}</p>
-              <p><strong>Payment Method:</strong> {paymentMethod}</p>
+              <p>
+                <strong>Invoice Number:</strong> {invoiceNumber}
+              </p>
+              <p>
+                <strong>Date:</strong> {invoiceDate}
+              </p>
+              <p>
+                <strong>Payment Method:</strong> {paymentMethod}
+              </p>
             </div>
             <div>
-              <p><strong>Order ID:</strong> {order._id || "N/A"}</p>
+              <p>
+                <strong>Order ID:</strong> {order._id || "N/A"}
+              </p>
             </div>
           </div>
 
           {/* Customer Info */}
           <h3 className="text-lg font-semibold mb-2 border-b pb-1">Customer Info</h3>
           <div className="grid grid-cols-2 gap-4 mb-6">
-            <p><strong>Name:</strong> {order.name || "N/A"}</p>
-            <p><strong>Email:</strong> {order.email || "N/A"}</p>
-            <p><strong>Phone:</strong> {order.phone || "N/A"}</p>
-            <p><strong>Address:</strong> {order.address || "N/A"}</p>
+            <p>
+              <strong>Name:</strong> {customer.fullName || order.name || "N/A"}
+            </p>
+            <p>
+              <strong>Email:</strong> {customer.email || order.email || "N/A"}
+            </p>
+            <p>
+              <strong>Phone:</strong> {customer.phone || order.phone || "N/A"}
+            </p>
+            <p>
+              <strong>Address:</strong> {customer.address || order.address || "N/A"}
+            </p>
           </div>
 
           {/* Order Table */}
@@ -121,7 +154,9 @@ const OrderInvoiceModal = ({ order, invoice, onClose }) => {
                       <td className="border p-2">{idx + 1}</td>
                       <td className="border p-2">{item.title || "N/A"}</td>
                       <td className="border p-2 text-right">{item.quantity || 0}</td>
-                      <td className="border p-2 text-right ">KES {item.price?.toLocaleString() || 0}</td>
+                      <td className="border p-2 text-right">
+                        KES {item.price?.toLocaleString() || 0}
+                      </td>
                       <td className="border p-2 text-right">
                         KES {((item.price || 0) * (item.quantity || 0)).toLocaleString()}
                       </td>
@@ -129,7 +164,9 @@ const OrderInvoiceModal = ({ order, invoice, onClose }) => {
                   ))
                 ) : (
                   <tr>
-                    <td className="border p-2 text-center" colSpan={5}>No products found</td>
+                    <td className="border p-2 text-center" colSpan={5}>
+                      No products found
+                    </td>
                   </tr>
                 )}
               </tbody>
@@ -146,7 +183,8 @@ const OrderInvoiceModal = ({ order, invoice, onClose }) => {
             Thank you for shopping with Beauty Bliss Shop!
           </p>
           <p className="text-center mt-2 text-sm text-gray-400">
-            <strong>Terms & Conditions:</strong> All sales are final. Products must be returned within 7 days if defective. Please keep your invoice for any inquiries.
+            <strong>Terms & Conditions:</strong> All sales are final. Products must be
+            returned within 7 days if defective. Please keep your invoice for any inquiries.
           </p>
         </div>
 
