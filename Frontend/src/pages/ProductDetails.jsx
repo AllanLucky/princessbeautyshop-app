@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { userRequest } from "../requestMethod";
@@ -7,51 +8,28 @@ import "react-toastify/dist/ReactToastify.css";
 import { addProduct } from "../redux/cartRedux";
 import { FaPlus, FaMinus, FaStar } from "react-icons/fa";
 
-// ⭐ STAR DISPLAY
-const StarDisplay = ({ rating = 0, maxRating = 5 }) => {
-  return (
-    <div className="flex">
-      {[...Array(maxRating)].map((_, i) => (
-        <FaStar
-          key={i}
-          className={i < rating ? "text-yellow-400" : "text-gray-300"}
-        />
-      ))}
-    </div>
-  );
-};
+const StarDisplay = ({ rating = 0, maxRating = 5 }) => (
+  <div className="flex gap-1">
+    {[...Array(maxRating)].map((_, i) => (
+      <FaStar
+        key={i}
+        className={i < rating ? "text-yellow-400" : "text-gray-300"}
+      />
+    ))}
+  </div>
+);
 
 const ProductDetails = () => {
   const location = useLocation();
   const id = location.pathname.split("/")[2];
+  const dispatch = useDispatch();
 
   const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [reviews, setReviews] = useState([]);
   const [avgRating, setAvgRating] = useState(0);
+  const [tab, setTab] = useState("description");
 
-  const dispatch = useDispatch();
-
-  // ================= QUANTITY =================
-  const handleQuantity = (type) => {
-    if (!product) return;
-
-    const stock = product.stock ?? product.countInStock ?? 0;
-
-    if (type === "dec") {
-      setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
-    }
-
-    if (type === "inc") {
-      if (quantity >= stock) {
-        toast.error(`Only ${stock} items in stock`);
-        return;
-      }
-      setQuantity((prev) => prev + 1);
-    }
-  };
-
-  // ================= FETCH PRODUCT =================
   useEffect(() => {
     const getProduct = async () => {
       try {
@@ -59,215 +37,164 @@ const ProductDetails = () => {
         setProduct(res.data);
 
         const ratingData = res.data.ratings || [];
+        setReviews(ratingData);
 
-        // latest review per user
-        const latestReviews = {};
-        ratingData.forEach((r) => {
-          const key = r.postedBy || r.name;
-          if (!latestReviews[key]) latestReviews[key] = r;
-          else {
-            const oldDate = new Date(latestReviews[key].createdAt || 0);
-            const newDate = new Date(r.createdAt || 0);
-            if (newDate > oldDate) latestReviews[key] = r;
-          }
-        });
-
-        const finalReviews = Object.values(latestReviews);
-        setReviews(finalReviews);
-
-        if (ratingData.length > 0) {
+        if (ratingData.length) {
           const total = ratingData.reduce((a, b) => a + b.star, 0);
           setAvgRating((total / ratingData.length).toFixed(1));
-        } else setAvgRating(0);
+        }
       } catch (err) {
         console.log(err);
       }
     };
 
-    if (id) getProduct();
+    getProduct();
   }, [id]);
 
-  if (!product) return <h2 className="p-10 text-center">Loading...</h2>;
+  if (!product) return <p className="p-10 text-center">Loading...</p>;
 
-  const stock = product.stock ?? product.countInStock ?? 0;
+  const stock = product.stock || 0;
 
-  // ================= PRICE =================
-  const getUnitPrice = () => {
-    if (
-      product.wholesalePrice &&
-      quantity >= product.wholesaleMinimumQuantity
-    ) {
-      return product.wholesalePrice;
-    }
+  const unitPrice = product.discountedPrice || product.originalPrice;
+  const totalPrice = unitPrice * quantity;
 
-    if (product.discountedPrice) return product.discountedPrice;
-    return product.originalPrice || 0;
+  const handleQuantity = (type) => {
+    if (type === "dec") setQuantity((p) => (p > 1 ? p - 1 : 1));
+    if (type === "inc" && quantity < stock) setQuantity((p) => p + 1);
   };
 
-  const totalPrice = getUnitPrice() * quantity;
-
-  // ================= ADD TO CART =================
   const handleAddToCart = () => {
-    if (stock <= 0) {
-      toast.error("Product out of stock");
-      return;
-    }
-
-    if (quantity > stock) {
-      toast.error(`Only ${stock} items available`);
-      return;
-    }
-
-    dispatch(
-      addProduct({
-        ...product,
-        quantity,
-        price: getUnitPrice(),
-        total: totalPrice,
-        isWholesale:
-          quantity >= product.wholesaleMinimumQuantity ? true : false,
-      })
-    );
-
-    toast.success("Added to cart 🛒");
+    dispatch(addProduct({ ...product, quantity, price: unitPrice }));
+    toast.success("Added to cart");
   };
-
-  // ================= TOTAL BOX =================
-  const totalBoxItems = product.whatinbox
-    ? product.whatinbox.reduce((a, b) => a + (b.qty || 1), 0)
-    : 0;
 
   return (
-    <div className="flex flex-col md:flex-row gap-8 p-6 md:p-12">
-      <ToastContainer position="top-right" autoClose={2500} />
+    <div className="max-w-7xl mx-auto p-6">
+      <ToastContainer />
 
-      {/* IMAGE */}
-      <div className="flex-1">
+      <div className="grid md:grid-cols-2 gap-10">
+
+        {/* IMAGE */}
         <img
           src={product.img?.[0]}
-          alt=""
-          className="w-full max-h-[500px] object-contain rounded-lg shadow"
+          className="w-full max-h-[500px] object-contain rounded-xl shadow"
         />
-      </div>
 
-      {/* DETAILS */}
-      <div className="flex-1">
-        <h1 className="text-3xl font-bold">{product.title}</h1>
-        <p className="text-gray-600 mt-3">{product.desc}</p>
+        {/* INFO */}
+        <div>
+          <h1 className="text-3xl font-bold">{product.title}</h1>
+          <p className="text-gray-600 mt-2">{product.desc}</p>
 
-        {/* STOCK */}
-        <p className={`mt-2 font-semibold ${stock ? "text-green-600" : "text-red-500"}`}>
-          {stock ? `${stock} items in stock` : "Out of stock"}
-        </p>
+          <div className="flex items-center gap-3 mt-3">
+            <StarDisplay rating={Math.round(avgRating)} />
+            <span className="text-sm text-gray-600">
+              {avgRating} ({reviews.length} reviews)
+            </span>
+          </div>
 
-        {/* PRICE */}
-        <div className="mt-4">
-          <h2 className="text-2xl font-bold text-red-600">
+          <p className={`mt-2 font-semibold ${stock ? "text-green-600" : "text-red-600"}`}>
+            {stock ? `${stock} In Stock` : "Out of Stock"}
+          </p>
+
+          <h2 className="text-3xl text-pink-600 font-bold mt-4">
             KES {totalPrice.toLocaleString()}
           </h2>
+
+          {/* QTY */}
+          <div className="flex items-center gap-4 mt-6">
+            <button onClick={() => handleQuantity("dec")} className="p-2 bg-gray-200 rounded-full">
+              <FaMinus />
+            </button>
+
+            <span className="font-bold">{quantity}</span>
+
+            <button
+              onClick={() => handleQuantity("inc")}
+              disabled={quantity >= stock}
+              className="p-2 bg-gray-200 rounded-full"
+            >
+              <FaPlus />
+            </button>
+          </div>
+
+          {/* BUTTONS */}
+          <div className="flex gap-4 mt-6">
+            <button
+              onClick={handleAddToCart}
+              className="flex-1 bg-pink-600 text-white py-3 rounded-lg font-semibold"
+            >
+              Add to Cart
+            </button>
+
+            <button className="flex-1 bg-black text-white py-3 rounded-lg font-semibold">
+              Buy Now
+            </button>
+          </div>
         </div>
+      </div>
 
-        {/* RATING */}
-        <div className="flex items-center gap-3 mt-3">
-          <StarDisplay rating={Math.round(avgRating)} />
-          <span className="text-sm text-gray-600">
-            {avgRating} ⭐ ({reviews.length} reviews)
-          </span>
-        </div>
+      {/* TABS */}
+      <div className="flex gap-6 mt-12 border-b">
+        {["description", "features", "specs", "reviews"].map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`pb-2 capitalize ${
+              tab === t ? "border-b-2 border-pink-600 font-semibold" : ""
+            }`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
 
-        {/* WHAT IN BOX */}
-        {product.whatinbox && product.whatinbox.length > 0 && (
-          <div className="mt-6 bg-gray-50 p-4 rounded-lg border">
-            <h3 className="font-bold text-lg mb-3">📦 What's in the box</h3>
+      {/* TAB CONTENT */}
+      <div className="mt-8 bg-white rounded-xl shadow p-6">
 
-            {product.whatinbox.map((box, i) => (
-              <div key={i} className="flex justify-between border-b py-2">
-                <span>{box.item}</span>
-                <span className="bg-black text-white text-xs px-2 py-1 rounded">
-                  x{box.qty}
-                </span>
+        {tab === "description" && (
+          <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+            {product.desc}
+          </p>
+        )}
+
+        {tab === "features" && (
+          <ul className="grid md:grid-cols-2 gap-3 list-disc pl-5 text-gray-700">
+            {product.features?.map((f, i) => (
+              <li key={i}>{f}</li>
+            ))}
+          </ul>
+        )}
+
+        {tab === "specs" && (
+          <div className="border rounded-lg">
+            {product.specifications?.map((s, i) => (
+              <div
+                key={i}
+                className={`grid grid-cols-2 px-4 py-3 ${
+                  i % 2 ? "bg-white" : "bg-gray-50"
+                }`}
+              >
+                <span className="font-medium">{s.key}</span>
+                <span className="text-gray-600">{s.value}</span>
               </div>
             ))}
-
-            <div className="flex justify-between mt-3 font-semibold">
-              <span>Total items</span>
-              <span>{totalBoxItems}</span>
-            </div>
           </div>
         )}
 
-        {/* QTY */}
-        <div className="flex items-center gap-4 mt-6">
-          <button
-            onClick={() => handleQuantity("dec")}
-            className="p-2 bg-pink-600 text-white rounded-full"
-          >
-            <FaMinus />
-          </button>
-
-          <span className="text-lg font-bold">{quantity}</span>
-
-          <button
-            onClick={() => handleQuantity("inc")}
-            disabled={quantity >= stock}
-            className={`p-2 rounded-full text-white ${
-              quantity >= stock
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-pink-600"
-            }`}
-          >
-            <FaPlus />
-          </button>
-        </div>
-
-        {/* TOTAL */}
-        <div className="mt-4 bg-yellow-50 p-3 rounded">
-          <p className="font-semibold">
-            Total:{" "}
-            <span className="text-red-600">
-              KES {totalPrice.toLocaleString()}
-            </span>
-          </p>
-        </div>
-
-        {/* BUTTONS */}
-        <div className="flex gap-4 mt-6">
-          <button
-            onClick={handleAddToCart}
-            disabled={!stock}
-            className={`flex-1 py-3 rounded-lg font-semibold text-white ${
-              stock
-                ? "bg-pink-600 hover:bg-pink-700"
-                : "bg-gray-400 cursor-not-allowed"
-            }`}
-          >
-            {stock ? "Add to Cart" : "Out of Stock"}
-          </button>
-
-          <button className="flex-1 bg-black text-white py-3 rounded-lg font-semibold">
-            Buy Now
-          </button>
-        </div>
-
-        {/* COMMENTS */}
-        <div className="mt-10">
-          <h3 className="font-bold text-lg mb-3">Customer Comments</h3>
-
-          {reviews.length === 0 ? (
-            <p className="text-gray-500 text-sm">No comments yet</p>
+        {tab === "reviews" && (
+          reviews.length === 0 ? (
+            <p>No reviews yet.</p>
           ) : (
             reviews.map((r, i) => (
-              <div key={i} className="border-b py-3">
-                <div className="flex items-center gap-2">
-                  <StarDisplay rating={r.star} />
-                  <span className="font-semibold text-sm">{r.name}</span>
-                </div>
-
-                <p className="text-gray-600 text-sm mt-1">{r.comment}</p>
+              <div key={i} className="border-b py-4">
+                <StarDisplay rating={r.star} />
+                <p className="font-semibold">{r.name}</p>
+                <p className="text-gray-600">{r.comment}</p>
               </div>
             ))
-          )}
-        </div>
+          )
+        )}
+
       </div>
     </div>
   );
