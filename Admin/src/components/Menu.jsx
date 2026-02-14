@@ -10,18 +10,29 @@ import {
   FaSignOutAlt,
   FaUsers,
   FaTachometerAlt,
+  FaPlusCircle,
+  FaTag,
+  FaStar,
+  FaEnvelope,
+  FaCreditCard,
+  FaTruck,
+  FaPercent,
+  FaUndo,
+  FaHeart,
+  FaHeadset,
 } from "react-icons/fa";
 import { NavLink } from "react-router-dom";
 import { logout } from "../redux/adminRedux";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 
-const Menu = () => {
+const Menu = ({ collapsed }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const admin = useSelector((state) => state.admin.currentAdmin);
 
   const handleLogout = () => {
+    if (!window.confirm("Are you sure you want to logout?")) return;
     dispatch(logout());
     navigate("/login");
   };
@@ -34,80 +45,149 @@ const Menu = () => {
          : "text-gray-600 hover:bg-gray-100 hover:text-pink-500"
      }`;
 
+  const linkLabel = (label) => (!collapsed ? label : ""); // Hide label when collapsed
+
   return (
-    <div className="h-screen w-[260px] bg-white border-r-2 border-gray-300 shadow-sm flex flex-col">
+    <div
+      className={`h-screen bg-white border-r-2 border-gray-300 shadow-sm flex flex-col transition-all duration-300 ${
+        collapsed ? "w-20" : "w-64"
+      }`}
+    >
       {/* Logo and Admin Info */}
       <div className="flex items-center gap-3 px-4 py-4 flex-shrink-0">
         <FaTachometerAlt className="text-pink-500 text-2xl" />
-        <div>
-          <h1 className="text-xl font-bold text-gray-800">Admin Panel</h1>
-          {admin && <p className="text-gray-500 text-sm">{admin.name}</p>}
-        </div>
+        {!collapsed && (
+          <div>
+            <h1 className="text-xl font-bold text-gray-800">Admin Panel</h1>
+            {admin && <p className="text-gray-500 text-sm">{admin.name}</p>}
+          </div>
+        )}
       </div>
 
-      {/* Scrollable navigation links */}
+      {/* Navigation Links */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <nav className="flex-1 overflow-y-auto px-2 space-y-2 scrollbar-thin scrollbar-thumb-pink-300 scrollbar-track-gray-100">
+          {/* Dashboard */}
           <NavLink to="/admin-dashboard" className={navStyle}>
-            <FaHome /> Dashboard
+            <FaHome /> {linkLabel("Dashboard")}
           </NavLink>
 
+          {/* Profile */}
           <NavLink to="/profile" className={navStyle}>
-            <FaUsers /> Profile
+            <FaUsers /> {linkLabel("Profile")}
           </NavLink>
 
-          <hr className="my-4 border-gray-200" />
+          <hr className={`my-4 border-gray-200 ${collapsed ? "hidden" : ""}`} />
 
+          {/* Users */}
           <NavLink to="/users" className={navStyle}>
-            <FaUsers /> Users
+            <FaUsers /> {linkLabel("Customers")}
           </NavLink>
 
+          <NavLink to="/vendors" className={navStyle}>
+            <FaUsers /> {linkLabel("Vendors")}
+          </NavLink>
+
+          {/* Products & Inventory */}
           <NavLink to="/products" className={navStyle}>
-            <FaBox /> Products
+            <FaBox /> {linkLabel("Products")}
+          </NavLink>
+
+          <NavLink to="/categories" className={navStyle}>
+            <FaClipboardList /> {linkLabel("Categories")}
+          </NavLink>
+
+          <NavLink to="/inventory" className={navStyle}>
+            <FaPlusCircle /> {linkLabel("Inventory")}
+          </NavLink>
+
+          <NavLink to="/coupons" className={navStyle}>
+            <FaTag /> {linkLabel("Coupons")}
+          </NavLink>
+
+          <NavLink to="/reviews" className={navStyle}>
+            <FaStar /> {linkLabel("Reviews")}
           </NavLink>
 
           <NavLink to="/orders" className={navStyle}>
-            <FaClipboardList /> Orders
+            <FaClipboardList /> {linkLabel("Orders")}
           </NavLink>
 
-          <NavLink to="/invoices" className={navStyle}>
-            <FaClipboardList /> Invoices
+          <NavLink to="/returns" className={navStyle}>
+            <FaUndo /> {linkLabel("Returns")}
           </NavLink>
 
-          <hr className="my-4 border-gray-200" />
+          <NavLink to="/wishlist" className={navStyle}>
+            <FaHeart /> {linkLabel("Wishlist")}
+          </NavLink>
 
+          <NavLink to="/support" className={navStyle}>
+            <FaHeadset /> {linkLabel("Support Tickets")}
+          </NavLink>
+
+          <hr className={`my-4 border-gray-200 ${collapsed ? "hidden" : ""}`} />
+
+          {/* Marketing & Content */}
           <NavLink to="/banners" className={navStyle}>
-            <FaElementor /> Banners
+            <FaElementor /> {linkLabel("Banners")}
           </NavLink>
 
-          <NavLink to="/settings" className={navStyle}>
-            <FaCog /> Settings
+          <NavLink to="/notifications" className={navStyle}>
+            <FaEnvelope /> {linkLabel("Notifications")}
           </NavLink>
 
-          <NavLink to="/backups" className={navStyle}>
-            <FaHdd /> Backups
+          <NavLink to="/blog" className={navStyle}>
+            <FaClipboard /> {linkLabel("Blog")}
           </NavLink>
 
-          <hr className="my-4 border-gray-200" />
+          <hr className={`my-4 border-gray-200 ${collapsed ? "hidden" : ""}`} />
 
+          {/* Analytics */}
           <NavLink to="/charts" className={navStyle}>
-            <FaChartBar /> Charts
+            <FaChartBar /> {linkLabel("Analytics")}
           </NavLink>
 
           <NavLink to="/all-logs" className={navStyle}>
-            <FaClipboard /> All Logs
+            <FaClipboard /> {linkLabel("Logs")}
           </NavLink>
-        </nav>
 
-        {/* Logout button fixed at bottom */}
-        <div className="flex-shrink-0 p-4 border-t border-gray-200">
+          <hr className={`my-4 border-gray-200 ${collapsed ? "hidden" : ""}`} />
+
+          {/* Settings & System */}
+          <NavLink to="/settings" className={navStyle}>
+            <FaCog /> {linkLabel("Settings")}
+          </NavLink>
+
+          <NavLink to="/roles" className={navStyle}>
+            <FaUsers /> {linkLabel("Roles & Permissions")}
+          </NavLink>
+
+          <NavLink to="/backups" className={navStyle}>
+            <FaHdd /> {linkLabel("Backups")}
+          </NavLink>
+
+          <NavLink to="/payments" className={navStyle}>
+            <FaCreditCard /> {linkLabel("Payments")}
+          </NavLink>
+
+          <NavLink to="/shipping" className={navStyle}>
+            <FaTruck /> {linkLabel("Shipping")}
+          </NavLink>
+
+          <NavLink to="/taxes" className={navStyle}>
+            <FaPercent /> {linkLabel("Taxes")}
+          </NavLink>
+
+          <hr className={`my-4 border-gray-200 ${collapsed ? "hidden" : ""}`} />
+
+          {/* Logout */}
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-red-500 hover:bg-red-50 transition w-full"
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg text-red-500 hover:bg-red-50 transition w-full`}
           >
-            <FaSignOutAlt /> Logout
+            <FaSignOutAlt /> {linkLabel("Logout")}
           </button>
-        </div>
+        </nav>
       </div>
     </div>
   );

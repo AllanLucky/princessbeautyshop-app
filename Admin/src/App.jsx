@@ -1,8 +1,10 @@
-import { createBrowserRouter, RouterProvider, Outlet, Navigate } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
+
+// Layout
+import Layout from "./components/Layout";
 
 // Components
-import Menu from "./components/Menu";
-import Headers from "./components/Headers";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // Pages
 import Home from "./pages/Home";
@@ -21,30 +23,8 @@ import Alllogs from "./pages/Alllogs";
 import AdminInvoices from "./pages/AdminInvoices";
 import EditUser from "./pages/EditUser";
 import ProductFeaturePage from "./pages/ProductFeaturePage";
-
-// Custom ProtectedRoute
-import ProtectedRoute from "./components/ProtectedRoute";
-
-// --- Admin Layout ---
-const Layout = () => (
-  <div className="flex flex-col h-screen overflow-hidden">
-    {/* Header */}
-    <Headers />
-
-    {/* Body: Sidebar + Main content */}
-    <div className="flex flex-1 h-full overflow-hidden">
-      {/* Sidebar */}
-      <div className="w-64 flex-shrink-0 h-full bg-gray-100 border-r border-gray-300">
-        <Menu />
-      </div>
-
-      {/* Main content */}
-      <div className="flex-1 h-full overflow-auto bg-gray-50 p-5">
-        <Outlet />
-      </div>
-    </div>
-  </div>
-);
+import CreateOrder from "./pages/CreateOrder";
+import Inventory from "./pages/Inventory";
 
 // --- Routes ---
 const router = createBrowserRouter([
@@ -70,8 +50,10 @@ const router = createBrowserRouter([
       { path: "products", element: <Products /> },
       { path: "newproduct", element: <NewProduct /> },
       { path: "product/:productId", element: <Product /> },
-      { path: "/admin/product/features/:id", element: <ProductFeaturePage /> },
+      { path: "admin/product/features/:id", element: <ProductFeaturePage /> },
       { path: "orders", element: <Orders /> },
+      { path: "create-order", element: <CreateOrder /> },
+      { path: "inventory", element: <Inventory /> },
       { path: "invoices", element: <AdminInvoices /> },
       { path: "banners", element: <Banners /> },
       { path: "settings", element: <Settings /> },
