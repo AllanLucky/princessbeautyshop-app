@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
-import { FaCheckDouble, FaClock, FaRegCheckCircle, FaEye, FaTrash } from "react-icons/fa";
+import { Link } from "react-router-dom";
+import {
+  FaCheckDouble,
+  FaClock,
+  FaRegCheckCircle,
+  FaEye,
+  FaTrash,
+} from "react-icons/fa";
 import { DataGrid } from "@mui/x-data-grid";
 import { userRequest } from "../requestMethods";
 import { toast, ToastContainer } from "react-toastify";
@@ -17,9 +24,11 @@ const Orders = () => {
     const getOrders = async () => {
       try {
         setLoading(true);
-        const res = await userRequest.get("/orders");
-        setOrders(res.data.orders || res.data);
+        const response = await userRequest.get("/orders");
+        const fetchedOrders = response.data.orders || response.data;
+        setOrders(fetchedOrders);
       } catch (err) {
+        console.error(err);
         toast.error(err.response?.data?.message || "Failed to fetch orders");
       } finally {
         setLoading(false);
@@ -41,6 +50,7 @@ const Orders = () => {
 
       toast.success("Order marked as delivered");
     } catch (err) {
+      console.error(err);
       toast.error(err.response?.data?.message || "Failed to update order");
     }
   };
@@ -56,6 +66,7 @@ const Orders = () => {
 
       toast.success("Order deleted successfully 🗑️");
     } catch (err) {
+      console.error(err);
       toast.error(err.response?.data?.message || "Delete failed");
     } finally {
       setDeletingId(null);
@@ -65,7 +76,7 @@ const Orders = () => {
   const openOrderDetails = (order) => setSelectedOrder(order);
   const closeOrderDetails = () => setSelectedOrder(null);
 
-  // ================= TABLE =================
+  // ================= TABLE COLUMNS =================
   const columns = [
     { field: "_id", headerName: "Order ID", width: 200 },
     { field: "name", headerName: "Customer Name", width: 200 },
@@ -140,15 +151,17 @@ const Orders = () => {
     <div className="p-4 md:p-6 w-full min-w-[300px] bg-gray-50 min-h-screen">
       <ToastContainer />
 
-      <div className="flex items-center justify-between mb-4 md:mb-6">
-        <h1 className="text-xl md:text-2xl font-bold text-gray-800">
-          All Orders
-        </h1>
-        <span className="text-sm text-gray-500">
-          Total: {orders.length}
-        </span>
+      {/* HEADER */}
+      <div className="flex flex-col md:flex-row justify-between mb-6 gap-3">
+        <h1 className="text-2xl font-bold">All Orders</h1>
+        <Link to="/create-order">
+          <button className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg">
+            + Create Order
+          </button>
+        </Link>
       </div>
 
+      {/* ORDERS TABLE */}
       <div className="bg-white rounded-xl shadow p-2 md:p-4 w-full overflow-auto">
         <DataGrid
           rows={orders}
@@ -164,12 +177,12 @@ const Orders = () => {
               backgroundColor: "#f9fafb",
               color: "#374151",
               fontWeight: 600,
-              textAlign: "center"
+              textAlign: "center",
             },
             "& .MuiDataGrid-columnHeaderTitle": {
               fontWeight: "600",
               width: "100%",
-              textAlign: "center"
+              textAlign: "center",
             },
             "& .MuiDataGrid-row:hover": {
               backgroundColor: "#fdf2f8",
@@ -184,6 +197,7 @@ const Orders = () => {
         />
       </div>
 
+      {/* ORDER DETAIL MODAL */}
       {selectedOrder && (
         <OrderDetailModal
           order={selectedOrder}

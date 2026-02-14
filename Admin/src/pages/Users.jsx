@@ -143,7 +143,7 @@ const Users = () => {
       <ToastContainer position="top-right" autoClose={2000} />
 
       <div className="flex flex-col md:flex-row items-center justify-between mb-5 gap-2">
-        <h1 className="text-2xl font-semibold text-gray-800">Users</h1>
+        <h1 className="text-2xl font-semibold text-gray-800">All Customers</h1>
         <span className="text-sm text-gray-500">Total: {users.length}</span>
       </div>
 

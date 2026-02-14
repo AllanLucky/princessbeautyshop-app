@@ -2,17 +2,10 @@ import { useSelector, useDispatch } from "react-redux";
 import { useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { updateAdminCredentials } from "../redux/adminApiCalls"; 
+import { userRequest } from "../requestMethods"; // Axios instance
 import { logout } from "../redux/adminRedux";
 import { useNavigate } from "react-router-dom";
-import {
-  FaUpload,
-  FaEnvelope,
-  FaLock,
-  FaSignOutAlt,
-  FaSave,
-  FaUser,
-} from "react-icons/fa";
+import { FaUpload, FaLock, FaSignOutAlt, FaSave } from "react-icons/fa";
 
 const Myaccounts = () => {
   const dispatch = useDispatch();
@@ -20,34 +13,70 @@ const Myaccounts = () => {
   const admin = useSelector((state) => state.admin.currentAdmin);
 
   const [email, setEmail] = useState(admin?.email || "");
-  const [password, setPassword] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [profilePic, setProfilePic] = useState(admin?.avatar || "");
   const [loading, setLoading] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
-  const handleUpdate = async () => {
-    if (!email || !password) {
-      toast.error("Email and password cannot be empty!");
+  if (!admin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <p className="text-gray-600 text-lg">You are not logged in.</p>
+      </div>
+    );
+  }
+
+  // Upload avatar if changed
+  const uploadAvatar = async () => {
+    if (profilePic instanceof File) {
+      const formData = new FormData();
+      formData.append("avatar", profilePic);
+
+      const res = await userRequest.put("/users/upload-avatar", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      return res.data.avatar; // Returns the uploaded avatar URL
+    }
+    return profilePic; // No change
+  };
+
+  // Save all changes
+  const handleSaveChanges = async () => {
+    if (!email) {
+      toast.error("Email cannot be empty!");
+      return;
+    }
+
+    if ((currentPassword && !newPassword) || (!currentPassword && newPassword)) {
+      toast.error("To change password, both current and new password are required");
       return;
     }
 
     setLoading(true);
     try {
-      const { success, error } = await updateAdminCredentials(dispatch, admin.id, {
-        email,
-        password,
-        avatar: profilePic,
-      });
+      // 1️⃣ Upload avatar if changed
+      const avatarUrl = await uploadAvatar();
+      setProfilePic(avatarUrl);
 
-      if (success) {
-        toast.success("Profile updated successfully!");
-        setPassword("");
-        setEditMode(false);
-      } else {
-        toast.error(error);
+      // 2️⃣ Update email
+      await userRequest.put("/users/update-profile", { email });
+
+      // 3️⃣ Change password if provided
+      if (currentPassword && newPassword) {
+        await userRequest.put("/users/change-password", {
+          currentPassword,
+          newPassword,
+        });
+        setCurrentPassword("");
+        setNewPassword("");
       }
+
+      toast.success("Profile updated successfully!");
+      setEditMode(false);
     } catch (err) {
-      toast.error("Something went wrong. Please try again.");
+      toast.error(err.response?.data?.message || "Failed to update profile");
       console.error(err);
     } finally {
       setLoading(false);
@@ -56,65 +85,40 @@ const Myaccounts = () => {
 
   const handleImageChange = (e) => {
     if (e.target.files && e.target.files[0]) {
-      setProfilePic(URL.createObjectURL(e.target.files[0]));
+      setProfilePic(e.target.files[0]); // store File for upload
     }
   };
 
   const handleLogout = () => {
-    const confirmLogout = window.confirm("Are you sure you want to logout?");
-    if (!confirmLogout) return;
+    if (!window.confirm("Are you sure you want to logout?")) return;
     dispatch(logout());
     toast.success("Logged out successfully!");
     setTimeout(() => navigate("/login"), 700);
   };
 
-  if (!admin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-600 text-lg">You are not logged in.</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-rose-50 to-white pt-24 pb-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-b from-rose-50 to-white pt-24 pb-12 px-4 sm:px-6 lg:px-8">
       <ToastContainer position="top-right" autoClose={3000} />
 
-      <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
+      <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden">
         {/* HEADER */}
-        <div className="text-center p-8 border-b border-gray-100">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Admin Profile</h1>
-          <p className="text-gray-600">Manage your personal information and security</p>
+        <div className="text-center p-10 border-b border-gray-100">
+          <h1 className="text-4xl font-extrabold text-gray-800 mb-2">Admin Profile</h1>
+          <p className="text-gray-500 text-lg">Manage your personal information and security</p>
         </div>
 
-        {/* STATS - moved to top */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-8 border-b border-gray-100 bg-gray-50">
-          <div className="bg-white p-4 rounded-lg text-center shadow">
-            <p className="text-sm text-gray-500">Role</p>
-            <h4 className="font-bold text-gray-800 capitalize">{admin.role || "admin"}</h4>
-          </div>
-          <div className="bg-white p-4 rounded-lg text-center shadow">
-            <p className="text-sm text-gray-500">Status</p>
-            <h4 className="font-bold text-green-600">Active</h4>
-          </div>
-          <div className="bg-white p-4 rounded-lg text-center shadow">
-            <p className="text-sm text-gray-500">Account</p>
-            <h4 className="font-bold text-gray-800">Verified</h4>
-          </div>
-        </div>
-
-        {/* PROFILE TOP */}
-        <div className="flex flex-col lg:flex-row items-center lg:items-start p-8 gap-8">
+        {/* PROFILE SECTION */}
+        <div className="flex flex-col lg:flex-row items-center lg:items-start p-8 gap-10">
           {/* Profile Image */}
           <div className="flex flex-col items-center">
             <img
-              src={profilePic || "/avatar.png"}
+              src={profilePic instanceof File ? URL.createObjectURL(profilePic) : profilePic || "/avatar.png"}
               alt="Profile"
-              className="h-28 w-28 rounded-full object-cover border-2 border-gray-300"
+              className="h-32 w-32 rounded-full object-cover border-4 border-gray-200 shadow-lg"
             />
             <label
               htmlFor="profilePic"
-              className="flex items-center gap-2 mt-3 cursor-pointer text-pink-500 hover:text-pink-600 transition"
+              className="flex items-center gap-2 mt-4 cursor-pointer text-pink-500 hover:text-pink-600 font-medium transition"
             >
               <FaUpload /> Change Photo
             </label>
@@ -128,40 +132,53 @@ const Myaccounts = () => {
 
           {/* Profile Info */}
           <div className="flex-1 w-full">
-            {/* Name & Email */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
-                <label className="block text-gray-700 font-medium mb-1">Full Name</label>
+                <label className="block text-gray-700 font-semibold mb-1">Full Name</label>
                 <input
                   type="text"
                   value={admin.name}
                   disabled
-                  className="w-full border border-gray-300 rounded px-3 py-2 bg-gray-100"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-100 text-gray-700"
                 />
               </div>
 
               <div>
-                <label className="block text-gray-700 font-medium mb-1">Email</label>
+                <label className="block text-gray-700 font-semibold mb-1">Email</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={!editMode}
-                  className={`w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-pink-300 outline-none ${
+                  className={`w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-pink-300 outline-none ${
                     !editMode && "bg-gray-100 cursor-not-allowed"
                   }`}
                 />
               </div>
 
-              <div>
-                <label className="block text-gray-700 font-medium mb-1">New Password</label>
+              <div className="md:col-span-2">
+                <label className="block text-gray-700 font-semibold mb-1">Current Password</label>
                 <input
                   type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  disabled={!editMode}
+                  placeholder={editMode ? "Enter current password" : "Disabled"}
+                  className={`w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-pink-300 outline-none ${
+                    !editMode && "bg-gray-100 cursor-not-allowed"
+                  }`}
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-gray-700 font-semibold mb-1">New Password</label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
                   disabled={!editMode}
                   placeholder={editMode ? "Enter new password" : "Disabled"}
-                  className={`w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-pink-300 outline-none ${
+                  className={`w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-pink-300 outline-none ${
                     !editMode && "bg-gray-100 cursor-not-allowed"
                   }`}
                 />
@@ -172,27 +189,26 @@ const Myaccounts = () => {
             <div className="flex flex-col md:flex-row gap-4">
               <button
                 onClick={() => setEditMode(!editMode)}
-                className="w-full md:w-auto bg-pink-500 hover:bg-pink-600 text-white py-2 px-6 rounded-lg font-medium transition"
+                className="w-full md:w-auto bg-pink-500 hover:bg-pink-600 text-white py-3 px-8 rounded-xl font-medium transition shadow-lg hover:shadow-xl"
               >
                 {editMode ? "Cancel" : "Edit Profile"}
               </button>
 
               {editMode && (
                 <button
-                  onClick={handleUpdate}
+                  onClick={handleSaveChanges}
                   disabled={loading}
-                  className="w-full md:w-auto bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-500 text-white py-2 px-6 rounded-lg font-medium transition hover:scale-[1.02] disabled:opacity-50 flex items-center justify-center"
+                  className="w-full md:w-auto bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-500 text-white py-3 px-8 rounded-xl font-medium transition shadow-lg hover:scale-[1.03] disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  <FaSave className="mr-2" />
-                  {loading ? "Saving..." : "Save Changes"}
+                  <FaSave /> {loading ? "Saving..." : "Save Changes"}
                 </button>
               )}
 
               <button
                 onClick={handleLogout}
-                className="w-full md:w-auto bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-6 rounded-lg font-medium flex items-center justify-center"
+                className="w-full md:w-auto bg-gray-100 hover:bg-gray-200 text-gray-800 py-3 px-8 rounded-xl font-medium flex items-center justify-center gap-2 shadow"
               >
-                <FaSignOutAlt className="mr-2" /> Logout
+                <FaSignOutAlt /> Logout
               </button>
             </div>
           </div>
