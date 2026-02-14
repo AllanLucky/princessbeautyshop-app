@@ -12,7 +12,10 @@ import Users from "./pages/Users";
 import Products from "./pages/Products";
 import NewProduct from "./pages/NewProduct";
 import Product from "./pages/Product";
+import ProductFeaturePage from "./pages/ProductFeaturePage";
 import Orders from "./pages/Orders";
+import CreateOrder from "./pages/CreateOrder";
+import Inventory from "./pages/Inventory";
 import Banners from "./pages/Banners";
 import Settings from "./pages/Settings";
 import Backups from "./pages/Backups";
@@ -22,9 +25,18 @@ import Login from "./pages/Login";
 import Alllogs from "./pages/Alllogs";
 import AdminInvoices from "./pages/AdminInvoices";
 import EditUser from "./pages/EditUser";
-import ProductFeaturePage from "./pages/ProductFeaturePage";
-import CreateOrder from "./pages/CreateOrder";
-import Inventory from "./pages/Inventory";
+
+// New Admin Pages
+import Vendors from "./pages/Vendors";
+import CreateVendor from "./pages/CreateVendor";
+import EditVendor from "./pages/EditVendor";
+// import Coupons from "./pages/Coupons";
+// import Reviews from "./pages/Reviews";
+// import Returns from "./pages/Returns";
+// import Wishlist from "./pages/Wishlist";
+// import SupportTickets from "./pages/SupportTickets";
+// import Notifications from "./pages/Notifications";
+// import Blog from "./pages/Blog";
 
 // --- Routes ---
 const router = createBrowserRouter([
@@ -45,21 +57,46 @@ const router = createBrowserRouter([
       { path: "", element: <Navigate to="/admin-dashboard" /> },
       { path: "admin-dashboard", element: <Home /> },
       { path: "profile", element: <Myaccounts /> },
+
+      // Users
       { path: "users", element: <Users /> },
       { path: "user/:id", element: <EditUser /> },
+
+      // Products
       { path: "products", element: <Products /> },
       { path: "newproduct", element: <NewProduct /> },
       { path: "product/:productId", element: <Product /> },
       { path: "admin/product/features/:id", element: <ProductFeaturePage /> },
+
+      // Orders & Inventory
       { path: "orders", element: <Orders /> },
       { path: "create-order", element: <CreateOrder /> },
       { path: "inventory", element: <Inventory /> },
       { path: "invoices", element: <AdminInvoices /> },
+
+      // Marketing & Content
       { path: "banners", element: <Banners /> },
-      { path: "settings", element: <Settings /> },
-      { path: "backups", element: <Backups /> },
+      // { path: "notifications", element: <Notifications /> },
+      // { path: "blog", element: <Blog /> },
+
+      // Vendors, Coupons, Reviews, Returns, Wishlist, Support
+      { path: "vendors", element: <Vendors /> },
+      { path: "create-vendor", element: <CreateVendor /> },
+      { path: "vendor/:id", element: <EditVendor /> },
+
+      // { path: "coupons", element: <Coupons /> },
+      // { path: "reviews", element: <Reviews /> },
+      // { path: "returns", element: <Returns /> },
+      // { path: "wishlist", element: <Wishlist /> },
+      // { path: "support", element: <SupportTickets /> },
+
+      // Analytics & Logs
       { path: "charts", element: <Charts /> },
       { path: "all-logs", element: <Alllogs /> },
+
+      // Settings
+      { path: "settings", element: <Settings /> },
+      { path: "backups", element: <Backups /> },
     ],
   },
   // 404 fallback
