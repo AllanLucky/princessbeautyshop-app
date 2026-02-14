@@ -6,7 +6,7 @@ import bcrypt from "bcryptjs";
 // @route   POST /api/vendors
 // @access  Admin
 export const createVendor = asyncHandler(async (req, res) => {
-  const { name, email, password, storeName, phone } = req.body;
+  const { name, email, password, storeName, phone, avatar } = req.body;
 
   if (!name || !email || !password || !storeName) {
     res.status(400);
@@ -29,6 +29,7 @@ export const createVendor = asyncHandler(async (req, res) => {
     password: hashedPassword,
     storeName,
     phone,
+    avatar,
     createdBy: req.user._id, // admin ID from auth middleware
   });
 
@@ -41,6 +42,7 @@ export const createVendor = asyncHandler(async (req, res) => {
       email: vendor.email,
       storeName: vendor.storeName,
       phone: vendor.phone,
+      avatar: vendor.avatar,
       createdBy: vendor.createdBy,
     },
   });
@@ -52,6 +54,20 @@ export const createVendor = asyncHandler(async (req, res) => {
 export const getVendors = asyncHandler(async (req, res) => {
   const vendors = await Vendor.find().select("-password");
   res.json({ success: true, vendors });
+});
+
+// @desc    Get single vendor by ID
+// @route   GET /api/vendors/:id
+// @access  Admin
+export const getVendorById = asyncHandler(async (req, res) => {
+  const vendor = await Vendor.findById(req.params.id).select("-password");
+
+  if (!vendor) {
+    res.status(404);
+    throw new Error("Vendor not found");
+  }
+
+  res.json({ success: true, vendor });
 });
 
 // @desc    Update a vendor
@@ -77,7 +93,21 @@ export const updateVendor = asyncHandler(async (req, res) => {
 
   await vendor.save();
 
-  res.json({ success: true, message: "Vendor updated successfully" });
+  res.json({
+    success: true,
+    message: "Vendor updated successfully",
+    vendor: {
+      id: vendor._id,
+      name: vendor.name,
+      email: vendor.email,
+      storeName: vendor.storeName,
+      phone: vendor.phone,
+      avatar: vendor.avatar,
+      isActive: vendor.isActive,
+      role: vendor.role,
+      createdBy: vendor.createdBy,
+    },
+  });
 });
 
 // @desc    Delete a vendor
