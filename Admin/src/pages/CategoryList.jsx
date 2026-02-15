@@ -23,7 +23,15 @@ const Categories = () => {
       try {
         setLoading(true);
         const res = await userRequest.get("/categories");
-        setCategories(res.data.categories);
+
+        // ✅ Robust: check if res.data.categories exists, otherwise fallback
+        const data = Array.isArray(res.data.categories)
+          ? res.data.categories
+          : Array.isArray(res.data)
+          ? res.data
+          : [];
+
+        setCategories(data);
       } catch (error) {
         console.error("Failed to fetch categories:", error);
         toast.error("Failed to fetch categories", {
@@ -34,6 +42,7 @@ const Categories = () => {
         setLoading(false);
       }
     };
+
     fetchCategories();
   }, []);
 
@@ -65,7 +74,6 @@ const Categories = () => {
     { field: "_id", headerName: "ID", width: 220 },
     { field: "name", headerName: "Category Name", width: 200 },
     { field: "description", headerName: "Description", width: 300 },
-
     {
       field: "action",
       headerName: "Actions",
@@ -75,7 +83,6 @@ const Categories = () => {
           <Link to={`/category/${params.row._id}`}>
             <FaEdit className="text-blue-500 text-xl cursor-pointer" />
           </Link>
-
           <button
             disabled={deletingId === params.row._id}
             onClick={() => handleDelete(params.row._id)}
@@ -108,7 +115,7 @@ const Categories = () => {
         <DataGrid
           rows={categories}
           columns={categoryColumns}
-          getRowId={(row) => row._id}
+          getRowId={(row) => row._id || row.id} // fallback
           loading={loading}
           autoHeight
           pagination

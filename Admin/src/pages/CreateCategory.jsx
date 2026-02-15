@@ -59,7 +59,7 @@ const CreateCategory = () => {
 
       <h1 className="text-2xl font-bold mb-5 text-center">Create New Category</h1>
 
-      <div className="bg-white p-5 rounded-lg shadow mb-5 max-w-4xl mx-auto">
+      <div className="p-5 w-[77vw] overflow-hidden bg-white shadow-lg rounded-lg">
         <form
           onSubmit={handleSubmit}
           className="grid grid-cols-1 md:grid-cols-2 gap-4"
