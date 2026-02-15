@@ -24,9 +24,9 @@ const Categories = () => {
         setLoading(true);
         const res = await userRequest.get("/categories");
 
-        // ✅ Robust: check if res.data.categories exists, otherwise fallback
-        const data = Array.isArray(res.data.categories)
-          ? res.data.categories
+        // ✅ Robust: check if res.data.data exists (backend returns { success, data })
+        const data = Array.isArray(res.data.data)
+          ? res.data.data
           : Array.isArray(res.data)
           ? res.data
           : [];
@@ -105,7 +105,7 @@ const Categories = () => {
         <h1 className="text-2xl font-semibold text-gray-800">All Categories</h1>
         <button
           onClick={() => navigate("/new-category")}
-          className="bg-green-500 text-white px-4 py-2 rounded"
+          className="bg-green-600 text-white px-4 py-2 rounded"
         >
           Add Category
         </button>

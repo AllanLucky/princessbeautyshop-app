@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { userRequest } from "../requestMethods"; // axios instance
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -57,7 +57,15 @@ const CreateCategory = () => {
     <div className="p-5 bg-gray-50 min-h-screen">
       <ToastContainer position="top-right" autoClose={2500} />
 
-      <h1 className="text-2xl font-bold mb-5 text-center">Create New Category</h1>
+      {/* HEADER */}
+      <div className="flex flex-col md:flex-row justify-between mb-6 gap-3">
+        <h1 className="text-2xl font-bold float-start">Create New Category</h1>
+        <Link to="/categories">
+          <button className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg float-end">
+            Back
+          </button>
+        </Link>
+      </div>
 
       <div className="p-5 w-[77vw] overflow-hidden bg-white shadow-lg rounded-lg">
         <form
@@ -95,7 +103,7 @@ const CreateCategory = () => {
           <button
             type="submit"
             disabled={loading}
-            className="col-span-full bg-green-500 text-white py-3 rounded-lg font-semibold hover:bg-green-600 transition disabled:opacity-50"
+            className="col-span-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition disabled:opacity-50"
           >
             {loading ? "Creating..." : "Create Category"}
           </button>
