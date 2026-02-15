@@ -1,14 +1,17 @@
 import Category from "../models/categoryModel.js";
 import asyncHandler from "express-async-handler";
 
+// ================= GET ALL CATEGORIES =================
 // @desc    Get all categories
 // @route   GET /api/categories
-// @access  Public or Admin (depending on your system)
+// @access  Public
 const getAllCategories = asyncHandler(async (req, res) => {
   const categories = await Category.find().sort({ createdAt: -1 });
-  res.status(200).json({ success: true, categories });
+  // Return array directly (matches Products API)
+  res.status(200).json(categories);
 });
 
+// ================= CREATE CATEGORY =================
 // @desc    Create a new category
 // @route   POST /api/categories
 // @access  Admin
@@ -20,7 +23,7 @@ const createCategory = asyncHandler(async (req, res) => {
     throw new Error("Category name is required");
   }
 
-  // Optional: check for existing category with same name
+  // Check if category exists
   const existingCategory = await Category.findOne({ name });
   if (existingCategory) {
     res.status(400);
@@ -30,17 +33,14 @@ const createCategory = asyncHandler(async (req, res) => {
   const newCategory = await Category.create({
     name,
     description: description || "",
-    createdBy: req.user._id, // Admin ID if using protect middleware
+    createdBy: req.user._id,
   });
 
-  res.status(201).json({
-    success: true,
-    message: "Category created successfully",
-    category: newCategory,
-  });
+  res.status(201).json(newCategory);
 });
 
-// Optional: Update a category
+// ================= UPDATE CATEGORY =================
+// @desc    Update a category
 // @route   PUT /api/categories/:id
 // @access  Admin
 const updateCategory = asyncHandler(async (req, res) => {
@@ -50,24 +50,25 @@ const updateCategory = asyncHandler(async (req, res) => {
     throw new Error("Category not found");
   }
 
+  // Merge request body into category
   Object.assign(category, req.body);
   await category.save();
 
-  res.json({ success: true, message: "Category updated successfully", category });
+  res.status(200).json(category);
 });
 
-// Optional: Delete a category
+// ================= DELETE CATEGORY =================
+// @desc    Delete a category
 // @route   DELETE /api/categories/:id
 // @access  Admin
 const deleteCategory = asyncHandler(async (req, res) => {
-  const category = await Category.findById(req.params.id);
+  const category = await Category.findByIdAndDelete(req.params.id);
   if (!category) {
     res.status(404);
     throw new Error("Category not found");
   }
 
-  await category.remove();
-  res.json({ success: true, message: "Category deleted successfully" });
+  res.status(200).json({ message: "Category deleted successfully" });
 });
 
 export { getAllCategories, createCategory, updateCategory, deleteCategory };
