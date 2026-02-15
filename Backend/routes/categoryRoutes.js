@@ -8,7 +8,7 @@ import {
 } from "../controllers/categoryController.js";
 
 import { protect, adminOnly } from "../middlewares/authMiddleware.js";
-import upload from "../middlewares/upload.js"; // 👈 multer
+import upload from "../middlewares/uploadMiddleware.js"; // 👈 multer
 
 const router = express.Router();
 
