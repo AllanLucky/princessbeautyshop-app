@@ -34,26 +34,28 @@ const CreateVendor = () => {
     const { name, email, storeName, password } = vendor;
 
     if (!name || !email || !storeName || !password) {
-      return toast.error("Name, Email, Store Name & Password required");
+      return toast.error("Name, Email, Store Name & Password are required");
     }
 
     try {
       setLoading(true);
 
+      // Create vendor API call
       await userRequest.post("/vendors", vendor);
 
+      // ✅ Success notification
       toast.success("Vendor created successfully 🎉");
 
-      // ✅ CLEAR FORM
+      // ✅ Clear form fields
       setVendor(initialState);
 
-      // ✅ GO BACK AFTER SHORT DELAY
+      // ✅ Navigate back to vendors page after short delay (800ms)
       setTimeout(() => {
         navigate("/vendors");
       }, 800);
 
     } catch (err) {
-      toast.error(err.response?.data?.message || "Create failed");
+      toast.error(err.response?.data?.message || "Failed to create vendor");
     } finally {
       setLoading(false);
     }
@@ -68,12 +70,10 @@ const CreateVendor = () => {
       </div>
 
       <div className="bg-white shadow-lg rounded-lg p-6">
-
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
           {/* LEFT */}
           <div className="space-y-4">
-
             <input
               name="name"
               value={vendor.name}
@@ -98,12 +98,10 @@ const CreateVendor = () => {
               placeholder="Store Name"
               className="w-full border rounded px-3 py-2"
             />
-
           </div>
 
           {/* RIGHT */}
           <div className="space-y-4">
-
             <input
               name="phone"
               value={vendor.phone}
@@ -128,7 +126,6 @@ const CreateVendor = () => {
               placeholder="Password"
               className="w-full border rounded px-3 py-2"
             />
-
           </div>
 
           <div className="col-span-full pt-4">
