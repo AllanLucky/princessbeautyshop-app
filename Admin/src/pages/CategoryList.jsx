@@ -18,22 +18,25 @@ const Categories = () => {
   });
 
   // ================= GET CATEGORIES =================
-  const fetchCategories = async () => {
-    try {
-      setLoading(true);
-      const res = await userRequest.get("/categories");
-      const data = Array.isArray(res.data?.data) ? res.data.data : [];
-      setCategories(data);
-    } catch (error) {
-      console.error("Failed to fetch categories:", error);
-      toast.error(error.response?.data?.message || "Failed to fetch categories", {
-        position: "top-right",
-        autoClose: 2500,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoading(true);
+        const res = await userRequest.get("/categories");
+
+        // Backend returns { success, data: [...] }
+        const data = Array.isArray(res.data?.data) ? res.data.data : [];
+        setCategories(data);
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+        toast.error("Failed to fetch categories", {
+          position: "top-right",
+          autoClose: 2500,
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
 
   useEffect(() => {
     fetchCategories();
@@ -74,7 +77,7 @@ const Categories = () => {
       renderCell: (params) =>
         params.row.image ? (
           <img
-            src={params.row.image} // Cloudinary secure_url
+            src={params.row.image}
             alt={params.row.name}
             className="w-16 h-16 object-cover rounded"
           />
