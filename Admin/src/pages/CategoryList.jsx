@@ -22,14 +22,14 @@ const Categories = () => {
     const fetchCategories = async () => {
       try {
         setLoading(true);
-        const res = await userRequest.get("/categories");
+        const res = await userRequest.get("/api/v1/categories");
 
         // Backend returns { success, data: [...] }
         const data = Array.isArray(res.data?.data) ? res.data.data : [];
         setCategories(data);
       } catch (error) {
         console.error("Failed to fetch categories:", error);
-        toast.error("Failed to fetch categories", {
+        toast.error(error.response?.data?.message || "Failed to fetch categories", {
           position: "top-right",
           autoClose: 2500,
         });
@@ -38,7 +38,6 @@ const Categories = () => {
       }
     };
 
-  useEffect(() => {
     fetchCategories();
   }, []);
 
@@ -48,7 +47,7 @@ const Categories = () => {
 
     try {
       setDeletingId(id);
-      await userRequest.delete(`/categories/${id}`);
+      await userRequest.delete(`/api/v1/categories/${id}`);
       setCategories((prev) => prev.filter((cat) => cat._id !== id));
       toast.success("Category deleted successfully 🗑️", {
         position: "top-right",
@@ -77,7 +76,7 @@ const Categories = () => {
       renderCell: (params) =>
         params.row.image ? (
           <img
-            src={params.row.image}
+            src={params.row.image} // Cloudinary secure_url
             alt={params.row.name}
             className="w-16 h-16 object-cover rounded"
           />
@@ -153,6 +152,5 @@ const Categories = () => {
     </div>
   );
 };
-
 
 export default Categories;
