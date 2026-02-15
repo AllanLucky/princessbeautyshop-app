@@ -6,17 +6,17 @@ import {
   updateCategory,
   deleteCategory,
 } from "../controllers/categoryController.js";
-import { protect, adminOnly } from "../middlewares/authMiddleware.js";
+import { protect, admin } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// ================= PUBLIC ROUTES =================
-router.get("/", getAllCategories); // get all categories
+// Public routes
+router.get("/", getAllCategories);
+router.get("/:id", getCategoryById);
 
-// ================= ADMIN ROUTES =================
-router.post("/", protect, adminOnly, createCategory); // create new category
-router.get("/:id", protect, adminOnly, getCategoryById); // get single category
-router.put("/:id", protect, adminOnly, updateCategory); // update category
-router.delete("/:id", protect, adminOnly, deleteCategory); // delete category
+// Admin routes
+router.post("/", protect, admin, createCategory);
+router.put("/:id", protect, admin, updateCategory);
+router.delete("/:id", protect, admin, deleteCategory);
 
 export default router;
