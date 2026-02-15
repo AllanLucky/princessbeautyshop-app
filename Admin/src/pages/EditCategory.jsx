@@ -1,21 +1,18 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
 import { userRequest } from "../requestMethods";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
+import { FaPlus } from "react-icons/fa";
+import axios from "axios";
 import "react-toastify/dist/ReactToastify.css";
 
 const EditCategory = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // Initial form state
-  const initialState = {
-    name: "",
-    description: "",
-    image: "",
-  };
-
-  const [category, setCategory] = useState(initialState);
+  const [inputs, setInputs] = useState({ name: "", description: "" });
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [existingImage, setExistingImage] = useState("");
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
 
@@ -24,124 +21,135 @@ const EditCategory = () => {
     const fetchCategory = async () => {
       try {
         setFetching(true);
+        const res = await userRequest.get(`/api/v1/categories/${id}`);
+        const data = res.data.data;
 
-        // Fetch single category
-        const res = await userRequest.get(`/categories/${id}`);
-
-        // Backend returns { success: true, data: category }
-        const data = res.data?.data;
-
-        if (!data || !data._id) {
-          toast.error("Category not found", { autoClose: 2000 });
-          setTimeout(() => navigate("/categories"), 1500);
-          return;
-        }
-
-        // Populate form
-        setCategory({
-          name: data.name || "",
-          description: data.description || "",
-          image: data.image || "",
-        });
+        setInputs({ name: data.name, description: data.description });
+        setExistingImage(data.image || "");
       } catch (err) {
-        toast.error(err.response?.data?.message || "Category not found", {
-          autoClose: 2500,
-        });
+        toast.error(err.response?.data?.message || "Failed to fetch category");
         setTimeout(() => navigate("/categories"), 5000);
       } finally {
         setFetching(false);
       }
     };
-
     fetchCategory();
   }, [id, navigate]);
 
-  // ================= HANDLE INPUT =================
+  // ================= INPUT CHANGE =================
   const handleChange = (e) => {
-    setCategory((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
+    setInputs((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  // ================= IMAGE SELECT =================
+  const handleImageChange = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedImage(e.target.files[0]);
+    }
   };
 
   // ================= UPDATE CATEGORY =================
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!category.name) {
-      return toast.error("Category name is required");
-    }
+    if (!inputs.name) return toast.error("Category name is required");
 
     try {
       setLoading(true);
 
-      // Update category
-      const res = await userRequest.put(`/categories/${id}`, category);
+      let imageUrl = existingImage;
+      if (selectedImage) {
+        // Upload to Cloudinary
+        const data = new FormData();
+        data.append("file", selectedImage);
+        data.append("upload_preset", "uploads"); // your Cloudinary preset
 
-      if (res.data?.success) {
-        toast.success("Category updated successfully 🎉");
-        setTimeout(() => navigate("/categories"), 800);
-      } else {
-        toast.error(res.data?.message || "Update failed");
+        const uploadRes = await axios.post(
+          "https://api.cloudinary.com/v1_1/dkdx7xytz/image/upload",
+          data
+        );
+
+        imageUrl = uploadRes.data.secure_url;
       }
+
+      await userRequest.put(`/categories/${id}`, {
+        name: inputs.name,
+        description: inputs.description,
+        image: imageUrl,
+      });
+
+      toast.success("Category updated successfully 🎉");
+      setTimeout(() => navigate("/categories"), 1000);
     } catch (err) {
+      console.error(err);
       toast.error(err.response?.data?.message || "Update failed");
     } finally {
       setLoading(false);
     }
   };
 
-  if (fetching) {
-    return (
-      <div className="text-center mt-10 text-lg">
-        Loading category...
-      </div>
-    );
-  }
+  if (fetching) return <div className="text-center mt-10 text-lg">Loading category...</div>;
 
   return (
-    <div className="p-8 bg-gray-100 min-h-screen flex flex-col items-center">
+    <div className="p-5 bg-gray-50 min-h-screen">
       <ToastContainer position="top-right" autoClose={2500} />
 
-      {/* HEADER */}
-      <div className="flex flex-col md:flex-row justify-between mb-6 gap-3">
-        <h1 className="text-2xl font-bold float-start">Edit Category</h1>
-        <Link to="/categories">
-          <button className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg float-end">
-            Back
-          </button>
-        </Link>
-      </div>
+      <h1 className="text-2xl font-bold mb-5">Edit Category</h1>
 
-      <div className="p-5 w-[77vw] overflow-hidden bg-white shadow-lg rounded-lg">
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-6">
+      <div className="p-5 w-[77vw] bg-white shadow-lg rounded-lg">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Name */}
           <input
             name="name"
-            value={category.name}
+            value={inputs.name}
             onChange={handleChange}
             placeholder="Category Name"
-            className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="border rounded p-3 w-full h-14"
           />
 
-          <textarea
+          {/* Description */}
+          <input
             name="description"
-            value={category.description}
+            value={inputs.description}
             onChange={handleChange}
             placeholder="Description"
-            className="w-full border px-3 py-2 rounded h-32 resize-none focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="border rounded p-3 w-full h-14"
           />
 
-          <input
-            name="image"
-            value={category.image}
-            onChange={handleChange}
-            placeholder="Image URL (optional)"
-            className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
+          {/* Image Upload */}
+          <div className="col-span-full">
+            <label className="font-semibold mb-2">Category Image</label>
+            <div className="relative">
+              {!selectedImage ? (
+                existingImage ? (
+                  <img
+                    src={existingImage}
+                    alt="Existing"
+                    className="h-32 w-32 object-cover rounded-md border"
+                  />
+                ) : (
+                  <div className="border-2 h-32 w-32 border-gray-400 rounded-md flex items-center justify-center cursor-pointer">
+                    <label htmlFor="file" className="flex flex-col items-center text-gray-600">
+                      <FaPlus className="text-2xl mb-1" />
+                      Select Image
+                    </label>
+                  </div>
+                )
+              ) : (
+                <img
+                  src={URL.createObjectURL(selectedImage)}
+                  alt="Selected"
+                  className="h-32 w-32 object-cover rounded-md border"
+                />
+              )}
+              <input type="file" id="file" onChange={handleImageChange} hidden />
+            </div>
+          </div>
 
+          {/* Submit */}
           <button
+            type="submit"
             disabled={loading}
-            className="w-full py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition"
+            className="col-span-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50"
           >
             {loading ? "Updating..." : "Update Category"}
           </button>

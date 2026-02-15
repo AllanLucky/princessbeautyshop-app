@@ -2,10 +2,11 @@ import { useSelector, useDispatch } from "react-redux";
 import { useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import axios from "axios";
 import { userRequest } from "../requestMethods"; // Axios instance
 import { logout } from "../redux/adminRedux";
 import { useNavigate } from "react-router-dom";
-import { FaUpload, FaLock, FaSignOutAlt, FaSave } from "react-icons/fa";
+import { FaUpload, FaSignOutAlt, FaSave } from "react-icons/fa";
 
 const Myaccounts = () => {
   const dispatch = useDispatch();
@@ -27,17 +28,19 @@ const Myaccounts = () => {
     );
   }
 
-  // Upload avatar if changed
+  // Upload avatar to Cloudinary if changed
   const uploadAvatar = async () => {
     if (profilePic instanceof File) {
-      const formData = new FormData();
-      formData.append("avatar", profilePic);
+      const data = new FormData();
+      data.append("file", profilePic);
+      data.append("upload_preset", "uploads"); // your Cloudinary preset
 
-      const res = await userRequest.put("/users/upload-avatar", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const res = await axios.post(
+        "https://api.cloudinary.com/v1_1/dkdx7xytz/image/upload",
+        data
+      );
 
-      return res.data.avatar; // Returns the uploaded avatar URL
+      return res.data.secure_url; // Cloudinary URL
     }
     return profilePic; // No change
   };
@@ -60,8 +63,11 @@ const Myaccounts = () => {
       const avatarUrl = await uploadAvatar();
       setProfilePic(avatarUrl);
 
-      // 2️⃣ Update email
-      await userRequest.put("/users/update-profile", { email });
+      // 2️⃣ Update profile (email + avatar)
+      await userRequest.put("/users/update-profile", {
+        email,
+        avatar: avatarUrl,
+      });
 
       // 3️⃣ Change password if provided
       if (currentPassword && newPassword) {
