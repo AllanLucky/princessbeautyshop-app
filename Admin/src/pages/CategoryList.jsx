@@ -24,13 +24,8 @@ const Categories = () => {
         setLoading(true);
         const res = await userRequest.get("/categories");
 
-        // ✅ Robust: check if res.data.data exists (backend returns { success, data })
-        const data = Array.isArray(res.data.data)
-          ? res.data.data
-          : Array.isArray(res.data)
-          ? res.data
-          : [];
-
+        // Backend returns { success, data: [...] }
+        const data = Array.isArray(res.data?.data) ? res.data.data : [];
         setCategories(data);
       } catch (error) {
         console.error("Failed to fetch categories:", error);
@@ -53,7 +48,7 @@ const Categories = () => {
     try {
       setDeletingId(id);
       await userRequest.delete(`/categories/${id}`);
-      setCategories(categories.filter((cat) => cat._id !== id));
+      setCategories((prev) => prev.filter((cat) => cat._id !== id));
       toast.success("Category deleted successfully 🗑️", {
         position: "top-right",
         autoClose: 2500,
@@ -74,6 +69,21 @@ const Categories = () => {
     { field: "_id", headerName: "ID", width: 220 },
     { field: "name", headerName: "Category Name", width: 200 },
     { field: "description", headerName: "Description", width: 300 },
+    {
+      field: "image",
+      headerName: "Image",
+      width: 150,
+      renderCell: (params) =>
+        params.row.image ? (
+          <img
+            src={params.row.image}
+            alt={params.row.name}
+            className="w-16 h-16 object-cover rounded"
+          />
+        ) : (
+          <span className="text-gray-400 italic">No image</span>
+        ),
+    },
     {
       field: "action",
       headerName: "Actions",
