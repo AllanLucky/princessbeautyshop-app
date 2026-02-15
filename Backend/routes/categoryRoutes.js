@@ -8,7 +8,6 @@ import {
 } from "../controllers/categoryController.js";
 
 import { protect, adminOnly } from "../middlewares/authMiddleware.js";
-import upload from "../middlewares/uploadMiddleware.js"; // 👈 multer
 
 const router = express.Router();
 
@@ -18,23 +17,11 @@ router.get("/:id", getCategoryById);
 
 // ================= ADMIN =================
 
-// Create Category (with image)
-router.post(
-  "/",
-  protect,
-  adminOnly,
-  upload.single("image"),   // 👈 IMPORTANT
-  createCategory
-);
+// Create Category (Cloudinary URL passed in req.body.image)
+router.post("/", protect, adminOnly, createCategory);
 
-// Update Category (with image)
-router.put(
-  "/:id",
-  protect,
-  adminOnly,
-  upload.single("image"),   // 👈 IMPORTANT
-  updateCategory
-);
+// Update Category (Cloudinary URL passed in req.body.image)
+router.put("/:id", protect, adminOnly, updateCategory);
 
 // Delete Category
 router.delete("/:id", protect, adminOnly, deleteCategory);

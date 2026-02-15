@@ -3,7 +3,7 @@ import asyncHandler from "express-async-handler";
 
 // ================= GET ALL CATEGORIES =================
 // @desc    Get all categories
-// @route   GET /api/categories
+// @route   GET /api/v1/categories
 // @access  Public
 const getAllCategories = asyncHandler(async (req, res) => {
   const categories = await Category.find().sort({ createdAt: -1 });
@@ -12,7 +12,7 @@ const getAllCategories = asyncHandler(async (req, res) => {
 
 // ================= GET SINGLE CATEGORY =================
 // @desc    Get a category by ID
-// @route   GET /api/categories/:id
+// @route   GET /api/v1/categories/:id
 // @access  Public
 const getCategoryById = asyncHandler(async (req, res) => {
   const category = await Category.findById(req.params.id);
@@ -27,7 +27,7 @@ const getCategoryById = asyncHandler(async (req, res) => {
 
 // ================= CREATE CATEGORY =================
 // @desc    Create a new category
-// @route   POST /api/categories
+// @route   POST /api/v1/categories
 // @access  Admin
 const createCategory = asyncHandler(async (req, res) => {
   const { name, description, image } = req.body;
@@ -47,8 +47,8 @@ const createCategory = asyncHandler(async (req, res) => {
   const newCategory = await Category.create({
     name,
     description: description || "",
-    image: image || "",
-    createdBy: req.user?._id, // requires protect middleware
+    image: image || "", // Cloudinary secure_url passed from frontend
+    createdBy: req.user?._id,
   });
 
   res.status(201).json({
@@ -60,7 +60,7 @@ const createCategory = asyncHandler(async (req, res) => {
 
 // ================= UPDATE CATEGORY =================
 // @desc    Update a category
-// @route   PUT /api/categories/:id
+// @route   PUT /api/v1/categories/:id
 // @access  Admin
 const updateCategory = asyncHandler(async (req, res) => {
   const category = await Category.findById(req.params.id);
@@ -73,7 +73,7 @@ const updateCategory = asyncHandler(async (req, res) => {
 
   if (name) category.name = name;
   if (description !== undefined) category.description = description;
-  if (image !== undefined) category.image = image;
+  if (image) category.image = image; // Cloudinary secure_url
 
   await category.save();
 
@@ -86,7 +86,7 @@ const updateCategory = asyncHandler(async (req, res) => {
 
 // ================= DELETE CATEGORY =================
 // @desc    Delete a category
-// @route   DELETE /api/categories/:id
+// @route   DELETE /api/v1/categories/:id
 // @access  Admin
 const deleteCategory = asyncHandler(async (req, res) => {
   const category = await Category.findById(req.params.id);
@@ -95,7 +95,7 @@ const deleteCategory = asyncHandler(async (req, res) => {
     throw new Error("Category not found");
   }
 
-  await category.remove();
+  await Category.deleteOne({ _id: req.params.id });
 
   res.status(200).json({
     success: true,
