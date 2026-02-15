@@ -100,7 +100,7 @@ const Vendors = () => {
       renderCell: (params) => (
         <div className="flex items-center gap-4">
           <Link to={`/vendor/${params.row._id}`}>
-            <FaEdit className="text-blue-500 hover:text-blue-700 text-xl cursor-pointer" />
+            <FaEdit className="text-blue-500 hover:text-blue-700 text-xl cursor-pointer mr-10" />
           </Link>
 
           <button
