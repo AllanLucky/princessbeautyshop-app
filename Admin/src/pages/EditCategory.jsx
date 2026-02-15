@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { userRequest } from "../requestMethods";
 import { useNavigate, useParams } from "react-router-dom";
+import { userRequest } from "../requestMethods";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -11,24 +11,43 @@ const EditCategory = () => {
   const initialState = {
     name: "",
     description: "",
-    image: "", // optional if you handle images
+    image: "",
   };
 
   const [category, setCategory] = useState(initialState);
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
 
   // ================= FETCH CATEGORY =================
   useEffect(() => {
     const fetchCategory = async () => {
       try {
+        setFetching(true);
         const res = await userRequest.get(`/categories/${id}`);
-        setCategory(res.data); // populate form with existing data
+
+        // ✅ Adjust this based on your backend response
+        // Example: if backend sends { category: {...} }
+        const data = res.data.category || res.data;
+
+        if (!data || !data._id) {
+          toast.error("Category not found", { autoClose: 2000 });
+          navigate("/categories"); // redirect to categories list if not found
+          return;
+        }
+
+        setCategory(data);
       } catch (err) {
-        toast.error(err.response?.data?.message || "Failed to load category");
+        toast.error(err.response?.data?.message || "Category not found", {
+          autoClose: 2500,
+        });
+        navigate("/categories"); // redirect on API error
+      } finally {
+        setFetching(false);
       }
     };
+
     fetchCategory();
-  }, [id]);
+  }, [id, navigate]);
 
   // ================= HANDLE INPUT =================
   const handleChange = (e) => {
@@ -48,11 +67,8 @@ const EditCategory = () => {
       await userRequest.put(`/categories/${id}`, category);
       toast.success("Category updated successfully 🎉");
 
-      // ✅ Clear form (optional if you want)
-      setCategory(initialState);
-
-      // ✅ Navigate back after short delay
-      setTimeout(() => navigate("/admin/categories"), 800);
+      // ✅ navigate back after update
+      setTimeout(() => navigate("/categories"), 800);
     } catch (err) {
       toast.error(err.response?.data?.message || "Update failed");
     } finally {
@@ -60,17 +76,17 @@ const EditCategory = () => {
     }
   };
 
+  if (fetching) {
+    return <div className="text-center mt-10 text-lg">Loading category...</div>;
+  }
+
   return (
-    <div className="p-5 bg-gray-50 min-h-screen">
+    <div className="p-8 bg-gray-100 min-h-screen flex flex-col items-center">
       <ToastContainer position="top-right" autoClose={2500} />
+      <h1 className="text-3xl font-semibold mb-6 text-center">Edit Category</h1>
 
-      <h1 className="text-3xl font-semibold mb-6 text-center">
-        Edit Category
-      </h1>
-
-      <div className="bg-white shadow-lg rounded-lg p-6">
+      <div className="p-5 w-[77vw] overflow-hidden bg-white shadow-lg rounded-lg">
         <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-6">
-
           <input
             name="name"
             value={category.name}
