@@ -6,17 +6,37 @@ import {
   updateCategory,
   deleteCategory,
 } from "../controllers/categoryController.js";
+
 import { protect, adminOnly } from "../middlewares/authMiddleware.js";
+import upload from "../middlewares/upload.js"; // 👈 multer
 
 const router = express.Router();
 
-// Public routes
+// ================= PUBLIC =================
 router.get("/", getAllCategories);
 router.get("/:id", getCategoryById);
 
-// Admin routes
-router.post("/", protect, adminOnly, createCategory);
-router.put("/:id", protect, adminOnly, updateCategory);
+// ================= ADMIN =================
+
+// Create Category (with image)
+router.post(
+  "/",
+  protect,
+  adminOnly,
+  upload.single("image"),   // 👈 IMPORTANT
+  createCategory
+);
+
+// Update Category (with image)
+router.put(
+  "/:id",
+  protect,
+  adminOnly,
+  upload.single("image"),   // 👈 IMPORTANT
+  updateCategory
+);
+
+// Delete Category
 router.delete("/:id", protect, adminOnly, deleteCategory);
 
 export default router;
