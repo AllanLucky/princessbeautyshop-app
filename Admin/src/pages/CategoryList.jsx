@@ -22,7 +22,7 @@ const Categories = () => {
     const fetchCategories = async () => {
       try {
         setLoading(true);
-        const res = await userRequest.get("/api/v1/categories");
+        const res = await userRequest.get("/categories");
 
         // Backend returns { success, data: [...] }
         const data = Array.isArray(res.data?.data) ? res.data.data : [];
@@ -47,7 +47,7 @@ const Categories = () => {
 
     try {
       setDeletingId(id);
-      await userRequest.delete(`/api/v1/categories/${id}`);
+      await userRequest.delete(`/categories/${id}`);
       setCategories((prev) => prev.filter((cat) => cat._id !== id));
       toast.success("Category deleted successfully 🗑️", {
         position: "top-right",
