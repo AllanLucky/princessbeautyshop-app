@@ -18,26 +18,24 @@ const Categories = () => {
   });
 
   // ================= GET CATEGORIES =================
+  const fetchCategories = async () => {
+    try {
+      setLoading(true);
+      const res = await userRequest.get("/categories");
+      const data = Array.isArray(res.data?.data) ? res.data.data : [];
+      setCategories(data);
+    } catch (error) {
+      console.error("Failed to fetch categories:", error);
+      toast.error(error.response?.data?.message || "Failed to fetch categories", {
+        position: "top-right",
+        autoClose: 2500,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        setLoading(true);
-        const res = await userRequest.get("/categories");
-
-        // Backend returns { success, data: [...] }
-        const data = Array.isArray(res.data?.data) ? res.data.data : [];
-        setCategories(data);
-      } catch (error) {
-        console.error("Failed to fetch categories:", error);
-        toast.error("Failed to fetch categories", {
-          position: "top-right",
-          autoClose: 2500,
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchCategories();
   }, []);
 
@@ -76,7 +74,7 @@ const Categories = () => {
       renderCell: (params) =>
         params.row.image ? (
           <img
-            src={params.row.image}
+            src={params.row.image} // Cloudinary secure_url
             alt={params.row.name}
             className="w-16 h-16 object-cover rounded"
           />
@@ -115,7 +113,7 @@ const Categories = () => {
         <h1 className="text-2xl font-semibold text-gray-800">All Categories</h1>
         <button
           onClick={() => navigate("/new-category")}
-          className="bg-green-600 text-white px-4 py-2 rounded"
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
         >
           Add Category
         </button>
@@ -125,7 +123,7 @@ const Categories = () => {
         <DataGrid
           rows={categories}
           columns={categoryColumns}
-          getRowId={(row) => row._id || row.id} // fallback
+          getRowId={(row) => row._id || row.id}
           loading={loading}
           autoHeight
           pagination
