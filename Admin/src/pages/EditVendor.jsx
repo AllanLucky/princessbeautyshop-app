@@ -2,19 +2,13 @@ import { useEffect, useState } from "react";
 import { userRequest } from "../requestMethods";
 import { useNavigate, useParams } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const EditVendor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [vendor, setVendor] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    address: "",
-    storeName: "",
-  });
-
+  const [vendor, setVendor] = useState(null); // initialize as null
   const [loading, setLoading] = useState(false);
 
   // ================= FETCH VENDOR =================
@@ -22,9 +16,9 @@ const EditVendor = () => {
     const fetchVendor = async () => {
       try {
         const res = await userRequest.get(`/vendors/${id}`);
-        setVendor(res.data);
+        setVendor(res.data.vendor); // use res.data.vendor
       } catch (error) {
-        toast.error("Failed to load vendor");
+        toast.error( error.response?.data?.message || "Failed to fetch vendor data");
       }
     };
 
@@ -58,19 +52,15 @@ const EditVendor = () => {
     }
   };
 
+  if (!vendor) return <div className="text-center mt-10">Loading vendor data...</div>;
+
   return (
     <div className="p-5 w-[77vw]">
-
       <ToastContainer />
-
-      <h1 className="text-3xl font-semibold mb-6 text-center">
-        Edit Vendor
-      </h1>
+      <h1 className="text-3xl font-semibold mb-6 text-center">Edit Vendor</h1>
 
       <div className="bg-white p-6 rounded shadow">
-
         <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-5">
-
           <input
             name="name"
             value={vendor.name}
@@ -117,7 +107,6 @@ const EditVendor = () => {
           >
             {loading ? "Updating..." : "Update Vendor"}
           </button>
-
         </form>
       </div>
     </div>
