@@ -13,7 +13,7 @@ const getAllCategories = asyncHandler(async (req, res) => {
 // ================= GET SINGLE CATEGORY =================
 // @desc    Get a category by ID
 // @route   GET /api/categories/:id
-// @access  Admin
+// @access  Public
 const getCategoryById = asyncHandler(async (req, res) => {
   const category = await Category.findById(req.params.id);
 
@@ -48,7 +48,7 @@ const createCategory = asyncHandler(async (req, res) => {
     name,
     description: description || "",
     image: image || "",
-    createdBy: req.user._id, // admin only
+    createdBy: req.user?._id, // requires protect middleware
   });
 
   res.status(201).json({
