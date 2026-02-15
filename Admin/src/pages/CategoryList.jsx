@@ -38,6 +38,7 @@ const Categories = () => {
       }
     };
 
+  useEffect(() => {
     fetchCategories();
   }, []);
 
@@ -115,7 +116,7 @@ const Categories = () => {
         <h1 className="text-2xl font-semibold text-gray-800">All Categories</h1>
         <button
           onClick={() => navigate("/new-category")}
-          className="bg-green-600 text-white px-4 py-2 rounded"
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
         >
           Add Category
         </button>
@@ -125,7 +126,7 @@ const Categories = () => {
         <DataGrid
           rows={categories}
           columns={categoryColumns}
-          getRowId={(row) => row._id || row.id} // fallback
+          getRowId={(row) => row._id || row.id}
           loading={loading}
           autoHeight
           pagination
