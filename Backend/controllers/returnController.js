@@ -1,4 +1,4 @@
-import Return from "../models/Return.js";
+import Return from "../models/returnModel.js";
 import asyncHandler from "express-async-handler";
 
 // Create return request
