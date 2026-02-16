@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { userRequest } from "../requestMethods";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import { FaPlus } from "react-icons/fa";
 import axios from "axios";
@@ -21,7 +21,7 @@ const EditCategory = () => {
     const fetchCategory = async () => {
       try {
         setFetching(true);
-        const res = await userRequest.get(`/api/v1/categories/${id}`);
+        const res = await userRequest.get(`/categories/${id}`);
         const data = res.data.data;
 
         setInputs({ name: data.name, description: data.description });
@@ -93,7 +93,14 @@ const EditCategory = () => {
     <div className="p-5 bg-gray-50 min-h-screen">
       <ToastContainer position="top-right" autoClose={2500} />
 
-      <h1 className="text-2xl font-bold mb-5">Edit Category</h1>
+       <div className="flex items-center justify-between mb-6">
+              <h1 className="text-3xl font-semibold">Edit Category</h1>
+              <Link to="/categories">
+                <button className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg">
+                  Back
+                </button>
+              </Link>
+            </div>
 
       <div className="p-5 w-[77vw] bg-white shadow-lg rounded-lg">
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
