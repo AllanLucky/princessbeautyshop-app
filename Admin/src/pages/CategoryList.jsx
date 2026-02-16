@@ -17,22 +17,16 @@ const Categories = () => {
     pageSize: 10,
   });
 
-  // ================= GET CATEGORIES =================
+  // ================= FETCH =================
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         setLoading(true);
-        const res = await userRequest.get("/api/v1/categories");
-
-        // Backend returns { success, data: [...] }
+        const res = await userRequest.get("/categories");
         const data = Array.isArray(res.data?.data) ? res.data.data : [];
         setCategories(data);
       } catch (error) {
-        console.error("Failed to fetch categories:", error);
-        toast.error(error.response?.data?.message || "Failed to fetch categories", {
-          position: "top-right",
-          autoClose: 2500,
-        });
+        toast.error(error.response?.data?.message || "Failed to fetch categories");
       } finally {
         setLoading(false);
       }
@@ -41,45 +35,42 @@ const Categories = () => {
     fetchCategories();
   }, []);
 
-  // ================= DELETE CATEGORY =================
+  // ================= DELETE =================
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this category?")) return;
+    if (!window.confirm("Delete this category?")) return;
 
     try {
       setDeletingId(id);
-      await userRequest.delete(`/api/v1/categories/${id}`);
+      await userRequest.delete(`/categories/${id}`);
       setCategories((prev) => prev.filter((cat) => cat._id !== id));
-      toast.success("Category deleted successfully 🗑️", {
-        position: "top-right",
-        autoClose: 2500,
-      });
+      toast.success("Category deleted successfully 🗑️");
     } catch (error) {
-      console.error("Delete failed:", error);
-      toast.error(error.response?.data?.message || "Delete failed", {
-        position: "top-right",
-        autoClose: 2500,
-      });
+      toast.error(error.response?.data?.message || "Failed to delete category");
     } finally {
       setDeletingId(null);
     }
   };
 
-  // ================= TABLE COLUMNS =================
+  // ================= COLUMNS =================
   const categoryColumns = [
     { field: "_id", headerName: "ID", width: 220 },
-    { field: "name", headerName: "Category Name", width: 200 },
-    { field: "description", headerName: "Description", width: 300 },
+    { field: "name", headerName: "Category Name", width: 220 },
+    { field: "description", headerName: "Description", width: 320 },
     {
       field: "image",
       headerName: "Image",
-      width: 150,
+      width: 180,
+      align: "center",
+      headerAlign: "center",
       renderCell: (params) =>
         params.row.image ? (
-          <img
-            src={params.row.image} // Cloudinary secure_url
-            alt={params.row.name}
-            className="w-16 h-16 object-cover rounded"
-          />
+          <div className="flex justify-center w-full">
+            <img
+              src={params.row.image}
+              alt={params.row.name}
+              className="w-20 h-20 object-cover rounded-xl border shadow-sm hover:scale-105 transition"
+            />
+          </div>
         ) : (
           <span className="text-gray-400 italic">No image</span>
         ),
@@ -91,16 +82,14 @@ const Categories = () => {
       renderCell: (params) => (
         <div className="flex items-center gap-4">
           <Link to={`/category/${params.row._id}`}>
-            <FaEdit className="text-blue-500 text-xl cursor-pointer" />
+            <FaEdit className="text-blue-500 text-xl hover:text-blue-700" />
           </Link>
           <button
             disabled={deletingId === params.row._id}
             onClick={() => handleDelete(params.row._id)}
-            className="group relative flex items-center justify-center"
+            className="p-2 rounded-full bg-red-50 hover:bg-red-100"
           >
-            <div className="p-2 rounded-full bg-red-50 group-hover:bg-red-100 transition">
-              <FaTrash className="text-red-500 group-hover:text-red-700 text-xl" />
-            </div>
+            <FaTrash className="text-red-500 text-xl" />
           </button>
         </div>
       ),
@@ -108,37 +97,40 @@ const Categories = () => {
   ];
 
   return (
-    <div className="p-8 bg-gray-100 min-h-screen w-full overflow-x-hidden">
-      <ToastContainer position="top-right" autoClose={2000} />
+    <div className="p-8 bg-gray-100 min-h-screen w-full">
+      <ToastContainer />
 
-      <div className="flex flex-col md:flex-row items-center justify-between mb-5 gap-2">
-        <h1 className="text-2xl font-semibold text-gray-800">All Categories</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-800">All Categories</h1>
         <button
           onClick={() => navigate("/new-category")}
-          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+          className="bg-green-600 text-white px-5 py-2 rounded-lg shadow hover:bg-green-700 transition"
         >
-          Add Category
+          + Add Category
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm p-4 w-full overflow-hidden">
+      <div className="bg-white rounded-xl shadow p-4">
         <DataGrid
           rows={categories}
           columns={categoryColumns}
-          getRowId={(row) => row._id || row.id}
+          getRowId={(row) => row._id}
           loading={loading}
+          rowHeight={90}
           autoHeight
           pagination
           paginationModel={paginationModel}
           onPaginationModelChange={setPaginationModel}
-          pageSizeOptions={[5, 10, 20, 50]}
+          pageSizeOptions={[5, 10, 20]}
           disableRowSelectionOnClick
           sx={{
             border: "none",
             "& .MuiDataGrid-columnHeaders": {
               backgroundColor: "#f9fafb",
-              color: "#374151",
               fontWeight: "600",
+            },
+            "& .MuiDataGrid-row": {
+              alignItems: "center",
             },
             "& .MuiDataGrid-row:hover": {
               backgroundColor: "#fdf2f8",
