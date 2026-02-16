@@ -33,7 +33,8 @@ import EditVendor from "./pages/EditVendor";
 import CategoryList from "./pages/CategoryList";
 import EditCategory from "./pages/EditCategory";
 import CreateCategory from "./pages/CreateCategory";
-// import Coupons from "./pages/Coupons";
+import Coupons from "./pages/Coupons";
+import CreateCoupon from "./pages/CreateCoupon";
 // import Reviews from "./pages/Reviews";
 // import Returns from "./pages/Returns";
 // import Wishlist from "./pages/Wishlist";
@@ -89,6 +90,11 @@ const router = createBrowserRouter([
       {path: "categories", element: <CategoryList /> },
       {path: "new-category", element: <CreateCategory /> },
       { path: "category/:id", element: <EditCategory /> },
+
+      { path: "coupons", element: <Coupons /> },
+      { path: "new-coupon", element: <CreateCoupon /> },
+
+      // { path: "coupon/:id", element: <EditCoupon /> },
 
       // { path: "coupons", element: <Coupons /> },
       // { path: "reviews", element: <Reviews /> },
