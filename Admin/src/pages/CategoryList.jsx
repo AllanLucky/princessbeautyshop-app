@@ -23,6 +23,8 @@ const Categories = () => {
       try {
         setLoading(true);
         const res = await userRequest.get("/categories");
+
+        // Backend returns { success, data: [...] }
         const data = Array.isArray(res.data?.data) ? res.data.data : [];
         setCategories(data);
       } catch (error) {
