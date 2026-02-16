@@ -1,5 +1,5 @@
 import asyncHandler from "express-async-handler";
-import Vendor from "../models/Vendor.js";
+import Vendor from "../models/vendorModel.js";
 import bcrypt from "bcryptjs";
 
 // @desc    Create a new vendor
