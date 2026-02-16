@@ -62,7 +62,7 @@ const deleteProduct = asyncHandler(async (req, res) => {
 const getProduct = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id).populate(
     "ratings.postedBy",
-    "name"
+    "name email"
   );
 
   if (!product) {
@@ -73,7 +73,6 @@ const getProduct = asyncHandler(async (req, res) => {
   // ⭐ Calculate average rating
   let avgRating = 0;
   const totalReviews = product.ratings.length;
-
   if (totalReviews > 0) {
     const total = product.ratings.reduce((sum, r) => sum + r.star, 0);
     avgRating = (total / totalReviews).toFixed(1);
@@ -173,6 +172,53 @@ const toggleWishlist = asyncHandler(async (req, res) => {
   res.json({ message: "Added to wishlist" });
 });
 
+// ================= ADMIN GET ALL REVIEWS =================
+const getProductReviews = asyncHandler(async (req, res) => {
+  const product = await Product.findById(req.params.id).populate(
+    "ratings.postedBy",
+    "name email"
+  );
+
+  if (!product) {
+    res.status(404);
+    throw new Error("Product not found");
+  }
+
+  res.status(200).json({
+    success: true,
+    reviews: product.ratings.map((r) => ({
+      _id: r._id,
+      name: r.name || r.postedBy?.name,
+      email: r.postedBy?.email || "",
+      star: r.star,
+      comment: r.comment,
+      createdAt: r.createdAt,
+    })),
+  });
+});
+
+// ================= ADMIN GET ALL WISHLIST USERS =================
+const getProductWishlist = asyncHandler(async (req, res) => {
+  const product = await Product.findById(req.params.id).populate(
+    "wishlistUsers",
+    "name email"
+  );
+
+  if (!product) {
+    res.status(404);
+    throw new Error("Product not found");
+  }
+
+  res.status(200).json({
+    success: true,
+    users: product.wishlistUsers.map((user) => ({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+    })),
+  });
+});
+
 export {
   createProduct,
   updateProduct,
@@ -181,4 +227,6 @@ export {
   getALLproducts,
   ratingProduct,
   toggleWishlist,
+  getProductReviews,
+  getProductWishlist,
 };

@@ -7,6 +7,8 @@ import {
   getALLproducts,
   ratingProduct,
   toggleWishlist,
+  getProductReviews,
+  getProductWishlist,
 } from "../controllers/productController.js";
 
 import { protect, adminOnly } from "../middlewares/authMiddleware.js";
@@ -45,5 +47,11 @@ router.put("/:id", protect, adminOnly, updateProduct);
 
 // Delete product
 router.delete("/:id", protect, adminOnly, deleteProduct);
+
+// Get all reviews for a product
+router.get("/reviews/:id", protect, adminOnly, getProductReviews);
+
+// Get all wishlist users for a product
+router.get("/wishlist-users/:id", protect, adminOnly, getProductWishlist);
 
 export default router;
