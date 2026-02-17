@@ -1,6 +1,6 @@
 import { DataGrid } from "@mui/x-data-grid";
 import { Link } from "react-router-dom";
-import { FaTrash, FaEye, FaLayerGroup } from "react-icons/fa";
+import { FaTrash, FaEye, FaLayerGroup, FaStar } from "react-icons/fa";
 import { userRequest } from "../requestMethods";
 import { useEffect, useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
@@ -116,6 +116,19 @@ const Products = () => {
         <Link to={`/admin/product/features/${params.row._id}`}>
           <div className="bg-indigo-50 p-2 rounded-full hover:bg-indigo-100">
             <FaLayerGroup className="text-purple-600 text-lg" />
+          </div>
+        </Link>
+      ),
+    },
+
+    {
+      field: "reviews",
+      headerName: "Reviews",
+      width: 110,
+      renderCell: (params) => (
+        <Link to={`/reviews/${params.row._id}`}>
+          <div className="bg-yellow-50 p-2 rounded-full hover:bg-yellow-100">
+            <FaStar className="text-yellow-500 text-lg" />
           </div>
         </Link>
       ),

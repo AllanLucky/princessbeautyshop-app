@@ -105,10 +105,16 @@ const Menu = ({ collapsed }) => {
             <FaTag /> {linkLabel("Coupons")}
           </NavLink>
 
-          <NavLink to="/reviews" className={navStyle}>
+          {/* Reviews & Wishlist */}
+          <NavLink to="/reviews/1" className={navStyle}>
             <FaStar /> {linkLabel("Reviews")}
           </NavLink>
 
+          <NavLink to="/wishlist-users/1" className={navStyle}>
+            <FaHeart /> {linkLabel("Wishlist Users")}
+          </NavLink>
+
+          {/* Orders & Returns */}
           <NavLink to="/orders" className={navStyle}>
             <FaClipboardList /> {linkLabel("Orders")}
           </NavLink>
@@ -117,10 +123,7 @@ const Menu = ({ collapsed }) => {
             <FaUndo /> {linkLabel("Returns")}
           </NavLink>
 
-          <NavLink to="/wishlist" className={navStyle}>
-            <FaHeart /> {linkLabel("Wishlist")}
-          </NavLink>
-
+          {/* Support Tickets */}
           <NavLink to="/support" className={navStyle}>
             <FaHeadset /> {linkLabel("Support Tickets")}
           </NavLink>
