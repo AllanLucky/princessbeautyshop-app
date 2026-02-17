@@ -35,12 +35,9 @@ import EditCategory from "./pages/EditCategory";
 import CreateCategory from "./pages/CreateCategory";
 import Coupons from "./pages/Coupons";
 import CreateCoupon from "./pages/CreateCoupon";
-// import Reviews from "./pages/Reviews";
-// import Returns from "./pages/Returns";
-// import Wishlist from "./pages/Wishlist";
-// import SupportTickets from "./pages/SupportTickets";
-// import Notifications from "./pages/Notifications";
-// import Blog from "./pages/Blog";
+import EditCoupon from "./pages/EditCoupon";
+import Reviews from "./pages/Reviews";
+import WishlistUsers from "./pages/WishlistUsers";
 
 // --- Routes ---
 const router = createBrowserRouter([
@@ -49,6 +46,7 @@ const router = createBrowserRouter([
     path: "/login",
     element: <Login />,
   },
+
   // Protected admin routes
   {
     path: "/",
@@ -72,6 +70,10 @@ const router = createBrowserRouter([
       { path: "product/:productId", element: <Product /> },
       { path: "admin/product/features/:id", element: <ProductFeaturePage /> },
 
+      // Reviews & Wishlist (Admin)
+      { path: "reviews/:id", element: <Reviews /> },
+      { path: "wishlist-users/:id", element: <WishlistUsers /> },
+
       // Orders & Inventory
       { path: "orders", element: <Orders /> },
       { path: "create-order", element: <CreateOrder /> },
@@ -80,27 +82,17 @@ const router = createBrowserRouter([
 
       // Marketing & Content
       { path: "banners", element: <Banners /> },
-      // { path: "notifications", element: <Notifications /> },
-      // { path: "blog", element: <Blog /> },
-
-      // Vendors, Coupons, Reviews, Returns, Wishlist, Support
       { path: "vendors", element: <Vendors /> },
       { path: "create-vendor", element: <CreateVendor /> },
       { path: "vendor/:id", element: <EditVendor /> },
-      {path: "categories", element: <CategoryList /> },
-      {path: "new-category", element: <CreateCategory /> },
+      { path: "categories", element: <CategoryList /> },
+      { path: "new-category", element: <CreateCategory /> },
       { path: "category/:id", element: <EditCategory /> },
 
+      // Coupons
       { path: "coupons", element: <Coupons /> },
       { path: "new-coupon", element: <CreateCoupon /> },
-
-      // { path: "coupon/:id", element: <EditCoupon /> },
-
-      // { path: "coupons", element: <Coupons /> },
-      // { path: "reviews", element: <Reviews /> },
-      // { path: "returns", element: <Returns /> },
-      // { path: "wishlist", element: <Wishlist /> },
-      // { path: "support", element: <SupportTickets /> },
+      { path: "coupon/:id", element: <EditCoupon /> },
 
       // Analytics & Logs
       { path: "charts", element: <Charts /> },
@@ -111,6 +103,7 @@ const router = createBrowserRouter([
       { path: "backups", element: <Backups /> },
     ],
   },
+
   // 404 fallback
   {
     path: "*",
