@@ -35,7 +35,7 @@ const EditCoupon = () => {
   };
 
   return (
-    <div className="p-8 max-w-xl mx-auto">
+    <div className="p-8 w-[77vw] bg-gray-100 min-h-screen">
       <h1 className="text-xl font-bold mb-4">Edit Coupon</h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
