@@ -8,50 +8,40 @@ import {
   ratingProduct,
   toggleWishlist,
   getProductReviews,
+<<<<<<< HEAD
   getProductWishlist,
+=======
+  getWishlistUsers,
+>>>>>>> Frontend
 } from "../controllers/productController.js";
-
 import { protect, adminOnly } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-/* =========================================================
-   PUBLIC ROUTES
-========================================================= */
-
-// Get all products
+// PUBLIC ROUTES
 router.get("/", getALLproducts);
-
-// Get single product by ID
 router.get("/find/:id", getProduct);
 
-/* =========================================================
-   USER ROUTES (Logged in users)
-========================================================= */
-
-// Rate / review product
+// USER ROUTES
 router.post("/review/:id", protect, ratingProduct);
-
-// Toggle wishlist
 router.post("/wishlist/:id", protect, toggleWishlist);
 
-/* =========================================================
-   ADMIN ROUTES
-========================================================= */
-
-// Create product
+// ADMIN ROUTES
 router.post("/", protect, adminOnly, createProduct);
-
-// Update product
 router.put("/:id", protect, adminOnly, updateProduct);
-
-// Delete product
 router.delete("/:id", protect, adminOnly, deleteProduct);
 
+<<<<<<< HEAD
 // Get all reviews for a product
 router.get("/reviews/:id", protect, adminOnly, getProductReviews);
 
 // Get all wishlist users for a product
 router.get("/wishlist-users/:id", protect, adminOnly, getProductWishlist);
+=======
+// ADMIN: fetch reviews & wishlist separately
+router.get("/reviews/:id", protect, adminOnly, getProductReviews);
+router.get("/wishlist-users/:id", protect, adminOnly, getWishlistUsers);
+>>>>>>> Frontend
 
 export default router;
+
