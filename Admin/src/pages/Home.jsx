@@ -1,10 +1,37 @@
 import { useState, useEffect } from "react";
-import { LineChart } from "@mui/x-charts/LineChart";
 import { userRequest } from "../requestMethods";
+import {
+  IoCartOutline,
+  IoCashOutline,
+  IoPeopleOutline,
+  IoClipboardOutline,
+} from "react-icons/io5";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+} from "recharts";
+
+const COLORS = ["#4f46e5", "#ef4444", "#facc15"];
+const RADIAN = Math.PI / 180;
+
+// Fake Buyer Data in percentages
+const FakeBuyerData = [
+  { name: "Male", value: 35 },
+  { name: "Female", value: 50 },
+  { name: "Other", value: 15 },
+];
 
 const Home = () => {
   const [orders, setOrders] = useState([]);
-  const [products, setProducts] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -14,9 +41,7 @@ const Home = () => {
   const calculateOrderTotal = (order) => {
     if (!order.products) return 0;
     return order.products.reduce((sum, p) => {
-      const product = products.find((prod) => prod._id === p.productId || prod._id === p._id);
-      if (!product) return sum;
-      const price = product.discountedPrice || product.originalPrice || 0;
+      const price = p.price || 0;
       return sum + price * (p.quantity || 1);
     }, 0);
   };
@@ -25,14 +50,12 @@ const Home = () => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        const [ordersRes, productsRes, usersRes] = await Promise.all([
+        const [ordersRes, usersRes] = await Promise.all([
           userRequest.get("/orders"),
-          userRequest.get("/products"),
           userRequest.get("/users"),
         ]);
-        setOrders(ordersRes.data.orders || ordersRes.data);
-        setProducts(productsRes.data.products || productsRes.data);
-        setUsers(usersRes.data.users || usersRes.data);
+        setOrders(Array.isArray(ordersRes.data.orders) ? ordersRes.data.orders : []);
+        setUsers(Array.isArray(usersRes.data.users) ? usersRes.data.users : []);
       } catch (err) {
         console.error("Failed to fetch dashboard data:", err.response || err);
       } finally {
@@ -42,86 +65,174 @@ const Home = () => {
     fetchDashboardData();
   }, []);
 
-  const totalRevenue = orders.reduce((acc, order) => acc + calculateOrderTotal(order), 0);
-  const latestOrders = orders.slice(-5).reverse();
+  const totalRevenue = Array.isArray(orders)
+    ? orders.reduce((acc, order) => acc + calculateOrderTotal(order), 0)
+    : 0;
+
+  // Revenue bar chart
+  const barData = orders.map((o, idx) => ({
+    name: `Order ${idx + 1}`,
+    Revenue: calculateOrderTotal(o),
+  }));
+
+  // Render percentage inside Pie slices
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+    return (
+      <text
+        x={x}
+        y={y}
+        fill="white"
+        textAnchor={x > cx ? "start" : "end"}
+        dominantBaseline="central"
+        fontSize={12}
+        fontWeight="bold"
+      >
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
+  };
 
   return (
-    <div className="flex flex-col p-5 bg-gray-100 min-h-screen">
-      {/* --- Top Cards --- */}
-      <div className="flex flex-wrap gap-5 mb-5">
-        {[{ title: "Orders", count: orders.length, border: "border-blue-400" },
-          { title: "Products", count: products.length, border: "border-red-500" },
-          { title: "Users", count: users.length, border: "border-gray-400" }].map((card) => (
-          <div key={card.title} className="flex-1 bg-white h-52 shadow-xl rounded-lg flex flex-col items-center justify-center">
-            <div className={`h-32 w-32 border-[15px] rounded-full flex items-center justify-center ${card.border}`}>
-              <h2 className="text-3xl font-bold">{loading ? "..." : card.count}</h2>
-            </div>
-            <h2 className="text-xl font-semibold mt-2">{card.title}</h2>
-          </div>
-        ))}
+    <div className="flex flex-col bg-gray-50 min-h-screen p-1">
+      {/* Stats Boxes */}
+      <div className="flex flex-wrap gap-4 w-full mb-6">
+        <StatBox
+          icon={<IoCartOutline className="text-2xl text-white" />}
+          iconBg="bg-sky-500"
+          title="Total Revenue"
+          value={formatKES(totalRevenue)}
+        />
+        <StatBox
+          icon={<IoCashOutline className="text-2xl text-white" />}
+          iconBg="bg-red-500"
+          title="Total Expenses"
+          value={formatKES(totalRevenue * 0.3)}
+        />
+        <StatBox
+          icon={<IoPeopleOutline className="text-2xl text-white" />}
+          iconBg="bg-yellow-500"
+          title="Total Customers"
+          value={users.length}
+        />
+        <StatBox
+          icon={<IoClipboardOutline className="text-2xl text-white" />}
+          iconBg="bg-green-500"
+          title="Total Orders"
+          value={orders.length}
+        />
       </div>
 
-      {/* --- Table & Chart Section --- */}
-      <div className="flex flex-wrap gap-5">
-        {/* Latest Orders Table */}
-        <div className="flex-1 bg-white rounded-lg shadow-lg p-5 min-w-[400px]">
-          <h3 className="text-xl font-bold mb-4">Latest Transactions</h3>
-          {loading ? <p className="text-gray-500">Loading orders...</p> :
-            latestOrders.length === 0 ? <p className="text-gray-500">No orders yet.</p> :
-              <table className="w-full table-auto border-collapse">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="py-2 px-4 border-b">Customer</th>
-                    <th className="py-2 px-4 border-b">Amount</th>
-                    <th className="py-2 px-4 border-b">Status</th>
+      {/* Charts Section */}
+      <div className="flex flex-wrap gap-6 mb-6">
+        {/* Revenue Bar Chart */}
+        <div className="flex-1 md:flex-[3] bg-white rounded shadow-lg p-6 min-w-[250px] h-[22rem] flex flex-col">
+          <h3 className="text-2xl font-bold mb-4 text-gray-700">Revenue Overview</h3>
+          <ResponsiveContainer width="100%" height="85%">
+            <BarChart data={barData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" hide />
+              <YAxis />
+              <Tooltip formatter={(value) => formatKES(value)} />
+              <Bar dataKey="Revenue" fill="#4f46e5" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Buyer Profile Pie Chart */}
+        <div className="flex-1 md:flex-[1] bg-white rounded shadow-lg p-6 min-w-[200px] h-[22rem] flex flex-col items-center">
+          <h3 className="text-2xl font-bold mb-4 text-gray-700">Buyer Profile</h3>
+          <ResponsiveContainer width="100%" height="85%">
+            <PieChart>
+              <Pie
+                data={FakeBuyerData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={renderCustomizedLabel}
+                outerRadius={90}
+                dataKey="value"
+              >
+                {FakeBuyerData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Legend verticalAlign="bottom" height={36} />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Latest Transactions Table */}
+      <div className="bg-white rounded shadow-lg p-6">
+        <h3 className="text-2xl font-bold mb-4 text-gray-700">Latest Transactions</h3>
+        {loading ? (
+          <p className="text-gray-500">Loading orders...</p>
+        ) : orders.length === 0 ? (
+          <p className="text-gray-500">No orders yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full table-auto border-collapse text-left">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="py-3 px-4 text-gray-600 font-semibold">Customer</th>
+                  <th className="py-3 px-4 text-gray-600 font-semibold">Phone</th>
+                  <th className="py-3 px-4 text-gray-600 font-semibold">Address</th>
+                  <th className="py-3 px-4 text-gray-600 font-semibold">Amount</th>
+                  <th className="py-3 px-4 text-gray-600 font-semibold">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.slice(-5).reverse().map((order, idx) => (
+                  <tr
+                    key={order._id}
+                    className={`border-b transition hover:bg-gray-50 ${
+                      idx % 2 === 0 ? "bg-gray-50" : ""
+                    }`}
+                  >
+                    <td className="py-3 px-4 font-medium">{order.name}</td>
+                    <td className="py-3 px-4">{order.phone || "N/A"}</td>
+                    <td className="py-3 px-4">{order.address || "N/A"}</td>
+                    <td className="py-3 px-4 font-semibold">{formatKES(calculateOrderTotal(order))}</td>
+                    <td
+                      className={`py-3 px-4 font-medium ${
+                        order.status === 2
+                          ? "text-green-600"
+                          : order.status === 1
+                          ? "text-blue-600"
+                          : "text-yellow-500"
+                      }`}
+                    >
+                      {order.status === 2
+                        ? "Delivered"
+                        : order.status === 1
+                        ? "Processing"
+                        : "Pending"}
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {latestOrders.map((order) => {
-                    const orderTotal = calculateOrderTotal(order);
-                    return (
-                      <tr key={order._id} className="border-b">
-                        <td className="py-2 px-4">{order.name}</td>
-                        <td className="py-2 px-4">{formatKES(orderTotal)}</td>
-                        <td className={`py-2 px-4 font-medium ${
-                          order.status === 2 ? "text-green-500" :
-                          order.status === 1 ? "text-blue-500" : "text-yellow-500"
-                        }`}>
-                          {order.status === 2 ? "Delivered" :
-                            order.status === 1 ? "Processing" : "Pending"}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-          }
-        </div>
-
-        {/* Revenue Chart */}
-        <div className="flex-1 bg-white rounded-lg shadow-lg p-5 min-w-[400px]">
-          <h3 className="text-xl font-bold mb-4">Revenue Chart</h3>
-
-          <div className="flex flex-col gap-3 mb-5">
-            <div className="bg-gray-50 p-3 rounded-lg shadow flex justify-between">
-              <span className="font-semibold">Total Revenue:</span>
-              <span className="text-green-600 font-bold">{formatKES(totalRevenue)}</span>
-            </div>
-            <div className="bg-gray-50 p-3 rounded-lg shadow flex justify-between">
-              <span className="font-semibold">Total Orders:</span>
-              <span className="text-blue-600 font-bold">{orders.length}</span>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
-
-          <LineChart
-            xAxis={[{ data: orders.map((_, i) => i + 1) }]}
-            series={[{ data: orders.map((o) => calculateOrderTotal(o)) }]}
-            height={300}
-          />
-        </div>
+        )}
       </div>
     </div>
   );
 };
 
 export default Home;
+
+// StatBox Component
+function StatBox({ icon, iconBg, title, value }) {
+  return (
+    <div className="bg-white rounded-sm p-4 border border-gray-200 flex-1 flex min-w-[12rem] items-center">
+      <div className={`rounded-full w-12 h-12 flex items-center justify-center ${iconBg}`}>{icon}</div>
+      <div className="pl-4 flex flex-col">
+        <span className="text-sm text-gray-500 font-light">{title}</span>
+        <strong className="text-xl text-gray-700 font-semibold">{value}</strong>
+      </div>
+    </div>
+  );
+}
