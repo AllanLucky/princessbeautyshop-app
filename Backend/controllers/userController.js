@@ -16,10 +16,10 @@ const getMyProfile = asyncHandler(async (req, res) => {
 });
 
 // =====================================================
-// ✏️ UPDATE MY PROFILE
+// ✏️ UPDATE MY PROFILE (Cloudinary ready)
 // =====================================================
 const updateMyProfile = asyncHandler(async (req, res) => {
-  const { name, email, phone, address } = req.body;
+  const { name, email, phone, address, avatar } = req.body; // <-- avatar added
   const user = await User.findById(req.user._id);
   if (!user) throw new Error("User not found");
 
@@ -33,6 +33,7 @@ const updateMyProfile = asyncHandler(async (req, res) => {
   if (name) user.name = name;
   if (phone) user.phone = phone;
   if (address) user.address = address;
+  if (avatar) user.avatar = avatar; // <-- save Cloudinary URL
 
   const updatedUser = await user.save();
 
@@ -80,7 +81,7 @@ const changePassword = asyncHandler(async (req, res) => {
 });
 
 // =====================================================
-// 🖼 UPLOAD AVATAR
+// 🖼 UPLOAD AVATAR (local storage)
 // =====================================================
 const uploadAvatar = asyncHandler(async (req, res) => {
   if (!req.file) throw new Error("Please upload image");
@@ -125,15 +126,13 @@ const updateUser = asyncHandler(async (req, res) => {
   const user = await User.findById(userId);
   if (!user) throw new Error("User not found");
 
-  // Only admin/super_admin can edit any user
   if (!["admin", "super_admin"].includes(req.user.role)) {
     res.status(403);
     throw new Error("Admin only can update users");
   }
 
-  const { name, email, role, status, phone, address, password } = req.body;
+  const { name, email, role, status, phone, address, password, avatar } = req.body;
 
-  // Email check
   if (email && email !== user.email) {
     const emailExists = await User.findOne({ email });
     if (emailExists) throw new Error("Email already exists");
@@ -146,10 +145,10 @@ const updateUser = asyncHandler(async (req, res) => {
   if (phone) user.phone = phone;
   if (address) user.address = address;
   if (password) user.password = password;
+  if (avatar) user.avatar = avatar; // <-- save Cloudinary URL
 
   const updatedUser = await user.save();
 
-  // Log activity
   await logActivity(req.user._id, `Updated user ${updatedUser._id}`, req);
 
   res.status(200).json({
@@ -209,7 +208,6 @@ const deleteUser = asyncHandler(async (req, res) => {
   const deletedUser = await User.findByIdAndDelete(req.params.id);
   if (!deletedUser) throw new Error("User not found");
 
-  // Log activity
   await logActivity(req.user._id, `Deleted user ${deletedUser._id}`, req);
 
   res.status(200).json({

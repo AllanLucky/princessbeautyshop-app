@@ -24,14 +24,17 @@ const userSchema = new mongoose.Schema(
       select: false, 
     },
 
-   
     role: {
       type: String,
       enum: ["customer", "admin", "superadmin"],
       default: "customer",
     },
 
-    
+    avatar: {
+      type: String, // stores Cloudinary URL or local path
+      default: "",  // optional default avatar
+    },
+
     isVerified: {
       type: Boolean,
       default: false,
@@ -101,8 +104,6 @@ userSchema.methods.resetLoginAttempts = async function () {
 
   await this.save({ validateBeforeSave: false });
 };
-
-
 
 // ================= MODEL =================
 const User = mongoose.models.User || mongoose.model("User", userSchema);
