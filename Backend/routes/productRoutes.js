@@ -8,11 +8,9 @@ import {
   ratingProduct,
   toggleWishlist,
   getProductReviews,
-<<<<<<< HEAD
   getProductWishlist,
-=======
   getWishlistUsers,
->>>>>>> Frontend
+  getProductWishlist
 } from "../controllers/productController.js";
 import { protect, adminOnly } from "../middlewares/authMiddleware.js";
 
@@ -31,17 +29,14 @@ router.post("/", protect, adminOnly, createProduct);
 router.put("/:id", protect, adminOnly, updateProduct);
 router.delete("/:id", protect, adminOnly, deleteProduct);
 
-<<<<<<< HEAD
 // Get all reviews for a product
 router.get("/reviews/:id", protect, adminOnly, getProductReviews);
 
 // Get all wishlist users for a product
 router.get("/wishlist-users/:id", protect, adminOnly, getProductWishlist);
-=======
 // ADMIN: fetch reviews & wishlist separately
 router.get("/reviews/:id", protect, adminOnly, getProductReviews);
 router.get("/wishlist-users/:id", protect, adminOnly, getWishlistUsers);
->>>>>>> Frontend
 
 export default router;
 

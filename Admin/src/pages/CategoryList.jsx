@@ -12,19 +12,13 @@ const Categories = () => {
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
 
-  const [paginationModel, setPaginationModel] = useState({
-    page: 0,
-    pageSize: 10,
-  });
+  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
 
-  // ================= FETCH =================
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         setLoading(true);
         const res = await userRequest.get("/categories");
-
-        // Backend returns { success, data: [...] }
         const data = Array.isArray(res.data?.data) ? res.data.data : [];
         setCategories(data);
       } catch (error) {
@@ -33,14 +27,11 @@ const Categories = () => {
         setLoading(false);
       }
     };
-
     fetchCategories();
   }, []);
 
-  // ================= DELETE =================
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this category?")) return;
-
     try {
       setDeletingId(id);
       await userRequest.delete(`/categories/${id}`);
@@ -53,7 +44,6 @@ const Categories = () => {
     }
   };
 
-  // ================= COLUMNS =================
   const categoryColumns = [
     { field: "_id", headerName: "ID", width: 220 },
     { field: "name", headerName: "Category Name", width: 220 },
@@ -101,7 +91,6 @@ const Categories = () => {
   return (
     <div className="p-8 bg-gray-100 min-h-screen w-full">
       <ToastContainer />
-
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-800">All Categories</h1>
         <button
@@ -111,7 +100,6 @@ const Categories = () => {
           + Add Category
         </button>
       </div>
-
       <div className="bg-white rounded-xl shadow p-4">
         <DataGrid
           rows={categories}
@@ -131,15 +119,9 @@ const Categories = () => {
               backgroundColor: "#f9fafb",
               fontWeight: "600",
             },
-            "& .MuiDataGrid-row": {
-              alignItems: "center",
-            },
-            "& .MuiDataGrid-row:hover": {
-              backgroundColor: "#fdf2f8",
-            },
-            "& .MuiDataGrid-cell": {
-              borderBottom: "1px solid #f3f4f6",
-            },
+            "& .MuiDataGrid-row": { alignItems: "center" },
+            "& .MuiDataGrid-row:hover": { backgroundColor: "#fdf2f8" },
+            "& .MuiDataGrid-cell": { borderBottom: "1px solid #f3f4f6" },
           }}
         />
       </div>
