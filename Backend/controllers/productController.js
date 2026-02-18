@@ -70,6 +70,7 @@ const getProduct = asyncHandler(async (req, res) => {
 
   let avgRating = 0;
   const totalReviews = product.ratings.length;
+
   if (totalReviews > 0) {
     const total = product.ratings.reduce((sum, r) => sum + r.star, 0);
     avgRating = (total / totalReviews).toFixed(1);
@@ -90,14 +91,28 @@ const getALLproducts = asyncHandler(async (req, res) => {
   if (category) query.categories = { $in: [category] };
   if (brand) query.brand = brand;
   if (concern) query.concern = { $in: [concern] };
-  if (search)
-    query.$text = { $search: search, $caseSensitive: false, $diacriticSensitive: false };
+
+  if (search) {
+    query.$text = {
+      $search: search,
+      $caseSensitive: false,
+      $diacriticSensitive: false,
+    };
+  }
 
   let productsQuery = Product.find(query);
 
   if (qNew) productsQuery = productsQuery.sort({ createdAt: -1 });
-  if (sort === "asc") productsQuery = productsQuery.sort({ discountedPrice: 1, originalPrice: 1 });
-  if (sort === "desc") productsQuery = productsQuery.sort({ discountedPrice: -1, originalPrice: -1 });
+  if (sort === "asc")
+    productsQuery = productsQuery.sort({
+      discountedPrice: 1,
+      originalPrice: 1,
+    });
+  if (sort === "desc")
+    productsQuery = productsQuery.sort({
+      discountedPrice: -1,
+      originalPrice: -1,
+    });
 
   const products = await productsQuery;
 
@@ -164,10 +179,11 @@ const toggleWishlist = asyncHandler(async (req, res) => {
 
   product.wishlistUsers.push(userId);
   await product.save();
+
   res.json({ message: "Added to wishlist" });
 });
 
-// ================= GET ALL REVIEWS =================
+// ================= ADMIN GET ALL REVIEWS =================
 const getProductReviews = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id).populate(
     "ratings.postedBy",
@@ -180,15 +196,20 @@ const getProductReviews = asyncHandler(async (req, res) => {
   }
 
   res.status(200).json({
-    productId: product._id,
-    title: product.title,
-    reviews: product.ratings,
-    totalReviews: product.ratings.length,
+    success: true,
+    reviews: product.ratings.map((r) => ({
+      _id: r._id,
+      name: r.postedBy?.name || "User",
+      email: r.postedBy?.email || "",
+      star: r.star,
+      comment: r.comment,
+      createdAt: r.createdAt,
+    })),
   });
 });
 
-// ================= GET WISHLIST USERS =================
-const getWishlistUsers = asyncHandler(async (req, res) => {
+// ================= ADMIN GET ALL WISHLIST USERS =================
+const getProductWishlist = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id).populate(
     "wishlistUsers",
     "name email"
@@ -200,12 +221,18 @@ const getWishlistUsers = asyncHandler(async (req, res) => {
   }
 
   res.status(200).json({
+    success: true,
+    users: product.wishlistUsers.map((user) => ({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+    })),
     productId: product._id,
     title: product.title,
-    wishlistUsers: product.wishlistUsers,
   });
 });
 
+// ================= EXPORT =================
 export {
   createProduct,
   updateProduct,
@@ -215,5 +242,5 @@ export {
   ratingProduct,
   toggleWishlist,
   getProductReviews,
-  getWishlistUsers,
+  getProductWishlist,
 };
