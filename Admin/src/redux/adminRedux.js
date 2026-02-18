@@ -39,8 +39,17 @@ const adminSlice = createSlice({
 
       localStorage.removeItem("admin");
     },
+
+    // ================= UPDATE ADMIN =================
+    updateAdmin: (state, action) => {
+      state.currentAdmin = action.payload;
+      // persist updated profile
+      localStorage.setItem("admin", JSON.stringify(action.payload));
+    },
   },
 });
 
-export const { loginStart, loginSuccess, loginFailure, logout } = adminSlice.actions;
+export const { loginStart, loginSuccess, loginFailure, logout, updateAdmin } =
+  adminSlice.actions;
+
 export default adminSlice.reducer;
