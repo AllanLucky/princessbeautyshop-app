@@ -105,10 +105,10 @@ const Menu = ({ collapsed }) => {
             <FaTag /> {linkLabel("Coupons")}
           </NavLink>
 
-          {/* Reviews & Wishlist */}
+          {/* Reviews & Wishlist
           <NavLink to="/reviews/1" className={navStyle}>
             <FaStar /> {linkLabel("Reviews")}
-          </NavLink>
+          </NavLink> */}
 
           <NavLink to="/wishlist-users/1" className={navStyle}>
             <FaHeart /> {linkLabel("Wishlist Users")}

@@ -6,7 +6,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const ProductReviews = () => {
-  const { id } = useParams();
+  const { id: productId } = useParams();
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
@@ -16,10 +16,10 @@ const ProductReviews = () => {
     const fetchReviews = async () => {
       try {
         setLoading(true);
-        const res = await userRequest.get(`/products/reviews/${id}`);
+        const res = await userRequest.get(`/products/reviews/${productId}`);
         setReviews(res.data.reviews || []);
       } catch (err) {
-        console.log(err);
+        console.error(err);
         toast.error("Failed to load reviews");
       } finally {
         setLoading(false);
@@ -27,23 +27,31 @@ const ProductReviews = () => {
     };
 
     fetchReviews();
-  }, [id]);
+  }, [productId]);
 
   // ================= DELETE REVIEW =================
   const deleteReview = async (reviewId) => {
-    if (!window.confirm("Delete this bad review?")) return;
+    if (!window.confirm("Delete this review?")) return;
 
     try {
       setDeletingId(reviewId);
 
-      await userRequest.delete(`/products/review/${id}/${reviewId}`);
+      // ✅ Correct route: /products/review/:productId/:reviewId
+      const res = await userRequest.delete(`/products/review/${productId}/${reviewId}`);
 
       // remove from UI instantly
       setReviews((prev) => prev.filter((r) => r._id !== reviewId));
 
-      toast.success("Review deleted successfully 🗑️");
+      // optional: show updated stats from backend response
+      if (res.data?.avgRating !== undefined) {
+        toast.success(
+          `Review deleted 🗑️ | Avg Rating: ${res.data.avgRating} | Total Reviews: ${res.data.totalReviews}`
+        );
+      } else {
+        toast.success("Review deleted successfully 🗑️");
+      }
     } catch (err) {
-      console.log(err);
+      console.error(err);
       toast.error(err?.response?.data?.message || "Delete failed");
     } finally {
       setDeletingId(null);
