@@ -1,11 +1,12 @@
 import express from "express";
 import {
+  // Admin features
   getAllUsers,
   getSingleUser,
   updateUser,
   deleteUser,
 
-  // 🔥 USER FEATURES
+  // User features
   getMyProfile,
   updateMyProfile,
   changePassword,
@@ -18,24 +19,23 @@ import upload from "../middlewares/uploadMiddleware.js";
 
 const router = express.Router();
 
-
 // =======================================================
 // 🔐 LOGGED-IN USER ROUTES
-// base: /api/v1/users
+// Base URL: /api/v1/users
 // =======================================================
 
-// ================= MY PROFILE =================
+// -------- MY PROFILE --------
 
-// GET MY PROFILE
+// Get logged-in user's profile
 router.get("/me", protect, getMyProfile);
 
-// UPDATE MY PROFILE
+// Update logged-in user's profile
 router.put("/update-profile", protect, updateMyProfile);
 
-// CHANGE PASSWORD
+// Change password
 router.put("/change-password", protect, changePassword);
 
-// UPLOAD AVATAR
+// Upload avatar (supports local storage; can be switched to Cloudinary)
 router.put(
   "/upload-avatar",
   protect,
@@ -43,26 +43,23 @@ router.put(
   uploadAvatar
 );
 
-// DELETE MY ACCOUNT
+// Delete logged-in user's account
 router.delete("/delete-account", protect, deleteMyAccount);
 
-
-
 // =======================================================
-// 👑 ADMIN ROUTES (MUST BE BELOW /me ROUTES)
+// 👑 ADMIN ROUTES (must be after /me routes to avoid conflicts)
 // =======================================================
 
-// GET ALL USERS
+// Get all users (admin only)
 router.get("/", protect, adminOnly, getAllUsers);
 
-// GET SINGLE USER (FOR EDIT PAGE)
+// Get single user by ID (admin only)
 router.get("/:id", protect, adminOnly, getSingleUser);
 
-// 🔥 UPDATE USER (EDIT USER PAGE)
+// Update a user by ID (admin only)
 router.put("/:id", protect, adminOnly, updateUser);
 
-// DELETE USER
+// Delete a user by ID (admin only)
 router.delete("/:id", protect, adminOnly, deleteUser);
-
 
 export default router;
