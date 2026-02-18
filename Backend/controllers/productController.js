@@ -1,10 +1,14 @@
 import Product from "../models/productModel.js";
-import User from "../models/userModel.js";
 import asyncHandler from "express-async-handler";
+
 
 // ================= CREATE PRODUCT =================
 const createProduct = asyncHandler(async (req, res) => {
-  const newProduct = new Product(req.body);
+  const newProduct = new Product({
+    ...req.body,
+    createdBy: req.user?._id || null,
+  });
+
   const product = await newProduct.save();
 
   if (!product) {
@@ -14,6 +18,7 @@ const createProduct = asyncHandler(async (req, res) => {
 
   res.status(201).json(product);
 });
+
 
 // ================= UPDATE PRODUCT =================
 const updateProduct = asyncHandler(async (req, res) => {
@@ -25,6 +30,7 @@ const updateProduct = asyncHandler(async (req, res) => {
     throw new Error("Product not found");
   }
 
+  // arrays safe update
   if (updateData.features) {
     product.features = updateData.features;
     delete updateData.features;
@@ -44,6 +50,7 @@ const updateProduct = asyncHandler(async (req, res) => {
   res.status(200).json(product);
 });
 
+
 // ================= DELETE PRODUCT =================
 const deleteProduct = asyncHandler(async (req, res) => {
   const product = await Product.findByIdAndDelete(req.params.id);
@@ -53,15 +60,14 @@ const deleteProduct = asyncHandler(async (req, res) => {
     throw new Error("Product not found");
   }
 
-  res.status(200).json({ message: "Product deleted successfully" });
+  res.status(200).json({ success: true, message: "Product deleted successfully" });
 });
+
 
 // ================= GET SINGLE PRODUCT =================
 const getProduct = asyncHandler(async (req, res) => {
-  const product = await Product.findById(req.params.id).populate(
-    "ratings.postedBy",
-    "name email"
-  );
+  const product = await Product.findById(req.params.id)
+    .populate("ratings.postedBy", "name email");
 
   if (!product) {
     res.status(404);
@@ -83,44 +89,49 @@ const getProduct = asyncHandler(async (req, res) => {
   });
 });
 
+
 // ================= GET ALL PRODUCTS =================
 const getALLproducts = asyncHandler(async (req, res) => {
   const { new: qNew, category, brand, concern, search, sort } = req.query;
 
   let query = {};
+
   if (category) query.categories = { $in: [category] };
   if (brand) query.brand = brand;
   if (concern) query.concern = { $in: [concern] };
 
   if (search) {
-    query.$text = {
-      $search: search,
-      $caseSensitive: false,
-      $diacriticSensitive: false,
-    };
+    query.$text = { $search: search };
   }
 
   let productsQuery = Product.find(query);
 
   if (qNew) productsQuery = productsQuery.sort({ createdAt: -1 });
-  if (sort === "asc")
-    productsQuery = productsQuery.sort({
-      discountedPrice: 1,
-      originalPrice: 1,
-    });
-  if (sort === "desc")
-    productsQuery = productsQuery.sort({
-      discountedPrice: -1,
-      originalPrice: -1,
-    });
+
+  if (sort === "asc") {
+    productsQuery = productsQuery.sort({ discountedPrice: 1, originalPrice: 1 });
+  }
+
+  if (sort === "desc") {
+    productsQuery = productsQuery.sort({ discountedPrice: -1, originalPrice: -1 });
+  }
 
   const products = await productsQuery;
+
   res.status(200).json(products);
 });
+
 
 // ================= RATE / REVIEW PRODUCT =================
 const ratingProduct = asyncHandler(async (req, res) => {
   const { star, comment } = req.body;
+
+  // 🔥 SAFE USER CHECK
+  if (!req.user || !req.user._id) {
+    res.status(401);
+    throw new Error("User not logged in");
+  }
+
   const userId = req.user._id;
 
   const product = await Product.findById(req.params.id);
@@ -129,6 +140,7 @@ const ratingProduct = asyncHandler(async (req, res) => {
     throw new Error("Product not found");
   }
 
+  // check existing review
   const existingReview = product.ratings.find(
     (r) => r.postedBy.toString() === userId.toString()
   );
@@ -140,21 +152,24 @@ const ratingProduct = asyncHandler(async (req, res) => {
     product.ratings.push({
       star,
       comment,
-      postedBy: userId,
+      postedBy: userId, // 🔥 THIS MUST EXIST
     });
   }
 
   await product.save();
 
+  // calculate avg
   const total = product.ratings.reduce((sum, r) => sum + r.star, 0);
   const avgRating = (total / product.ratings.length).toFixed(1);
 
   res.status(200).json({
+    success: true,
     message: existingReview ? "Review updated" : "Review added",
     avgRating,
     totalReviews: product.ratings.length,
   });
 });
+
 
 // ================= ADMIN DELETE BAD REVIEW =================
 const deleteReview = asyncHandler(async (req, res) => {
@@ -189,8 +204,14 @@ const deleteReview = asyncHandler(async (req, res) => {
   });
 });
 
+
 // ================= ADD / REMOVE WISHLIST =================
 const toggleWishlist = asyncHandler(async (req, res) => {
+  if (!req.user) {
+    res.status(401);
+    throw new Error("Login required");
+  }
+
   const userId = req.user._id;
   const product = await Product.findById(req.params.id);
 
@@ -206,21 +227,20 @@ const toggleWishlist = asyncHandler(async (req, res) => {
   if (index > -1) {
     product.wishlistUsers.splice(index, 1);
     await product.save();
-    return res.json({ message: "Removed from wishlist" });
+    return res.json({ success: true, message: "Removed from wishlist" });
   }
 
   product.wishlistUsers.push(userId);
   await product.save();
 
-  res.json({ message: "Added to wishlist" });
+  res.json({ success: true, message: "Added to wishlist" });
 });
+
 
 // ================= ADMIN GET ALL REVIEWS =================
 const getProductReviews = asyncHandler(async (req, res) => {
-  const product = await Product.findById(req.params.id).populate(
-    "ratings.postedBy",
-    "name email"
-  );
+  const product = await Product.findById(req.params.id)
+    .populate("ratings.postedBy", "name email");
 
   if (!product) {
     res.status(404);
@@ -240,12 +260,11 @@ const getProductReviews = asyncHandler(async (req, res) => {
   });
 });
 
+
 // ================= ADMIN GET WISHLIST USERS =================
 const getProductWishlist = asyncHandler(async (req, res) => {
-  const product = await Product.findById(req.params.id).populate(
-    "wishlistUsers",
-    "name email"
-  );
+  const product = await Product.findById(req.params.id)
+    .populate("wishlistUsers", "name email");
 
   if (!product) {
     res.status(404);
@@ -263,6 +282,7 @@ const getProductWishlist = asyncHandler(async (req, res) => {
     title: product.title,
   });
 });
+
 
 // ================= EXPORT =================
 export {
