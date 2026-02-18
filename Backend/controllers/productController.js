@@ -30,6 +30,7 @@ const updateProduct = asyncHandler(async (req, res) => {
     throw new Error("Product not found");
   }
 
+  // arrays safe update
   if (updateData.features) {
     product.features = updateData.features;
     delete updateData.features;
@@ -125,6 +126,7 @@ const getALLproducts = asyncHandler(async (req, res) => {
 const ratingProduct = asyncHandler(async (req, res) => {
   const { star, comment } = req.body;
 
+  // 🔥 SAFE USER CHECK
   if (!req.user || !req.user._id) {
     res.status(401);
     throw new Error("User not logged in");
@@ -138,6 +140,7 @@ const ratingProduct = asyncHandler(async (req, res) => {
     throw new Error("Product not found");
   }
 
+  // check existing review
   const existingReview = product.ratings.find(
     (r) => r.postedBy.toString() === userId.toString()
   );
@@ -149,12 +152,13 @@ const ratingProduct = asyncHandler(async (req, res) => {
     product.ratings.push({
       star,
       comment,
-      postedBy: userId,
+      postedBy: userId, // 🔥 THIS MUST EXIST
     });
   }
 
   await product.save();
 
+  // calculate avg
   const total = product.ratings.reduce((sum, r) => sum + r.star, 0);
   const avgRating = (total / product.ratings.length).toFixed(1);
 
