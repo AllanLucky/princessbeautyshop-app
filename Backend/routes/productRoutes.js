@@ -10,6 +10,7 @@ import {
   deleteReview,
   getProductReviews,
   getProductWishlist,
+  getMyWishlist, // 🔥 added
 } from "../controllers/productController.js";
 
 import { protect, adminOnly } from "../middlewares/authMiddleware.js";
@@ -25,6 +26,9 @@ router.get("/find/:id", getProduct);
 // ================= USER ROUTES =================
 router.post("/review/:id", protect, ratingProduct);
 router.post("/wishlist/:id", protect, toggleWishlist);
+
+// 🔥 GET MY WISHLIST (USER)
+router.get("/my-wishlist", protect, getMyWishlist);
 
 
 // ================= ADMIN PRODUCT =================

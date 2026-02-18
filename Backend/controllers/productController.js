@@ -237,6 +237,27 @@ const toggleWishlist = asyncHandler(async (req, res) => {
 });
 
 
+// ================= USER GET MY WISHLIST =================
+const getMyWishlist = asyncHandler(async (req, res) => {
+  if (!req.user) {
+    res.status(401);
+    throw new Error("Login required");
+  }
+
+  const userId = req.user._id;
+
+  const products = await Product.find({
+    wishlistUsers: { $in: [userId] },
+  });
+
+  res.status(200).json({
+    success: true,
+    count: products.length,
+    wishlist: products,
+  });
+});
+
+
 // ================= ADMIN GET ALL REVIEWS =================
 const getProductReviews = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id)
@@ -296,4 +317,5 @@ export {
   deleteReview,
   getProductReviews,
   getProductWishlist,
+  getMyWishlist,
 };
