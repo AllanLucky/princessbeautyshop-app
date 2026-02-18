@@ -11,35 +11,41 @@ import {
   getProductReviews,
   getProductWishlist,
 } from "../controllers/productController.js";
+
 import { protect, adminOnly } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
+
 
 // ================= PUBLIC ROUTES =================
 router.get("/", getALLproducts);
 router.get("/find/:id", getProduct);
 
+
 // ================= USER ROUTES =================
 router.post("/review/:id", protect, ratingProduct);
 router.post("/wishlist/:id", protect, toggleWishlist);
 
-// ================= ADMIN PRODUCT MANAGEMENT =================
+
+// ================= ADMIN PRODUCT =================
 router.post("/", protect, adminOnly, createProduct);
 router.put("/:id", protect, adminOnly, updateProduct);
 router.delete("/:id", protect, adminOnly, deleteProduct);
 
+
 // ================= ADMIN REVIEW CONTROL =================
 
-// Get all reviews of a product
+// get all reviews of product
 router.get("/reviews/:id", protect, adminOnly, getProductReviews);
 
-// 🔥 Delete bad review (ADMIN ONLY)
+// delete bad review
 router.delete(
   "/review/:productId/:reviewId",
   protect,
   adminOnly,
   deleteReview
 );
+
 
 // ================= ADMIN WISHLIST =================
 router.get(
@@ -48,5 +54,6 @@ router.get(
   adminOnly,
   getProductWishlist
 );
+
 
 export default router;
