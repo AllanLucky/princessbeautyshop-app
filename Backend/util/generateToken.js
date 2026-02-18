@@ -3,49 +3,46 @@ import dotenv from "dotenv";
 dotenv.config();
 
 /**
- * Generate a JWT token and set it as an HTTP-only cookie.
- *
- * @param {object} res - Express response object
- * @param {string} userId - MongoDB User ID
- * @param {string} [role] - Optional user role for quick access in JWT
- * @param {object} [options] - Optional JWT options (e.g., expiresIn)
+ * Generate JWT token and set HTTP-only cookie
  */
 const generateToken = (res, userId, role = null, options = {}) => {
-  // Default token expiry: 10 days
   const defaultOptions = { expiresIn: "10d" };
   const tokenOptions = { ...defaultOptions, ...options };
 
-  // JWT payload
+  // ===== PAYLOAD =====
   const payload = { userId };
   if (role) payload.role = role;
 
-  // Sign the token
+  // ===== SIGN TOKEN =====
   const token = jwt.sign(payload, process.env.JWT_SECRET, tokenOptions);
 
-  // Cookie configuration
+  // ===== COOKIE MAX AGE =====
   const maxAge = tokenOptions.expiresIn
     ? parseJwtExpiry(tokenOptions.expiresIn)
-    : 10 * 24 * 60 * 60 * 1000; // fallback 10 days
+    : 10 * 24 * 60 * 60 * 1000;
 
+  // ===== COOKIE OPTIONS =====
   const cookieOptions = {
-    httpOnly: true, // prevents client-side JS from reading the cookie
-    secure: process.env.NODE_ENV === "production", // HTTPS only in production
-    sameSite: "strict", // CSRF protection
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production", // true on production
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", 
+    // 🔥 VERY IMPORTANT:
+    // lax for localhost
+    // none for production with https
     maxAge,
   };
 
-  // Set cookie
+  // ===== SET COOKIE =====
   res.cookie("jwt", token, cookieOptions);
 };
 
 /**
- * Convert JWT expiry string (like "10d", "2h") to milliseconds
- * @param {string} expiresIn
- * @returns {number} milliseconds
+ * Convert expiry string → milliseconds
  */
 const parseJwtExpiry = (expiresIn) => {
   const num = parseInt(expiresIn.slice(0, -1));
   const unit = expiresIn.slice(-1);
+
   switch (unit) {
     case "s":
       return num * 1000;
@@ -56,7 +53,7 @@ const parseJwtExpiry = (expiresIn) => {
     case "d":
       return num * 24 * 60 * 60 * 1000;
     default:
-      return 10 * 24 * 60 * 60 * 1000; // default 10 days
+      return 10 * 24 * 60 * 60 * 1000;
   }
 };
 
