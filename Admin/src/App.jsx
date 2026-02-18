@@ -36,7 +36,7 @@ import CreateCategory from "./pages/CreateCategory";
 import Coupons from "./pages/Coupons";
 import CreateCoupon from "./pages/CreateCoupon";
 import EditCoupon from "./pages/EditCoupon";
-import Reviews from "./pages/Reviews";
+import ProductReviews from "./pages/ProductReviews";
 import WishlistUsers from "./pages/WishlistUsers";
 
 // --- Routes ---
@@ -71,7 +71,7 @@ const router = createBrowserRouter([
       { path: "admin/product/features/:id", element: <ProductFeaturePage /> },
 
       // Reviews & Wishlist (Admin)
-      { path: "reviews/:id", element: <Reviews /> },
+      { path: "/reviews/:id", element: <ProductReviews /> },
       { path: "wishlist-users/:id", element: <WishlistUsers /> },
 
       // Orders & Inventory
