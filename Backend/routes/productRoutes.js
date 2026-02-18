@@ -7,6 +7,7 @@ import {
   getALLproducts,
   ratingProduct,
   toggleWishlist,
+  deleteReview,
   getProductReviews,
   getProductWishlist,
 } from "../controllers/productController.js";
@@ -27,12 +28,25 @@ router.post("/", protect, adminOnly, createProduct);
 router.put("/:id", protect, adminOnly, updateProduct);
 router.delete("/:id", protect, adminOnly, deleteProduct);
 
-// ================= ADMIN EXTRA ROUTES =================
+// ================= ADMIN REVIEW CONTROL =================
 
 // Get all reviews of a product
 router.get("/reviews/:id", protect, adminOnly, getProductReviews);
 
-// Get all users who wishlisted product
-router.get("/wishlist-users/:id", protect, adminOnly, getProductWishlist);
+// 🔥 Delete bad review (ADMIN ONLY)
+router.delete(
+  "/review/:productId/:reviewId",
+  protect,
+  adminOnly,
+  deleteReview
+);
+
+// ================= ADMIN WISHLIST =================
+router.get(
+  "/wishlist-users/:id",
+  protect,
+  adminOnly,
+  getProductWishlist
+);
 
 export default router;
