@@ -1,4 +1,5 @@
 import Product from "../models/productModel.js";
+import User from "../models/userModel.js";
 import asyncHandler from "express-async-handler";
 
 // ================= CREATE PRODUCT =================
@@ -24,19 +25,16 @@ const updateProduct = asyncHandler(async (req, res) => {
     throw new Error("Product not found");
   }
 
-  // Merge features if provided
   if (updateData.features) {
     product.features = updateData.features;
     delete updateData.features;
   }
 
-  // Merge specifications if provided
   if (updateData.specifications) {
     product.specifications = updateData.specifications;
     delete updateData.specifications;
   }
 
-  // Merge other fields
   Object.keys(updateData).forEach((key) => {
     product[key] = updateData[key];
   });
@@ -70,7 +68,6 @@ const getProduct = asyncHandler(async (req, res) => {
     throw new Error("Product not found");
   }
 
-  // ⭐ Calculate average rating
   let avgRating = 0;
   const totalReviews = product.ratings.length;
   if (totalReviews > 0) {
@@ -85,7 +82,7 @@ const getProduct = asyncHandler(async (req, res) => {
   });
 });
 
-// ================= GET ALL PRODUCTS (WITH FILTER) =================
+// ================= GET ALL PRODUCTS =================
 const getALLproducts = asyncHandler(async (req, res) => {
   const { new: qNew, category, brand, concern, search, sort } = req.query;
 
@@ -118,7 +115,6 @@ const ratingProduct = asyncHandler(async (req, res) => {
     throw new Error("Product not found");
   }
 
-  // Check if user already reviewed
   const existingReview = product.ratings.find(
     (r) => r.postedBy.toString() === userId.toString()
   );
@@ -131,7 +127,6 @@ const ratingProduct = asyncHandler(async (req, res) => {
       star,
       comment,
       postedBy: userId,
-      name: req.user.name,
     });
   }
 
@@ -162,17 +157,19 @@ const toggleWishlist = asyncHandler(async (req, res) => {
   );
 
   if (index > -1) {
-    product.wishlistUsers.splice(index, 1); // remove from wishlist
+    product.wishlistUsers.splice(index, 1);
     await product.save();
     return res.json({ message: "Removed from wishlist" });
   }
 
-  product.wishlistUsers.push(userId); // add to wishlist
+  product.wishlistUsers.push(userId);
   await product.save();
   res.json({ message: "Added to wishlist" });
 });
 
+// ================= GET ALL REVIEWS =================
 // ================= ADMIN GET ALL REVIEWS =================
+master
 const getProductReviews = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id).populate(
     "ratings.postedBy",
@@ -199,6 +196,7 @@ const getProductReviews = asyncHandler(async (req, res) => {
 
 // ================= ADMIN GET ALL WISHLIST USERS =================
 const getProductWishlist = asyncHandler(async (req, res) => {
+ master
   const product = await Product.findById(req.params.id).populate(
     "wishlistUsers",
     "name email"
@@ -216,6 +214,9 @@ const getProductWishlist = asyncHandler(async (req, res) => {
       name: user.name,
       email: user.email,
     })),
+    productId: product._id,
+    title: product.title,
+    wishlistUsers: product.wishlistUsers,
   });
 });
 
@@ -229,4 +230,6 @@ export {
   toggleWishlist,
   getProductReviews,
   getProductWishlist,
+  getWishlistUsers,
+  getProductWishlist,master
 };
