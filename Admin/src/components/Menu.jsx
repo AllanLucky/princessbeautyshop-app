@@ -110,7 +110,7 @@ const Menu = ({ collapsed }) => {
             <FaStar /> {linkLabel("Reviews")}
           </NavLink> */}
 
-          <NavLink to="/wishlist-users/1" className={navStyle}>
+          <NavLink to="/my-wishlist" className={navStyle}>
             <FaHeart /> {linkLabel("Wishlist Users")}
           </NavLink>
 

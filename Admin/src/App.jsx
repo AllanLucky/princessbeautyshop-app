@@ -25,6 +25,7 @@ import Login from "./pages/Login";
 import Alllogs from "./pages/Alllogs";
 import AdminInvoices from "./pages/AdminInvoices";
 import EditUser from "./pages/EditUser";
+import MyWishlist from "./pages/MyWishlist";
 
 // New Admin Pages
 import Vendors from "./pages/Vendors";
@@ -72,7 +73,7 @@ const router = createBrowserRouter([
 
       // Reviews & Wishlist (Admin)
       { path: "/reviews/:id", element: <ProductReviews /> },
-      { path: "wishlist-users/:id", element: <WishlistUsers /> },
+      { path: "my-wishlist", element: <MyWishlist /> },
 
       // Orders & Inventory
       { path: "orders", element: <Orders /> },
