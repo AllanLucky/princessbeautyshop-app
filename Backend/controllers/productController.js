@@ -115,7 +115,6 @@ const getALLproducts = asyncHandler(async (req, res) => {
     });
 
   const products = await productsQuery;
-
   res.status(200).json(products);
 });
 
@@ -152,6 +151,39 @@ const ratingProduct = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     message: existingReview ? "Review updated" : "Review added",
+    avgRating,
+    totalReviews: product.ratings.length,
+  });
+});
+
+// ================= ADMIN DELETE BAD REVIEW =================
+const deleteReview = asyncHandler(async (req, res) => {
+  const { productId, reviewId } = req.params;
+
+  const product = await Product.findById(productId);
+  if (!product) {
+    res.status(404);
+    throw new Error("Product not found");
+  }
+
+  const review = product.ratings.id(reviewId);
+  if (!review) {
+    res.status(404);
+    throw new Error("Review not found");
+  }
+
+  review.deleteOne();
+  await product.save();
+
+  let avgRating = 0;
+  if (product.ratings.length > 0) {
+    const total = product.ratings.reduce((sum, r) => sum + r.star, 0);
+    avgRating = (total / product.ratings.length).toFixed(1);
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Review deleted successfully",
     avgRating,
     totalReviews: product.ratings.length,
   });
@@ -208,7 +240,7 @@ const getProductReviews = asyncHandler(async (req, res) => {
   });
 });
 
-// ================= ADMIN GET ALL WISHLIST USERS =================
+// ================= ADMIN GET WISHLIST USERS =================
 const getProductWishlist = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id).populate(
     "wishlistUsers",
@@ -241,6 +273,7 @@ export {
   getALLproducts,
   ratingProduct,
   toggleWishlist,
+  deleteReview,
   getProductReviews,
   getProductWishlist,
 };
