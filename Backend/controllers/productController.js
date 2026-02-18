@@ -30,7 +30,6 @@ const updateProduct = asyncHandler(async (req, res) => {
     throw new Error("Product not found");
   }
 
-  // arrays safe update
   if (updateData.features) {
     product.features = updateData.features;
     delete updateData.features;
@@ -126,7 +125,6 @@ const getALLproducts = asyncHandler(async (req, res) => {
 const ratingProduct = asyncHandler(async (req, res) => {
   const { star, comment } = req.body;
 
-  // 🔥 SAFE USER CHECK
   if (!req.user || !req.user._id) {
     res.status(401);
     throw new Error("User not logged in");
@@ -140,7 +138,6 @@ const ratingProduct = asyncHandler(async (req, res) => {
     throw new Error("Product not found");
   }
 
-  // check existing review
   const existingReview = product.ratings.find(
     (r) => r.postedBy.toString() === userId.toString()
   );
@@ -152,13 +149,12 @@ const ratingProduct = asyncHandler(async (req, res) => {
     product.ratings.push({
       star,
       comment,
-      postedBy: userId, // 🔥 THIS MUST EXIST
+      postedBy: userId,
     });
   }
 
   await product.save();
 
-  // calculate avg
   const total = product.ratings.reduce((sum, r) => sum + r.star, 0);
   const avgRating = (total / product.ratings.length).toFixed(1);
 
@@ -237,6 +233,27 @@ const toggleWishlist = asyncHandler(async (req, res) => {
 });
 
 
+// ================= USER GET MY WISHLIST =================
+const getMyWishlist = asyncHandler(async (req, res) => {
+  if (!req.user) {
+    res.status(401);
+    throw new Error("Login required");
+  }
+
+  const userId = req.user._id;
+
+  const products = await Product.find({
+    wishlistUsers: { $in: [userId] },
+  });
+
+  res.status(200).json({
+    success: true,
+    count: products.length,
+    wishlist: products,
+  });
+});
+
+
 // ================= ADMIN GET ALL REVIEWS =================
 const getProductReviews = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id)
@@ -296,4 +313,5 @@ export {
   deleteReview,
   getProductReviews,
   getProductWishlist,
+  getMyWishlist,
 };
