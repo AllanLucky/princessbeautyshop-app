@@ -1,7 +1,9 @@
+// CreateCoupon.jsx
 import { useState } from "react";
 import { userRequest } from "../requestMethods";
 import { toast, ToastContainer } from "react-toastify";
 import { Link, useNavigate } from "react-router-dom";
+import "react-toastify/dist/ReactToastify.css";
 
 const CreateCoupon = () => {
   const navigate = useNavigate();
@@ -12,6 +14,7 @@ const CreateCoupon = () => {
     discountValue: "",
     discountType: "percentage",
     minOrderAmount: "",
+    usageLimit: "",
     expiresAt: "",
   });
 
@@ -23,17 +26,25 @@ const CreateCoupon = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // ✅ Validation for required fields
+    // ================= VALIDATION =================
     if (!form.code.trim()) {
       toast.error("Coupon Code is required");
       return;
     }
-    if (!form.discountValue) {
-      toast.error("Discount Value is required");
+    if (!form.discountValue || Number(form.discountValue) <= 0) {
+      toast.error("Discount Value must be greater than 0");
       return;
     }
     if (!form.expiresAt) {
       toast.error("Expiry Date is required");
+      return;
+    }
+    if (new Date(form.expiresAt) < new Date()) {
+      toast.error("Expiry Date cannot be in the past");
+      return;
+    }
+    if (form.usageLimit && Number(form.usageLimit) < 0) {
+      toast.error("Usage Limit cannot be negative");
       return;
     }
 
@@ -41,17 +52,18 @@ const CreateCoupon = () => {
       setLoading(true);
 
       await userRequest.post("/coupons", {
-        code: form.code.trim(),
+        code: form.code.trim().toUpperCase(),
         discountValue: Number(form.discountValue),
         discountType: form.discountType,
         minOrderAmount: Number(form.minOrderAmount) || 0,
+        usageLimit: Number(form.usageLimit) || 0,
         expiresAt: form.expiresAt,
       });
 
-      toast.success("Coupon created successfully");
+      toast.success("Coupon created successfully 🎉");
       navigate("/coupons");
     } catch (err) {
-      console.error(err);
+      console.error("Error creating coupon:", err);
       toast.error(err.response?.data?.message || "Failed to create coupon");
     } finally {
       setLoading(false);
@@ -60,7 +72,7 @@ const CreateCoupon = () => {
 
   return (
     <div className="p-8 w-full max-w-xl mx-auto bg-gray-100 min-h-screen">
-      <ToastContainer />
+      <ToastContainer position="top-right" autoClose={2000} />
 
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between mb-6 gap-3 items-center">
@@ -106,6 +118,9 @@ const CreateCoupon = () => {
             required
             className="w-full border rounded-lg p-2"
           />
+          <small className="text-gray-500">
+            Enter percentage or fixed amount depending on type
+          </small>
         </div>
 
         {/* Discount Type */}
@@ -118,13 +133,13 @@ const CreateCoupon = () => {
             className="w-full border rounded-lg p-2"
           >
             <option value="percentage">Percentage</option>
-            <option value="fixed">Fixed</option>
+            <option value="fixed">Fixed Amount (KES)</option>
           </select>
         </div>
 
-        {/* Min Order Amount */}
+        {/* Minimum Order Amount */}
         <div>
-          <label className="block mb-1 font-medium">Min Order Amount</label>
+          <label className="block mb-1 font-medium">Minimum Order Amount</label>
           <input
             name="minOrderAmount"
             type="number"
@@ -133,6 +148,22 @@ const CreateCoupon = () => {
             placeholder="0"
             className="w-full border rounded-lg p-2"
           />
+        </div>
+
+        {/* Usage Limit */}
+        <div>
+          <label className="block mb-1 font-medium">Usage Limit</label>
+          <input
+            name="usageLimit"
+            type="number"
+            value={form.usageLimit}
+            onChange={handleChange}
+            placeholder="0 (unlimited)"
+            className="w-full border rounded-lg p-2"
+          />
+          <small className="text-gray-500">
+            Number of times this coupon can be used. 0 = unlimited
+          </small>
         </div>
 
         {/* Expiry Date */}
