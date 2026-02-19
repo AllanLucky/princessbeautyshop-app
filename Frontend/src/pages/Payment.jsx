@@ -26,7 +26,7 @@ const Payment = () => {
   const handlePayment = async () => {
     try {
       const res = await userRequest.post("/stripe/create-checkout-session", {
-        userId: form.userId || "",
+        userId: form._id || "",
         name: form.name,
         email: form.email,
         phone: form.phone,
