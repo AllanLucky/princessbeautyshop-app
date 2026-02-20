@@ -7,119 +7,125 @@ import Order from "../models/orderModel.js";
 dotenv.config();
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_KEY);
+let cart;
+let name;
+let email;
+let userId;
 
-// ================= CREATE CHECKOUT SESSION =================
 router.post("/create-checkout-session", async (req, res) => {
-  try {
-    const { userId, name, email, cart, total } = req.body;
+  const customer = await stripe.customers.create({
+    metadata: {
+      userId: req.body.userId
+    },
+  });
 
-    if (!cart?.products || cart.products.length === 0) {
-      return res.status(400).json({ error: "Cart is empty" });
-    }
+  userId = req.body.userId;
+  email = req.body.email;
+  name = req.body.name;
+  cart = req.body.cart;
 
-    // ✅ Validate userId (optional)
-    let validUserId = null;
-    if (userId && mongoose.Types.ObjectId.isValid(userId)) {
-      validUserId = new mongoose.Types.ObjectId(userId);
-    }
-
-    // ✅ Save pending order
-    const pendingOrder = await Order.create({
-      userId: validUserId, // null if guest
-      name,
-      email,
-      products: cart.products.map((p) => ({
-        productId: p._id, // string is fine even if product deleted later
-        title: p.title,
-        desc: p.desc,
-        price: p.price,
-        quantity: p.quantity,
-        img: Array.isArray(p.img) ? p.img[0] : p.img || "",
-      })),
-      total,
-      paymentStatus: "pending",
-    });
-
-    // ✅ Prepare Stripe line items
-    const line_items = cart.products.map((product) => ({
+  const line_items = req.body.cart.products.map((product) => {
+    return {
       price_data: {
         currency: "KES",
         product_data: {
           name: product.title,
-          images: product.img ? [String(product.img)] : [],
-          description: product.desc || "",
+          images: [product.img],
+          description: product.desc,
+          metadata: {
+            id: product._id,
+          },
         },
-        unit_amount: Math.round(product.price * 100), // Stripe expects cents
+        unit_amount: product.price * 100,
       },
-      quantity: product.quantity || 1,
-    }));
+      quantity: product.quantity,
+    };
+  });
 
-    // ✅ Create Stripe checkout session
+  try {
     const session = await stripe.checkout.sessions.create({
+      customer: customer.id,
       line_items,
       mode: "payment",
-      payment_method_types: ["card"],
-      success_url: `${process.env.CLIENT_URL}/success?session_id={CHECKOUT_SESSION_ID}&order_id=${pendingOrder._id}`,
+      success_url: `${process.env.CLIENT_URL}/myorders`,
       cancel_url: `${process.env.CLIENT_URL}/cart`,
-      metadata: {
-        orderId: pendingOrder._id.toString(),
-      },
     });
 
-    res.status(200).json({ url: session.url });
+    res.send({ url: session.url });
   } catch (error) {
-    console.error("❌ Stripe checkout error:", error);
-    res.status(500).json({ error: error.message });
+    res.status(500).send({ error: error.message });
   }
 });
 
-// ================= STRIPE WEBHOOK =================
-router.post(
-  "/webhook",
-  express.raw({ type: "application/json" }),
-  async (req, res) => {
-    const sig = req.headers["stripe-signature"];
-    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+// // webhook
+// let endpointSecret;
 
-    let event;
-    try {
-      event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
-      console.log("🔥 Event received:", event.type);
-    } catch (err) {
-      console.error("❌ Webhook signature error:", err.message);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
+// router.post(
+//   "/webhook",
+//   express.raw({ type: "application/json" }),
+//   (req, res) => {
+//     const sig = req.headers["stripe-signature"];
 
-    try {
-      if (event.type === "checkout.session.completed") {
-        const session = event.data.object;
-        const { orderId } = session.metadata;
+//     let data;
+//     let eventType;
 
-        if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) {
-          console.error("❌ Invalid or missing orderId in metadata");
-          return res.status(400).send("Invalid orderId in metadata");
-        }
+//     if (endpointSecret) {
+//       let event;
+//       try {
+//         event = stripe.webhooks.constructEvent(
+//           req.body,
+//           sig,
+//           endpointSecret
+//         );
+//         console.log("webhook verified ");
+//       } catch (err) {
+//         console.log("webhook error", err.message);
+//         res.status(400).send(`Webhook Error: ${err.message}`);
+//         return;
+//       }
 
-        const order = await Order.findById(orderId);
-        if (!order) {
-          console.error("❌ Order not found:", orderId);
-          return res.status(404).send("Order not found");
-        }
+//       data = event.data.object;
+//       eventType = event.type;
+//     } else {
+//       data = req.body.data.object;
+//       eventType = req.body.type;
+//     }
 
-        order.paymentStatus = "paid";
-        order.paymentIntentId = session.payment_intent;
-        order.stripeSessionId = session.id;
-        await order.save();
+//     // Handle the event
+//     if (eventType === "checkout.session.completed") {
+//       if (data.customer) {
+//         stripe.customers
+//           .retrieve(data.customer)
+//           .then(async (customer) => {
+//             const newOrder = Order({
+//               name,
+//               userId,
+//               products: cart.products,
+//               total: cart.total,
+//               email
+//             });
+//             await newOrder.save();
+//           })
+//           .catch((err) => {
+//             console.log(err.message);
+//           });
+//       } else {
+//         // fallback if no customer object
+//         const newOrder = Order({
+//           name,
+//           userId,
+//           products: cart.products,
+//           total: cart.total,
+//           email
+//         });
+//         newOrder.save().catch((err) => console.log(err.message));
+//       }
+//     }
 
-        console.log("✅ Order updated successfully via webhook:", order._id);
-      }
-    } catch (err) {
-      console.error("❌ Order save/update failed:", err);
-    }
-
-    res.json({ received: true });
-  }
-);
+//     // Return a 200 response to acknowledge receipt of the event
+//     res.send().end();
+//   }
+// );
 
 // ================= FETCH ORDER BY STRIPE SESSION =================
 router.get("/orders/stripe/:sessionId", async (req, res) => {
