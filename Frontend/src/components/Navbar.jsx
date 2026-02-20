@@ -111,7 +111,7 @@ const Navbar = () => {
                     Profile
                   </Link>
                   <Link
-                    to="/customer-dashboard/my-orders"
+                    to="/customer-dashboard/myorders"
                     className="block px-4 py-2 hover:bg-gray-100"
                     onClick={() => setOpenDropdown(false)}
                   >
