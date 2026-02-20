@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import express from "express";
 import Stripe from "stripe";
 import dotenv from "dotenv";
@@ -125,5 +126,23 @@ router.post("/create-checkout-session", async (req, res) => {
 //     res.send().end();
 //   }
 // );
+
+// ================= FETCH ORDER BY STRIPE SESSION =================
+router.get("/orders/stripe/:sessionId", async (req, res) => {
+  try {
+    const order = await Order.findOne({
+      stripeSessionId: req.params.sessionId,
+    });
+
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    res.status(200).json(order);
+  } catch (err) {
+    console.error("❌ Error fetching order:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 
 export default router;

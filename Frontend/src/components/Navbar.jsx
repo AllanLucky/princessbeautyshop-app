@@ -10,11 +10,14 @@ const Navbar = () => {
   const [openSearch, setOpenSearch] = useState(false);
   const [search, setSearch] = useState("");
   const [openDropdown, setOpenDropdown] = useState(false);
+  const dropdownRef = useRef(null);
 
-  const { cart, user } = useSelector((state) => state);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const dropdownRef = useRef(null);
+
+  // ✅ Select only what you need from Redux
+  const cart = useSelector((state) => state.cart);
+  const user = useSelector((state) => state.user.currentUser);
 
   // Logout handler
   const handleLogout = () => {
@@ -77,7 +80,7 @@ const Navbar = () => {
           </Link>
 
           {/* User Dropdown / Login */}
-          {!user.currentUser ? (
+          {!user ? (
             <Link to="/login">
               <div className="flex items-center gap-2 border px-3 py-2 rounded-lg">
                 <FaUser className="text-pink-500 text-[12px]" />
@@ -94,7 +97,7 @@ const Navbar = () => {
               >
                 <FaUser className="text-pink-500 text-xl" />
                 <span className="hidden md:block text-pink-500 font-semibold">
-                  {user.currentUser.name}
+                  {user.name}
                 </span>
               </button>
 
