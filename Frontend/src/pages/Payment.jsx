@@ -1,11 +1,15 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaLock } from "react-icons/fa";
+import { useSelector } from "react-redux";
 import { userRequest } from "../requestMethod";
 
 const Payment = () => {
   const { state } = useLocation();
   const navigate = useNavigate();
+
+  // Get logged-in user from Redux
+  const currentUser = useSelector((state) => state.user.currentUser);
 
   if (!state) {
     toast.error("Missing order details.");
@@ -13,30 +17,48 @@ const Payment = () => {
     return null;
   }
 
-  const { form, cart } = state; // form contains name, email, phone, address
+  const { form, cart } = state; // form: name, email, phone, address
 
-  // Calculate totals consistently
+  // Calculate totals
   const subtotal = cart.products.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
-  const deliveryFee = 150;
+  const deliveryFee = cart.products.length > 0 ? 150 : 0;
   const total = subtotal + deliveryFee;
 
   const handlePayment = async () => {
     try {
-      const res = await userRequest.post("/stripe/create-checkout-session", {
-        userId: form._id || "",
+      // Validate form
+      if (!form.name || !form.email || !form.phone || !form.address) {
+        toast.error("Please fill all required fields.");
+        return;
+      }
+
+      // Prepare request body
+      const requestBody = {
         name: form.name,
         email: form.email,
         phone: form.phone,
         address: form.address,
         cart,
-        total, // ensure delivery fee is included
-      });
+        total,
+      };
+
+      // ✅ Automatically attach userId if user is logged in
+      if (currentUser && currentUser._id) {
+        requestBody.userId = currentUser._id;
+      }
+
+      // Send request to backend
+      const res = await userRequest.post(
+        "/stripe/create-checkout-session",
+        requestBody
+      );
 
       if (res?.data?.url) {
-        window.location.href = res.data.url; // redirect to Stripe checkout
+        // Redirect to Stripe checkout
+        window.location.href = res.data.url;
       } else {
         console.error("Stripe session response:", res.data);
         toast.error("Failed to create Stripe session.");
@@ -50,7 +72,7 @@ const Payment = () => {
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-10">
       <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* LEFT: PAYMENT INFO */}
+        {/* LEFT: Payment & Customer Info */}
         <div className="lg:col-span-2 bg-white rounded-xl shadow p-6">
           <div className="flex items-center gap-2 mb-6">
             <FaLock className="text-green-600" />
@@ -87,15 +109,18 @@ const Payment = () => {
           </div>
         </div>
 
-        {/* RIGHT: ORDER SUMMARY */}
+        {/* RIGHT: Order Summary */}
         <div className="bg-white rounded-xl shadow p-6 h-fit">
           <h3 className="text-lg font-semibold mb-4 border-b pb-2">
             Order Summary
           </h3>
 
           <div className="space-y-3 text-sm text-gray-700">
-            {cart.products.map((item) => (
-              <div key={item._id} className="flex justify-between">
+            {cart.products.map((item, index) => (
+              <div
+                key={`${item._id}-${index}`} // unique key
+                className="flex justify-between"
+              >
                 <span>
                   {item.title} × {item.quantity}
                 </span>
@@ -136,4 +161,3 @@ const Payment = () => {
 };
 
 export default Payment;
-
