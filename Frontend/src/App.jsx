@@ -127,7 +127,7 @@ function App() {
           path: "/payment",
           element: (
             <ProtectedRoute>
-              <Payment />
+              <Payment/>
             </ProtectedRoute>
           ),
         },
@@ -149,14 +149,15 @@ function App() {
             </ProtectedRoute>
           ),
         },
-        {
-          path: "/customer-dashboard/my-orders",
-          element: (
-            <ProtectedRoute>
-              <Orders />
-            </ProtectedRoute>
-          ),
-        },
+       {
+  path: "/customer-dashboard/myorders",
+  element: (
+    <ProtectedRoute>
+      <Orders />
+    </ProtectedRoute>
+  ),
+},
+
 
         // 🛍️ Products
         { path: "/product/:productId", element: <ProductDetails /> },

@@ -1,314 +1,271 @@
 import { useSelector, useDispatch } from "react-redux";
+import { useState, useEffect } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { logout } from "../redux/userRedux";
-import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import axios from "axios";
 import { userRequest } from "../requestMethod";
-import {
-  FaUser,
-  FaEnvelope,
-  FaLock,
-  FaSignOutAlt,
-  FaSave,
-  FaEye,
-  FaEyeSlash,
-} from "react-icons/fa";
+import { logout, updateUser } from "../redux/userRedux";
+import { useNavigate } from "react-router-dom";
+import { FaUpload, FaSignOutAlt, FaSave, FaEye, FaEyeSlash } from "react-icons/fa";
 
 const MyAccount = () => {
-  const user = useSelector((state) => state.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const currentUser = useSelector((state) => state.user.currentUser);
+  console.log("Current User from Redux:", currentUser);
 
-  const [editMode, setEditMode] = useState(false);
+  const [user, setUser] = useState(null); // user fetched from backend
   const [loading, setLoading] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const [formData, setFormData] = useState({
-    name: user.currentUser?.name || "",
-    email: user.currentUser?.email || "",
-    currentPassword: "",
-    newPassword: "",
-  });
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [profilePic, setProfilePic] = useState("");
 
-  const handleChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-  };
+  // Originals for cancel
+  const [originalName, setOriginalName] = useState("");
+  const [originalEmail, setOriginalEmail] = useState("");
+  const [originalAvatar, setOriginalAvatar] = useState("");
 
-  // ================= UPDATE PROFILE =================
-  const handleUpdate = async (e) => {
-    e.preventDefault();
-
-    if (!formData.name || !formData.email) {
-      return toast.error("Name and email required");
-    }
-
-    if (
-      formData.name === user.currentUser?.name &&
-      formData.email === user.currentUser?.email
-    ) {
-      return toast.info("No changes detected");
-    }
-
+  // ================= FETCH LOGIN USER =================
+  const fetchUser = async () => {
     try {
-      setLoading(true);
+      const res = await userRequest.get("/users/me");
+      setUser(res.data.user);
+      setName(res.data.user.name || "");
+      setEmail(res.data.user.email || "");
+      setProfilePic(res.data.user.avatar || "/avatar.png");
 
-      await userRequest.put("/users/update-profile", {
-        name: formData.name,
-        email: formData.email,
-      });
+      setOriginalName(res.data.user.name || "");
+      setOriginalEmail(res.data.user.email || "");
+      setOriginalAvatar(res.data.user.avatar || "/avatar.png");
 
-      toast.success("Profile updated successfully!");
-      setEditMode(false);
+      dispatch(updateUser(res.data.user));
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Update failed");
-    } finally {
-      setLoading(false);
+      toast.error(err.response?.data?.message || "Failed to fetch user data");
     }
   };
 
-  // ================= CHANGE PASSWORD =================
-  const handleChangePassword = async () => {
-    if (loading) return;
+  useEffect(() => {
+    fetchUser();
+  }, []);
 
-    if (!formData.currentPassword || !formData.newPassword) {
-      return toast.error("Fill all password fields");
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <p className="text-gray-600 text-lg">You are not logged in.</p>
+      </div>
+    );
+  }
+
+  // ================= UPLOAD AVATAR =================
+  const uploadAvatar = async () => {
+    if (profilePic instanceof File) {
+      const data = new FormData();
+      data.append("file", profilePic);
+      data.append("upload_preset", "uploads");
+
+      try {
+        const res = await axios.post(
+          "https://api.cloudinary.com/v1_1/dkdx7xytz/image/upload",
+          data
+        );
+        return res.data.secure_url;
+      } catch (err) {
+        toast.error("Image upload failed");
+        throw err;
+      }
     }
+    return profilePic;
+  };
 
-    if (formData.newPassword.length < 6) {
+  // ================= SAVE CHANGES =================
+  const handleSaveChanges = async () => {
+    if (!name || !email) return toast.error("Name & email required");
+    if ((currentPassword && !newPassword) || (!currentPassword && newPassword)) {
+      return toast.error("Both current & new password required");
+    }
+    if (newPassword && newPassword.length < 6) {
       return toast.error("New password must be at least 6 characters");
     }
 
-    if (formData.currentPassword === formData.newPassword) {
-      return toast.error("New password must be different");
-    }
-
+    setLoading(true);
     try {
-      setLoading(true);
+      const avatarUrl = await uploadAvatar();
 
-      await userRequest.put("/users/change-password", {
-        currentPassword: formData.currentPassword,
-        newPassword: formData.newPassword,
+      // update profile
+      const res = await userRequest.put("/users/update-profile", {
+        name,
+        email,
+        avatar: avatarUrl,
       });
+      setUser(res.data.user);
+      dispatch(updateUser(res.data.user));
 
-      toast.success("Password changed successfully!");
+      // update password if provided
+      if (currentPassword && newPassword) {
+        await userRequest.put("/users/change-password", {
+          currentPassword,
+          newPassword,
+        });
+        toast.success("Password changed successfully!");
+      }
 
-      setFormData((prev) => ({
-        ...prev,
-        currentPassword: "",
-        newPassword: "",
-      }));
+      toast.success("Profile updated successfully");
+      setEditMode(false);
+      setCurrentPassword("");
+      setNewPassword("");
+
+      setOriginalName(name);
+      setOriginalEmail(email);
+      setOriginalAvatar(avatarUrl);
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Password change failed");
+      toast.error(err.response?.data?.message || "Update failed");
     } finally {
       setLoading(false);
     }
   };
 
-  // ================= LOGOUT =================
+  // ================= CANCEL =================
+  const handleCancel = () => {
+    setName(originalName);
+    setEmail(originalEmail);
+    setProfilePic(originalAvatar);
+    setCurrentPassword("");
+    setNewPassword("");
+    setEditMode(false);
+  };
+
+  const handleImageChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setProfilePic(e.target.files[0]);
+    }
+  };
+
   const handleLogout = () => {
-    const confirm = window.confirm("Are you sure you want to logout?");
-    if (!confirm) return;
-
+    if (!window.confirm("Logout now?")) return;
     dispatch(logout());
-    toast.success("Logged out successfully!");
-
-    setTimeout(() => {
-      navigate("/login");
-    }, 700);
+    toast.success("Logged out");
+    setTimeout(() => navigate("/login"), 800);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-rose-50 to-white pt-24 pb-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-b from-rose-50 to-white pt-24 pb-12 px-4">
       <ToastContainer position="top-right" autoClose={3000} />
 
-      <div className="max-w-5xl mx-auto">
-        {/* HEADER */}
-        <div className="text-center mb-10">
-          <h1 className="text-3xl font-serif font-bold text-gray-800 mb-2">
-            My Account
-          </h1>
-          <p className="text-gray-600">
-            Manage your personal information and security
-          </p>
+      <h1 className="text-5xl font-extrabold text-pink-600 mb-8 text-center">
+        My Account
+      </h1>
+
+      <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-2xl p-8">
+        {/* IMAGE */}
+        <div className="flex flex-col items-center gap-4 mb-8">
+          <img
+            src={
+              profilePic instanceof File
+                ? URL.createObjectURL(profilePic)
+                : profilePic || "/avatar.png"
+            }
+            alt="Profile"
+            className="h-32 w-32 rounded-full object-cover border"
+          />
+
+          <label className="cursor-pointer text-pink-600 font-semibold flex gap-2 items-center">
+            <FaUpload /> Change Photo
+            <input type="file" hidden onChange={handleImageChange} />
+          </label>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-          {/* TOP PROFILE */}
-          <div className="p-8 border-b border-gray-100">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center">
-                <div className="w-16 h-16 bg-rose-500 text-white rounded-full flex items-center justify-center mr-4 text-xl font-bold">
-                  {user.currentUser?.name?.charAt(0).toUpperCase()}
-                </div>
+        {/* FORM */}
+        <div className="flex flex-col gap-4">
+          <div>
+            <label className="font-semibold">Full Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={!editMode}
+              className={`w-full border px-4 py-2 rounded-lg ${!editMode ? "bg-gray-100" : ""}`}
+            />
+          </div>
 
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-800">
-                    {user.currentUser?.name}
-                  </h2>
-                  <p className="text-gray-600">{user.currentUser?.email}</p>
-                </div>
-              </div>
+          <div>
+            <label className="font-semibold">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={!editMode}
+              className={`w-full border px-4 py-2 rounded-lg ${!editMode ? "bg-gray-100" : ""}`}
+            />
+          </div>
 
-              <button
-                onClick={() => setEditMode(!editMode)}
-                className="px-5 py-2 bg-rose-600 text-white rounded-lg font-medium hover:bg-rose-700 transition"
+          <div>
+            <label className="font-semibold">Current Password</label>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                disabled={!editMode}
+                className="w-full border px-4 py-2 rounded-lg"
+              />
+              <span
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-2.5 cursor-pointer text-gray-500"
               >
-                {editMode ? "Cancel" : "Edit Profile"}
-              </button>
-            </div>
-
-            {/* STATS */}
-            <div className="grid grid-cols-3 gap-4 mt-8">
-              <div className="bg-rose-50 p-4 rounded-lg text-center">
-                <p className="text-sm text-gray-500">Role</p>
-                <h4 className="font-bold text-gray-800 capitalize">
-                  {user.currentUser?.role || "customer"}
-                </h4>
-              </div>
-
-              <div className="bg-rose-50 p-4 rounded-lg text-center">
-                <p className="text-sm text-gray-500">Status</p>
-                <h4 className="font-bold text-green-600">Active</h4>
-              </div>
-
-              <div className="bg-rose-50 p-4 rounded-lg text-center">
-                <p className="text-sm text-gray-500">Account</p>
-                <h4 className="font-bold text-gray-800">Verified</h4>
-              </div>
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </span>
             </div>
           </div>
 
-          {/* BODY */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 p-8">
-            {/* PERSONAL INFO */}
-            <div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
-                <FaUser className="text-rose-600 mr-2" />
-                Personal Information
-              </h3>
-
-              <form onSubmit={handleUpdate} className="space-y-5">
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Full Name
-                  </label>
-                  <div className="relative">
-                    <FaUser className="absolute left-3 top-4 text-gray-400" />
-                    <input
-                      type="text"
-                      name="name"
-                      disabled={!editMode}
-                      value={formData.name}
-                      onChange={handleChange}
-                      className={`w-full pl-10 p-3 border rounded-lg focus:ring-2 focus:ring-rose-300 outline-none ${
-                        !editMode && "bg-gray-100 cursor-not-allowed"
-                      }`}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Email</label>
-                  <div className="relative">
-                    <FaEnvelope className="absolute left-3 top-4 text-gray-400" />
-                    <input
-                      type="email"
-                      name="email"
-                      disabled={!editMode}
-                      value={formData.email}
-                      onChange={handleChange}
-                      className={`w-full pl-10 p-3 border rounded-lg focus:ring-2 focus:ring-rose-300 outline-none ${
-                        !editMode && "bg-gray-100 cursor-not-allowed"
-                      }`}
-                    />
-                  </div>
-                </div>
-
-                {editMode && (
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-rose-600 hover:bg-rose-700 text-white py-3 rounded-lg font-medium flex items-center justify-center"
-                  >
-                    <FaSave className="mr-2" />
-                    {loading ? "Saving..." : "Save Changes"}
-                  </button>
-                )}
-              </form>
+          <div>
+            <label className="font-semibold">New Password</label>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                disabled={!editMode}
+                className="w-full border px-4 py-2 rounded-lg"
+              />
+              <span
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-2.5 cursor-pointer text-gray-500"
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </span>
             </div>
+          </div>
 
-            {/* PASSWORD */}
-            <div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
-                <FaLock className="text-rose-600 mr-2" />
-                Password & Security
-              </h3>
+          {/* BUTTONS */}
+          <div className="flex flex-wrap gap-4 mt-4">
+            <button
+              onClick={editMode ? handleCancel : () => setEditMode(true)}
+              className="bg-pink-500 text-white px-6 py-3 rounded-xl"
+            >
+              {editMode ? "Cancel" : "Edit Profile"}
+            </button>
 
-              <div className="space-y-5">
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Current Password
-                  </label>
-                  <div className="relative">
-                    <FaLock className="absolute left-3 top-4 text-gray-400" />
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      name="currentPassword"
-                      value={formData.currentPassword}
-                      onChange={handleChange}
-                      className="w-full pl-10 p-3 border rounded-lg focus:ring-2 focus:ring-rose-300 outline-none"
-                    />
-                  </div>
-                </div>
+            {editMode && (
+              <button
+                onClick={handleSaveChanges}
+                disabled={loading}
+                className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-3 rounded-xl flex gap-2 items-center"
+              >
+                <FaSave /> {loading ? "Saving..." : "Save Changes"}
+              </button>
+            )}
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    New Password
-                  </label>
-                  <div className="relative">
-                    <FaLock className="absolute left-3 top-4 text-gray-400" />
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      name="newPassword"
-                      value={formData.newPassword}
-                      onChange={handleChange}
-                      className="w-full pl-10 p-3 border rounded-lg focus:ring-2 focus:ring-rose-300 outline-none"
-                    />
-
-                    <span
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-4 cursor-pointer text-gray-500"
-                    >
-                      {showPassword ? <FaEyeSlash /> : <FaEye />}
-                    </span>
-                  </div>
-                </div>
-
-                <button
-                  onClick={handleChangePassword}
-                  disabled={loading}
-                  className="w-full bg-rose-600 hover:bg-rose-700 text-white py-3 rounded-lg font-medium"
-                >
-                  {loading ? "Updating..." : "Change Password"}
-                </button>
-
-                <button
-                  onClick={handleLogout}
-                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-lg font-medium flex items-center justify-center mt-4"
-                >
-                  <FaSignOutAlt className="mr-2" />
-                  Logout
-                </button>
-
-                <p className="text-xs text-gray-400 text-center">
-                  Last login: Today • Account secured
-                </p>
-              </div>
-            </div>
+            <button
+              onClick={handleLogout}
+              className="bg-gray-200 px-6 py-3 rounded-xl flex gap-2 items-center"
+            >
+              <FaSignOutAlt /> Logout
+            </button>
           </div>
         </div>
       </div>

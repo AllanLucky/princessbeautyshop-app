@@ -1,5 +1,6 @@
+import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import { FaLock } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { userRequest } from "../requestMethod";
@@ -45,19 +46,19 @@ const Payment = () => {
         total,
       };
 
-      // ✅ Automatically attach userId if user is logged in
+      // Automatically attach userId if logged in
       if (currentUser && currentUser._id) {
         requestBody.userId = currentUser._id;
       }
 
-      // Send request to backend
+      // Send request to backend to create Stripe checkout session
       const res = await userRequest.post(
         "/stripe/create-checkout-session",
         requestBody
       );
 
       if (res?.data?.url) {
-        // Redirect to Stripe checkout
+        // Redirect to Stripe checkout page
         window.location.href = res.data.url;
       } else {
         console.error("Stripe session response:", res.data);
@@ -71,6 +72,8 @@ const Payment = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-10">
+      <ToastContainer position="top-right" autoClose={3000} />
+
       <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* LEFT: Payment & Customer Info */}
         <div className="lg:col-span-2 bg-white rounded-xl shadow p-6">
@@ -91,17 +94,14 @@ const Payment = () => {
               <span className="font-medium">Customer Name</span>
               <span>{form.name}</span>
             </div>
-
             <div className="flex justify-between">
               <span className="font-medium">Email</span>
               <span>{form.email}</span>
             </div>
-
             <div className="flex justify-between">
               <span className="font-medium">Phone</span>
               <span>{form.phone}</span>
             </div>
-
             <div className="flex justify-between">
               <span className="font-medium">Delivery Address</span>
               <span className="text-right max-w-[60%]">{form.address}</span>
@@ -118,7 +118,7 @@ const Payment = () => {
           <div className="space-y-3 text-sm text-gray-700">
             {cart.products.map((item, index) => (
               <div
-                key={`${item._id}-${index}`} // unique key
+                key={`${item._id}-${index}`}
                 className="flex justify-between"
               >
                 <span>
