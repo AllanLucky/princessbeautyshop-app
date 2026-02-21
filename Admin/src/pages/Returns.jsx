@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 const Returns = () => {
   const [returns, setReturns] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   /*
   =====================================
@@ -16,22 +17,32 @@ const Returns = () => {
   const fetchReturns = async () => {
     try {
       setLoading(true);
+      setErrorMessage("");
 
       const res = await userRequest.get("/returns");
 
-      console.log("RETURNS RESPONSE:", res.data);
+      console.log("STATUS:", res.status);
+      console.log("DATA:", res.data);
 
-      // ✅ Handles both response formats
+      let data = [];
+
       if (Array.isArray(res.data)) {
-        setReturns(res.data);
-      } else {
-        setReturns(res.data.returns || []);
+        data = res.data;
+      } else if (Array.isArray(res.data.returns)) {
+        data = res.data.returns;
       }
+
+      setReturns(data);
     } catch (error) {
-      console.log(error.response?.data);
-      toast.error(
-        error.response?.data?.message || "Failed to load returns"
-      );
+      console.log("FULL ERROR:", error);
+
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to load returns";
+
+      setErrorMessage(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -74,13 +85,15 @@ const Returns = () => {
         Return Requests
       </h1>
 
-      {/* ✅ Loading */}
       {loading && (
         <p className="text-gray-500">Loading returns...</p>
       )}
 
-      {/* ✅ Empty State */}
-      {!loading && returns.length === 0 && (
+      {errorMessage && (
+        <p className="text-red-500">{errorMessage}</p>
+      )}
+
+      {!loading && !errorMessage && returns.length === 0 && (
         <p className="text-gray-500">
           No return requests found.
         </p>
@@ -93,14 +106,12 @@ const Returns = () => {
             className="bg-white shadow rounded-2xl p-6 border"
           >
             <p className="font-semibold">
-              Order:{" "}
-              {ret.orderId?._id || ret.orderId}
+              Order: {ret.orderId?._id || ret.orderId}
             </p>
 
             {ret.userId && (
               <p className="text-sm text-gray-600">
-                User:{" "}
-                {ret.userId.name || "Unknown"} (
+                User: {ret.userId.name || "Unknown"} (
                 {ret.userId.email || "No email"})
               </p>
             )}
