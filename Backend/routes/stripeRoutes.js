@@ -8,12 +8,33 @@ dotenv.config();
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_KEY);
 
-// ================= CREATE CHECKOUT SESSION =================
+/*
+=====================================================
+HELPER FUNCTIONS
+=====================================================
+*/
+
+// Normalize image array safely
+const normalizeImages = (img) => {
+  if (!img) return [];
+
+  if (Array.isArray(img)) return img;
+
+  if (typeof img === "object") {
+    return Object.values(img).filter(Boolean);
+  }
+
+  return [img];
+};
+
+// =====================================================
+// CREATE CHECKOUT SESSION
+// =====================================================
+
 router.post("/create-checkout-session", async (req, res) => {
   try {
     const { userId, email, name, cart } = req.body;
 
-    // Create Stripe customer
     const customer = await stripe.customers.create({
       email,
       name,
@@ -26,25 +47,42 @@ router.post("/create-checkout-session", async (req, res) => {
     const line_items = cart.products.map((product) => ({
       price_data: {
         currency: "KES",
+
         product_data: {
-          name: product.title,
-          images: [product.img],
-          description: product.desc,
-          metadata: { id: product._id },
+          name: product.title || "Product",
+          images: normalizeImages(product.img),
+
+          description: product.desc || "",
+          metadata: {
+            productId: product._id?.toString() || "",
+          },
         },
         unit_amount: product.price * 100, // convert to cents
       },
-      quantity: product.quantity,
+
+      quantity: Number(product.quantity || 1),
     }));
 
-    // Create checkout session
+    /*
+    -----------------------------------------------------
+    CREATE SESSION
+    -----------------------------------------------------
+    */
+
     const session = await stripe.checkout.sessions.create({
       customer: customer.id,
       payment_method_types: ["card"],
       line_items,
+
       mode: "payment",
       success_url: `${process.env.CLIENT_URL}/myorders`,
       cancel_url: `${process.env.CLIENT_URL}/cart`,
+
+      metadata: {
+        userId: userId?.toString() || "",
+        email: email || "",
+        name: name || "",
+      },
     });
 
     // ✅ Save order BEFORE payment (pending)
@@ -53,7 +91,7 @@ router.post("/create-checkout-session", async (req, res) => {
       name,
       email,
       products: cart.products,
-      total: cart.total,
+      total: Number(total || 0),
       stripeSessionId: session.id,
       paymentStatus: "pending",
     });
@@ -77,14 +115,17 @@ router.get("/orders/stripe/:sessionId", async (req, res) => {
       stripeSessionId: req.params.sessionId,
     });
 
-    if (!order) return res.status(404).json({ error: "Order not found" });
+  } catch (error) {
+    console.error("Stripe error:", error.message);
 
-    res.status(200).json(order);
-  } catch (err) {
-    console.error("❌ Error fetching order:", err);
-    res.status(500).json({ error: "Server error" });
+    return res.status(500).json({
+      error: "Payment session creation failed",
+    });
   }
 });
+
+WEBHOOK
+*/
 
 
 // ================= STRIPE WEBHOOK =================
@@ -93,6 +134,7 @@ router.post(
   express.raw({ type: "application/json" }),
   async (req, res) => {
     const sig = req.headers["stripe-signature"];
+
     let event;
 
     try {
@@ -102,7 +144,7 @@ router.post(
         process.env.STRIPE_WEBHOOK_SECRET
       );
     } catch (err) {
-      console.error("Webhook signature verification failed:", err.message);
+      console.error("Webhook signature error:", err.message);
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
@@ -113,13 +155,16 @@ router.post(
       try {
         await Order.findOneAndUpdate(
           { stripeSessionId: session.id },
-          { paymentStatus: "paid" },
+          {
+            paymentStatus: "paid",
+            paidAt: new Date(),
+          },
           { new: true }
         );
 
         console.log("✅ Payment successful for session:", session.id);
       } catch (err) {
-        console.error("❌ Error updating order:", err.message);
+        console.error("Order update error:", err.message);
       }
     }
 
