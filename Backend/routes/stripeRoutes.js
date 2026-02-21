@@ -14,6 +14,7 @@ HELPER
 =====================================================
 */
 
+// Normalize image safely
 const normalizeImages = (img) => {
   if (!img) return [];
 
@@ -38,11 +39,13 @@ router.post("/create-checkout-session", async (req, res) => {
       req.body;
 
     if (!cart?.products?.length) {
-      return res.status(400).json({ error: "Cart is empty" });
+      return res.status(400).json({
+        error: "Cart is empty",
+      });
     }
 
     /*
-    ⭐ Remove pending orders safely (avoid race bug)
+    ✅ Remove old pending order if exists
     */
 
     await Order.deleteMany({
@@ -93,7 +96,7 @@ router.post("/create-checkout-session", async (req, res) => {
 
     /*
     =====================================================
-    CREATE SESSION ⭐ CORE PART
+    CREATE SESSION ⭐ IMPORTANT PART
     =====================================================
     */
 
@@ -106,6 +109,9 @@ router.post("/create-checkout-session", async (req, res) => {
 
       mode: "payment",
 
+      /*
+      ⭐ Redirect to PaymentSuccess page
+      */
       success_url: `${process.env.CLIENT_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
 
       cancel_url: `${process.env.CLIENT_URL}/cart`,
@@ -184,7 +190,7 @@ router.post(
     }
 
     /*
-    ⭐ Payment Success Event
+    PAYMENT SUCCESS
     */
 
     if (event.type === "checkout.session.completed") {
@@ -196,11 +202,10 @@ router.post(
           {
             paymentStatus: "paid",
             paidAt: new Date(),
-            orderStatus: "processing",
           }
         );
 
-        console.log("✅ Payment verified:", session.id);
+        console.log("✅ Payment confirmed:", session.id);
 
       } catch (err) {
         console.error("Order update error:", err.message);
