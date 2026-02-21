@@ -38,7 +38,8 @@ import Coupons from "./pages/Coupons";
 import CreateCoupon from "./pages/CreateCoupon";
 import EditCoupon from "./pages/EditCoupon";
 import ProductReviews from "./pages/ProductReviews";
-import WishlistUsers from "./pages/WishlistUsers";
+import Payment from "./pages/Payment";
+import PaymentDetails from "./pages/PaymentDetails";
 
 // --- Routes ---
 const router = createBrowserRouter([
@@ -94,6 +95,11 @@ const router = createBrowserRouter([
       { path: "coupons", element: <Coupons /> },
       { path: "new-coupon", element: <CreateCoupon /> },
       { path: "coupon/:id", element: <EditCoupon /> },
+
+       // Coupons
+      { path: "payments", element: <Payment /> },
+      { path: "payment/:id", element: <PaymentDetails /> },
+     
 
       // Analytics & Logs
       { path: "charts", element: <Charts /> },
