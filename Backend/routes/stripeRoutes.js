@@ -33,44 +33,17 @@ const normalizeImages = (img) => {
 
 router.post("/create-checkout-session", async (req, res) => {
   try {
-    const {
-      userId,
-      email,
-      name,
-      phone,
-      address,
-      cart,
-      total,
-    } = req.body;
-
-    if (!cart || !Array.isArray(cart.products) || cart.products.length === 0) {
-      return res.status(400).json({
-        error: "Cart is empty",
-      });
-    }
-
-    /*
-    -----------------------------------------------------
-    CREATE STRIPE CUSTOMER
-    -----------------------------------------------------
-    */
+    const { userId, email, name, cart } = req.body;
 
     const customer = await stripe.customers.create({
       email,
       name,
       metadata: {
-        userId: userId?.toString() || "",
-        phone: phone || "",
-        address: address || "",
+        userId,
       },
     });
 
-    /*
-    -----------------------------------------------------
-    LINE ITEMS
-    -----------------------------------------------------
-    */
-
+    // Create line items
     const line_items = cart.products.map((product) => ({
       price_data: {
         currency: "KES",
@@ -84,10 +57,7 @@ router.post("/create-checkout-session", async (req, res) => {
             productId: product._id?.toString() || "",
           },
         },
-
-        unit_amount: Math.round(
-          Number(product.price || 0) * 100
-        ),
+        unit_amount: product.price * 100, // convert to cents
       },
 
       quantity: Number(product.quantity || 1),
@@ -101,13 +71,10 @@ router.post("/create-checkout-session", async (req, res) => {
 
     const session = await stripe.checkout.sessions.create({
       customer: customer.id,
-
       payment_method_types: ["card"],
-
       line_items,
 
       mode: "payment",
-
       success_url: `${process.env.CLIENT_URL}/myorders`,
       cancel_url: `${process.env.CLIENT_URL}/cart`,
 
@@ -118,27 +85,34 @@ router.post("/create-checkout-session", async (req, res) => {
       },
     });
 
-    /*
-    -----------------------------------------------------
-    SAVE PENDING ORDER
-    -----------------------------------------------------
-    */
-
+    // ✅ Save order BEFORE payment (pending)
     const newOrder = await Order.create({
       userId,
       name,
       email,
-      phone,
-      address,
       products: cart.products,
       total: Number(total || 0),
       stripeSessionId: session.id,
       paymentStatus: "pending",
     });
 
-    return res.status(200).json({
+    res.status(200).json({
       url: session.url,
       orderId: newOrder._id,
+    });
+
+  } catch (error) {
+    console.error("Stripe error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+// ================= FETCH ORDER BY STRIPE SESSION =================
+router.get("/orders/stripe/:sessionId", async (req, res) => {
+  try {
+    const order = await Order.findOne({
+      stripeSessionId: req.params.sessionId,
     });
 
   } catch (error) {
@@ -150,12 +124,11 @@ router.post("/create-checkout-session", async (req, res) => {
   }
 });
 
-/*
-=====================================================
 WEBHOOK
-=====================================================
 */
 
+
+// ================= STRIPE WEBHOOK =================
 router.post(
   "/webhook",
   express.raw({ type: "application/json" }),
@@ -175,12 +148,7 @@ router.post(
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    /*
-    -----------------------------------------------------
-    PAYMENT SUCCESS
-    -----------------------------------------------------
-    */
-
+    // ✅ Payment successful
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
 
@@ -194,8 +162,7 @@ router.post(
           { new: true }
         );
 
-        console.log("✅ Payment confirmed:", session.id);
-
+        console.log("✅ Payment successful for session:", session.id);
       } catch (err) {
         console.error("Order update error:", err.message);
       }
