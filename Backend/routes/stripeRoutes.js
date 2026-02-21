@@ -14,11 +14,11 @@ HELPER FUNCTIONS
 =====================================================
 */
 
-// Normalize image array safely
+// Normalize image safely for Stripe
 const normalizeImages = (img) => {
   if (!img) return [];
 
-  if (Array.isArray(img)) return img;
+  if (Array.isArray(img)) return [img[0]].filter(Boolean);
 
   if (typeof img === "object") {
     return Object.values(img).filter(Boolean);
@@ -27,9 +27,11 @@ const normalizeImages = (img) => {
   return [img];
 };
 
-// =====================================================
-// CREATE CHECKOUT SESSION
-// =====================================================
+/*
+=====================================================
+CHECKOUT SESSION
+=====================================================
+*/
 
 router.post("/create-checkout-session", async (req, res) => {
   try {
@@ -65,7 +67,12 @@ router.post("/create-checkout-session", async (req, res) => {
       },
     });
 
-    // Create line items
+    /*
+    =====================================================
+    LINE ITEMS
+    =====================================================
+    */
+
     const line_items = cart.products.map((product) => ({
       price_data: {
         currency: "KES",
@@ -76,7 +83,7 @@ router.post("/create-checkout-session", async (req, res) => {
 
           description: product.desc || "",
           metadata: {
-            productId: product._id?.toString() || "",
+            productId: String(product._id || ""),
           },
         },
 
@@ -85,13 +92,13 @@ router.post("/create-checkout-session", async (req, res) => {
         ),
       },
 
-      quantity: Number(product.quantity || 1),
+      quantity: Math.max(1, Number(product.quantity || 1)),
     }));
 
     /*
-    -----------------------------------------------------
-    CREATE SESSION
-    -----------------------------------------------------
+    =====================================================
+    CREATE CHECKOUT SESSION
+    =====================================================
     */
 
     const session = await stripe.checkout.sessions.create({
@@ -102,11 +109,12 @@ router.post("/create-checkout-session", async (req, res) => {
       line_items,
 
       mode: "payment",
+
       success_url: `${process.env.CLIENT_URL}/myorders`,
       cancel_url: `${process.env.CLIENT_URL}/cart`,
 
       metadata: {
-        userId: userId?.toString() || "",
+        userId: String(userId || ""),
         email: email || "",
         name: name || "",
       },
@@ -130,10 +138,14 @@ router.post("/create-checkout-session", async (req, res) => {
       paymentStatus: "pending",
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       url: session.url,
       orderId: newOrder._id,
     });
+ /*
+WEBHOOK
+*/
+
 
   } catch (error) {
     console.error("Stripe error:", error.message);
@@ -168,7 +180,10 @@ router.post(
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    // ✅ Payment successful
+    /*
+    ✅ PAYMENT SUCCESS
+    */
+
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
 
