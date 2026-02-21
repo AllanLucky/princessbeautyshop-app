@@ -149,11 +149,6 @@ router.get("/orders/stripe/:sessionId", async (req, res) => {
 });
 
 /*
-=====================================================
-WEBHOOK
-=====================================================
-*/
-
 router.post(
   "/webhook",
   express.raw({ type: "application/json" }),
