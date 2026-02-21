@@ -2,7 +2,11 @@ import Order from "../models/orderModel.js";
 import Product from "../models/productModel.js";
 import asyncHandler from "express-async-handler";
 
-// ================= Inventory Helpers =================
+/*
+====================================================
+ INVENTORY HELPERS
+====================================================
+*/
 
 const deductStock = async (productId, quantity) => {
   const product = await Product.findById(productId);
@@ -26,7 +30,11 @@ const addStock = async (productId, quantity) => {
   await product.save();
 };
 
-// ================= CREATE ORDER (customer OR admin) =================
+/*
+====================================================
+ CREATE ORDER
+====================================================
+*/
 
 const createOrder = asyncHandler(async (req, res) => {
   const { products, total, currency, userId } = req.body;
@@ -36,7 +44,6 @@ const createOrder = asyncHandler(async (req, res) => {
     throw new Error("No order items provided");
   }
 
-  // 🔐 Determine order owner
   const orderUserId =
     req.user.role === "admin" || req.user.role === "super_admin"
       ? userId || req.user._id
@@ -53,7 +60,6 @@ const createOrder = asyncHandler(async (req, res) => {
     total,
     currency: currency || "KES",
 
-    // Customer info (admin can override)
     name: req.body.name || req.user.name,
     email: req.body.email || req.user.email,
     phone: req.body.phone || req.user.phone,
@@ -62,12 +68,15 @@ const createOrder = asyncHandler(async (req, res) => {
 
   res.status(201).json({
     success: true,
-    message: "Order created successfully",
     order,
   });
 });
 
-// ================= UPDATE ORDER =================
+/*
+====================================================
+ UPDATE ORDER
+====================================================
+*/
 
 const updateOrder = asyncHandler(async (req, res) => {
   const updates = { ...req.body };
@@ -75,26 +84,31 @@ const updateOrder = asyncHandler(async (req, res) => {
   if (req.user.role !== "admin" && req.user.role !== "super_admin") {
     delete updates.userId;
     delete updates.paymentStatus;
+    delete updates.isDelivered;
   }
 
-  const updatedOrder = await Order.findByIdAndUpdate(
+  const order = await Order.findByIdAndUpdate(
     req.params.id,
     { $set: updates },
     { new: true }
   );
 
-  if (!updatedOrder) {
+  if (!order) {
     res.status(404);
     throw new Error("Order not found");
   }
 
   res.json({
     success: true,
-    order: updatedOrder,
+    order,
   });
 });
 
-// ================= DELETE ORDER =================
+/*
+====================================================
+ DELETE ORDER
+====================================================
+*/
 
 const deleteOrder = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id);
@@ -104,7 +118,7 @@ const deleteOrder = asyncHandler(async (req, res) => {
     throw new Error("Order not found");
   }
 
-  // Restore inventory
+  // Restore stock
   for (const item of order.products) {
     await addStock(item.productId, item.quantity);
   }
@@ -117,15 +131,24 @@ const deleteOrder = asyncHandler(async (req, res) => {
   });
 });
 
-// ================= GET USER ORDERS =================
+/*
+====================================================
+ GET USER ORDERS
+====================================================
+*/
 
 const getUserOrder = asyncHandler(async (req, res) => {
-  if (req.user._id.toString() !== req.params.id && req.user.role !== "admin") {
+  if (
+    req.user._id.toString() !== req.params.id &&
+    req.user.role !== "admin"
+  ) {
     res.status(403);
     throw new Error("Unauthorized");
   }
 
-  const orders = await Order.find({ userId: req.params.id }).sort({ createdAt: -1 });
+  const orders = await Order.find({
+    userId: req.params.id,
+  }).sort({ createdAt: -1 });
 
   res.json({
     success: true,
@@ -134,7 +157,31 @@ const getUserOrder = asyncHandler(async (req, res) => {
   });
 });
 
-// ================= GET ALL ORDERS =================
+/*
+====================================================
+ GET ORDER BY ID (DETAIL PAGE)
+====================================================
+*/
+
+const getOrderById = asyncHandler(async (req, res) => {
+  const order = await Order.findById(req.params.id);
+
+  if (!order) {
+    res.status(404);
+    throw new Error("Order not found");
+  }
+
+  res.json({
+    success: true,
+    order,
+  });
+});
+
+/*
+====================================================
+ GET ALL ORDERS (ADMIN)
+====================================================
+*/
 
 const getAllOrders = asyncHandler(async (req, res) => {
   if (!["admin", "super_admin"].includes(req.user.role)) {
@@ -151,10 +198,17 @@ const getAllOrders = asyncHandler(async (req, res) => {
   });
 });
 
+/*
+====================================================
+ EXPORTS
+====================================================
+*/
+
 export {
   createOrder,
   updateOrder,
   deleteOrder,
   getUserOrder,
   getAllOrders,
+  getOrderById,
 };
