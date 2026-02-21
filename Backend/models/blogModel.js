@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import slugify from "slugify";
 
 const blogSchema = new mongoose.Schema(
   {
@@ -6,57 +7,89 @@ const blogSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      index: true,
     },
+
     slug: {
       type: String,
       unique: true,
-      trim: true,
+      index: true,
     },
+
     content: {
       type: String,
       required: true,
     },
+
     excerpt: {
       type: String,
       trim: true,
+      default: "",
     },
+
     image: {
-      type: String, // URL or file path
+      type: String,
       trim: true,
+      default: "",
     },
+
     author: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
     },
+
     category: {
       type: String,
       trim: true,
+      index: true,
+      default: "uncategorized",
     },
+
     tags: {
       type: [String],
       default: [],
+      index: true,
     },
+
     status: {
       type: String,
       enum: ["draft", "published", "archived"],
       default: "draft",
+      index: true,
     },
+
     views: {
       type: Number,
       default: 0,
+      min: 0,
     },
+
     likes: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
       },
     ],
+
     comments: [
       {
-        user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        content: { type: String, required: true },
-        createdAt: { type: Date, default: Date.now },
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+
+        content: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
       },
     ],
   },
@@ -65,9 +98,42 @@ const blogSchema = new mongoose.Schema(
   }
 );
 
-// 🔥 Create a text index for searching by title and content
-blogSchema.index({ title: "text", content: "text", excerpt: "text" });
+/*
+====================================================
+ AUTO SLUG GENERATION
+====================================================
+*/
 
-const Blog = mongoose.models.Blog || mongoose.model("Blog", blogSchema);
+blogSchema.pre("validate", function (next) {
+  if (this.title && !this.slug) {
+    this.slug = slugify(this.title, {
+      lower: true,
+      strict: true,
+    });
+  }
+  next();
+});
 
-export default Blog; // ✅ default export
+/*
+====================================================
+ TEXT SEARCH INDEXING
+====================================================
+*/
+
+blogSchema.index({
+  title: "text",
+  content: "text",
+  excerpt: "text",
+});
+
+/*
+====================================================
+ MODEL EXPORT
+====================================================
+*/
+
+const Blog =
+  mongoose.models.Blog ||
+  mongoose.model("Blog", blogSchema);
+
+export default Blog;
