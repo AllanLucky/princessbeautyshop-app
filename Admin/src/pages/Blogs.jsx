@@ -12,7 +12,11 @@ const Blogs = () => {
   const fetchBlogs = async () => {
     try {
       setLoading(true);
-      const res = await userRequest.get("/blogs");
+
+      const res = await userRequest.get("/blogs", {
+        withCredentials: true,
+      });
+
       setBlogs(res.data?.blogs || []);
     } catch (error) {
       toast.error(
@@ -32,7 +36,10 @@ const Blogs = () => {
     if (!window.confirm("Delete this blog?")) return;
 
     try {
-      await userRequest.delete(`/blogs/${id}`);
+      await userRequest.delete(`/blogs/${id}`, {
+        withCredentials: true,
+      });
+
       toast.success("Blog deleted successfully");
       fetchBlogs();
     } catch (error) {
@@ -47,18 +54,20 @@ const Blogs = () => {
       <ToastContainer position="top-right" autoClose={3000} />
 
       <div className="max-w-6xl mx-auto">
-        
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <h1 className="text-2xl sm:text-3xl font-semibold text-gray-800">
+
+          <h1 className="text-2xl sm:text-3xl font-semibold text-gray-800 text-center sm:text-left">
             All Blogs
           </h1>
 
           <Link to="/create-blog" className="w-full sm:w-auto">
-            <button className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg transition">
-              Create Blog
+            <button className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition shadow-md">
+              + Create Blog
             </button>
           </Link>
+
         </div>
 
         {/* Loading */}
@@ -80,9 +89,8 @@ const Blogs = () => {
           {blogs.map((blog) => (
             <div
               key={blog._id}
-              className="bg-white shadow-md hover:shadow-lg transition rounded-2xl overflow-hidden border"
+              className="bg-white shadow-md hover:shadow-lg transition rounded-2xl overflow-hidden border flex flex-col"
             >
-              {/* Image */}
               {blog.image && (
                 <img
                   src={blog.image}
@@ -91,7 +99,8 @@ const Blogs = () => {
                 />
               )}
 
-              <div className="p-5 flex flex-col justify-between h-full">
+              <div className="p-5 flex flex-col flex-1 justify-between">
+
                 <div>
                   <h2 className="text-lg font-semibold mb-2 line-clamp-2">
                     {blog.title}
@@ -104,13 +113,14 @@ const Blogs = () => {
 
                 {/* Buttons */}
                 <div className="flex flex-wrap gap-2 mt-4">
-                  <Link to={`/admin/blog/${blog._id}`}>
+
+                  <Link to={`/blog-detail/${blog._id}`}>
                     <button className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-lg text-sm transition">
                       View
                     </button>
                   </Link>
 
-                  <Link to={`/admin/blog/edit/${blog._id}`}>
+                  <Link to={`/blog/${blog._id}`}>
                     <button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm transition">
                       Edit
                     </button>
@@ -122,11 +132,14 @@ const Blogs = () => {
                   >
                     Delete
                   </button>
+
                 </div>
+
               </div>
             </div>
           ))}
         </div>
+
       </div>
     </div>
   );

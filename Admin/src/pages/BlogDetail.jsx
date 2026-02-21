@@ -63,7 +63,7 @@ const BlogDetail = () => {
             {blog.title}
           </h1>
 
-          <Link to="/admin/blogs" className="w-full sm:w-auto">
+          <Link to="/blogs" className="w-full sm:w-auto">
             <button className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg transition">
               Back
             </button>
