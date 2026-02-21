@@ -24,6 +24,7 @@ import couponRoutes from "./routes/couponRoutes.js";
 import supportTicketRoutes from "./routes/supportTicketRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import blogRoutes from "./routes/blogRoutes.js";
+import returnRoutes from "./routes/returnRoutes.js";
 
 // ================= RATE LIMITER =================
 import { globalLimiter } from "./middlewares/rateLimiter.js";
@@ -98,6 +99,7 @@ app.use("/api/v1/stripe", stripeRoute);
 app.use("/api/v1/revenue", revenueRoutes);
 app.use("/api/v1/invoices", invoiceRoutes);
 app.use("/api/v1/vendors", vendorRoutes);
+app.use("/api/v1/returns", returnRoutes);
 
 // ================= EXTRA MODULES =================
 app.use("/api/v1/coupons", couponRoutes);
