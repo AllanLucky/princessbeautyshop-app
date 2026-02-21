@@ -21,7 +21,7 @@ const normalizeImages = (img) => {
   if (Array.isArray(img)) return img.slice(0, 1);
 
   if (typeof img === "object") {
-    return Object.values(img).filter(Boolean);
+    return Object.values(img).filter(Boolean).slice(0, 1);
   }
 
   return [img];
@@ -135,6 +135,7 @@ router.post("/create-checkout-session", async (req, res) => {
       email,
       phone,
       address,
+
       products: cart.products.map((p) => ({
         productId: p._id,
         title: p.title,
@@ -143,9 +144,11 @@ router.post("/create-checkout-session", async (req, res) => {
         quantity: Number(p.quantity || 1),
         img: Array.isArray(p.img) ? p.img[0] : p.img || "",
       })),
+
       total: Number(total || 0),
       stripeSessionId: session.id,
       paymentStatus: "pending",
+      orderStatus: "processing",
     });
 
     return res.status(200).json({
@@ -164,7 +167,7 @@ router.post("/create-checkout-session", async (req, res) => {
 
 /*
 =====================================================
-WEBHOOK
+WEBHOOK (SOURCE OF TRUTH ⭐ VERY IMPORTANT)
 =====================================================
 */
 
@@ -183,7 +186,6 @@ router.post(
         process.env.STRIPE_WEBHOOK_SECRET
       );
     } catch (err) {
-      console.error("Webhook signature error:", err.message);
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
@@ -195,7 +197,7 @@ router.post(
       const session = event.data.object;
 
       try {
-        await Order.findOneAndUpdate(
+        await Order.updateOne(
           { stripeSessionId: session.id },
           {
             paymentStatus: "paid",
@@ -210,7 +212,7 @@ router.post(
       }
     }
 
-    res.status(200).json({ received: true });
+    res.json({ received: true });
   }
 );
 
