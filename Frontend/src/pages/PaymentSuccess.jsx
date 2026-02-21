@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
@@ -13,6 +13,8 @@ const PaymentSuccess = () => {
   const [loading, setLoading] = useState(true);
   const [order, setOrder] = useState(null);
 
+  const verifiedRef = useRef(false);
+
   const sessionId = new URLSearchParams(location.search).get(
     "session_id"
   );
@@ -24,28 +26,36 @@ const PaymentSuccess = () => {
       return;
     }
 
+    // Prevent double execution in React Strict Mode
+    if (verifiedRef.current) return;
+    verifiedRef.current = true;
+
     const verifyOrder = async () => {
       try {
         const res = await userRequest.get(
           `/orders/stripe/${sessionId}`
         );
 
+        if (!res?.data) {
+          throw new Error("Order not found");
+        }
+
         setOrder(res.data);
 
+        // Clear cart AFTER payment verification
         dispatch(clearCart());
 
         toast.success("Payment successful 🎉");
 
-        // ⭐ Auto redirect after 3 seconds (Professional UX)
+        // Auto redirect (professional UX)
         setTimeout(() => {
           navigate("/customer-dashboard/myorders", {
             replace: true,
           });
         }, 3000);
-
       } catch (err) {
         console.error(err);
-        toast.error("Order verification failed");
+        toast.error("Payment verification failed");
       } finally {
         setLoading(false);
       }
@@ -54,19 +64,21 @@ const PaymentSuccess = () => {
     verifyOrder();
   }, [sessionId, dispatch, navigate]);
 
-  if (loading)
+  if (loading) {
     return (
       <p className="text-center mt-20">
         Verifying payment...
       </p>
     );
+  }
 
-  if (!order)
+  if (!order) {
     return (
       <p className="text-center mt-20 text-red-600">
         Order not found.
       </p>
     );
+  }
 
   return (
     <div className="text-center mt-20 px-4">
@@ -81,9 +93,9 @@ const PaymentSuccess = () => {
       <div className="mt-8 max-w-xl mx-auto bg-white shadow rounded-lg p-6 text-left">
         <h3 className="font-semibold mb-4">Order Summary</h3>
 
-        {order.products?.map((p) => (
+        {order.products?.map((p, i) => (
           <div
-            key={p.productId}
+            key={p.productId || i}
             className="flex justify-between text-sm mb-2"
           >
             <span>
