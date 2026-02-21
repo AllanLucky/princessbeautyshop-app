@@ -10,15 +10,15 @@ const stripe = new Stripe(process.env.STRIPE_KEY);
 
 /*
 =====================================================
-HELPER FUNCTIONS
+HELPER
 =====================================================
 */
 
-// Normalize image safely for Stripe
+// Normalize image safely
 const normalizeImages = (img) => {
   if (!img) return [];
 
-  if (Array.isArray(img)) return [img[0]].filter(Boolean);
+  if (Array.isArray(img)) return img.slice(0, 1);
 
   if (typeof img === "object") {
     return Object.values(img).filter(Boolean);
@@ -39,24 +39,23 @@ router.post("/create-checkout-session", async (req, res) => {
       req.body;
 
     if (!cart?.products?.length) {
-      return res.status(400).json({ error: "Cart is empty" });
+      return res.status(400).json({
+        error: "Cart is empty",
+      });
     }
 
     /*
-    ✅ Prevent duplicate unpaid orders
+    ✅ Remove old pending order if exists
     */
-    const existingOrder = await Order.findOne({
+
+    await Order.deleteMany({
       userId,
       paymentStatus: "pending",
     });
 
-    if (existingOrder) {
-      await Order.deleteOne({ _id: existingOrder._id });
-    }
-
     /*
     =====================================================
-    CREATE STRIPE CUSTOMER
+    CREATE CUSTOMER
     =====================================================
     */
 
@@ -85,9 +84,6 @@ router.post("/create-checkout-session", async (req, res) => {
           images: normalizeImages(product.img),
 
           description: product.desc || "",
-          metadata: {
-            productId: String(product._id || ""),
-          },
         },
 
         unit_amount: Math.round(
@@ -100,7 +96,7 @@ router.post("/create-checkout-session", async (req, res) => {
 
     /*
     =====================================================
-    CREATE CHECKOUT SESSION
+    CREATE SESSION ⭐ IMPORTANT PART
     =====================================================
     */
 
@@ -113,7 +109,11 @@ router.post("/create-checkout-session", async (req, res) => {
 
       mode: "payment",
 
-      success_url: `${process.env.CLIENT_URL}/myorders`,
+      /*
+      ⭐ Redirect to PaymentSuccess page
+      */
+      success_url: `${process.env.CLIENT_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+
       cancel_url: `${process.env.CLIENT_URL}/cart`,
 
       metadata: {
@@ -152,6 +152,7 @@ router.post("/create-checkout-session", async (req, res) => {
       url: session.url,
       orderId: newOrder._id,
     });
+
   } catch (error) {
     console.error("Stripe error:", error.message);
 
@@ -187,7 +188,7 @@ router.post(
     }
 
     /*
-    ✅ PAYMENT SUCCESS
+    PAYMENT SUCCESS
     */
 
     if (event.type === "checkout.session.completed") {
@@ -199,11 +200,11 @@ router.post(
           {
             paymentStatus: "paid",
             paidAt: new Date(),
-          },
-          { new: true }
+          }
         );
 
         console.log("✅ Payment confirmed:", session.id);
+
       } catch (err) {
         console.error("Order update error:", err.message);
       }
