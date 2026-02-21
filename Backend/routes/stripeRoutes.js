@@ -124,10 +124,6 @@ router.get("/orders/stripe/:sessionId", async (req, res) => {
   }
 });
 
-WEBHOOK
-*/
-
-
 // ================= STRIPE WEBHOOK =================
 router.post(
   "/webhook",
