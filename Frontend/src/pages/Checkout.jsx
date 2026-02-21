@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 const Checkout = () => {
   const cart = useSelector((state) => state.cart);
   const user = useSelector((state) => state.user.currentUser);
+
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -15,115 +16,132 @@ const Checkout = () => {
     address: "",
   });
 
-  // Pre-fill form from Redux user
+  // ================= AUTH PROTECTION =================
+  if (!user?._id) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // ================= PREFILL USER DATA =================
   useEffect(() => {
-    if (user) {
-      setForm({
-        name: user.name || "",
-        email: user.email || "",
-        phone: user.phone || "",
-        address: user.address || "",
-      });
-    }
+    if (!user) return;
+
+    setForm((prev) => ({
+      ...prev,
+      name: user.name || "",
+      email: user.email || "",
+      phone: user.phone || "",
+      address: user.address || "",
+    }));
   }, [user]);
 
-  // Calculate totals
-  const subtotal = cart.products.reduce(
-    (sum, p) => sum + p.price * p.quantity,
-    0
-  );
+  // ================= CART TOTALS =================
+  const subtotal = useMemo(() => {
+    return cart.products.reduce(
+      (sum, p) => sum + p.price * p.quantity,
+      0
+    );
+  }, [cart.products]);
+
   const deliveryFee = cart.products.length > 0 ? 150 : 0;
   const total = subtotal + deliveryFee;
 
-  // Handle Proceed to Payment
+  // ================= INPUT CHANGE =================
+  const handleChange = (e) => {
+    setForm((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  // ================= PROCEED TO PAYMENT =================
   const handleProceed = () => {
     if (!form.name || !form.email || !form.phone || !form.address) {
       toast.error("Please fill in all required fields.");
       return;
     }
 
-    if (!user?._id) {
-      toast.error("You must be logged in to proceed.");
+    if (!cart.products.length) {
+      toast.error("Your cart is empty.");
       return;
     }
 
-    // Store checkout info temporarily for Payment page
-    const checkoutData = { form, cart, total, userId: user._id };
-    sessionStorage.setItem("checkoutData", JSON.stringify(checkoutData));
+    const checkoutData = {
+      userId: user._id,
+      form,
+      cart,
+      total,
+    };
 
-    // Navigate to Payment page
+    sessionStorage.setItem(
+      "checkoutData",
+      JSON.stringify(checkoutData)
+    );
+
     navigate("/payment");
   };
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-10">
       <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Customer Details */}
+
+        {/* CUSTOMER DETAILS */}
         <div className="lg:col-span-2 bg-white rounded-xl shadow p-6">
           <h2 className="text-2xl font-bold mb-6 border-b pb-2">
             Confirm Order Details
           </h2>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Full Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-500"
-              />
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Email <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-500"
-              />
-            </div>
+            <input
+              type="text"
+              name="name"
+              value={form.name}
+              readOnly
+              className="w-full border bg-gray-100 rounded-lg px-4 py-3"
+              placeholder="Full Name"
+            />
 
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Phone <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="tel"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-500"
-              />
-            </div>
+            <input
+              type="email"
+              name="email"
+              value={form.email}
+              readOnly
+              className="w-full border bg-gray-100 rounded-lg px-4 py-3"
+              placeholder="Email"
+            />
 
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium mb-1">
-                Delivery Address <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                value={form.address}
-                onChange={(e) =>
-                  setForm({ ...form, address: e.target.value })
-                }
-                className="w-full border rounded-lg px-4 py-3 h-28 resize-none focus:outline-none focus:ring-2 focus:ring-pink-500"
-                placeholder="Street, City, Landmark"
-              />
-            </div>
+            <input
+              type="tel"
+              name="phone"
+              value={form.phone}
+              onChange={handleChange}
+              className="w-full border rounded-lg px-4 py-3"
+              placeholder="Phone Number"
+            />
+
+            <textarea
+              name="address"
+              value={form.address}
+              onChange={handleChange}
+              className="md:col-span-2 w-full border rounded-lg px-4 py-3 h-28 resize-none"
+              placeholder="Street, City, Landmark"
+            />
+
           </div>
         </div>
 
-        {/* Order Summary */}
+        {/* ORDER SUMMARY */}
         <div className="bg-white rounded-xl shadow p-6 h-fit">
           <h3 className="text-lg font-semibold mb-4 border-b pb-2">
             Order Summary
           </h3>
+
           <div className="space-y-3 text-sm text-gray-700">
             {cart.products.map((item, index) => (
-              <div key={`${item._id}-${index}`} className="flex justify-between">
+              <div
+                key={`${item._id}-${index}`}
+                className="flex justify-between"
+              >
                 <span>
                   {item.title} × {item.quantity}
                 </span>
@@ -131,19 +149,24 @@ const Checkout = () => {
               </div>
             ))}
           </div>
+
           <div className="border-t mt-4 pt-4 space-y-2 text-sm">
+
             <div className="flex justify-between">
               <span>Subtotal</span>
               <span>KES {subtotal}</span>
             </div>
+
             <div className="flex justify-between">
               <span>Delivery Fee</span>
               <span>KES {deliveryFee}</span>
             </div>
+
             <div className="flex justify-between font-bold text-lg">
               <span>Total</span>
               <span>KES {total}</span>
             </div>
+
           </div>
 
           <button
@@ -153,6 +176,7 @@ const Checkout = () => {
             Proceed to Payment
           </button>
         </div>
+
       </div>
     </div>
   );

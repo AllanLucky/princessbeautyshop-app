@@ -4,20 +4,29 @@ import dotenv from "dotenv";
 import Order from "../models/orderModel.js";
 
 dotenv.config();
+
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_KEY);
 
 // ================= CREATE CHECKOUT SESSION =================
 router.post("/create-checkout-session", async (req, res) => {
   try {
-    const { userId, name, email, cart } = req.body;
+    const { userId, email, name, cart } = req.body;
 
     // Create Stripe customer
     const customer = await stripe.customers.create({
-      metadata: { userId },
+      email,
+      name,
+      metadata: {
+        userId,
+      },
     });
 
+<<<<<<< HEAD
     // Prepare line items
+=======
+    // Create line items
+>>>>>>> Frontend
     const line_items = cart.products.map((product) => ({
       price_data: {
         currency: "KES",
@@ -27,7 +36,7 @@ router.post("/create-checkout-session", async (req, res) => {
           description: product.desc,
           metadata: { id: product._id },
         },
-        unit_amount: product.price * 100,
+        unit_amount: product.price * 100, // convert to cents
       },
       quantity: product.quantity,
     }));
@@ -35,27 +44,32 @@ router.post("/create-checkout-session", async (req, res) => {
     // Create checkout session
     const session = await stripe.checkout.sessions.create({
       customer: customer.id,
+      payment_method_types: ["card"],
       line_items,
       mode: "payment",
+<<<<<<< HEAD
       payment_intent_data: {
         metadata: { userId: userId, email: email },
       },
       success_url: `${process.env.CLIENT_URL}/customer-dashboard/myorders`,
+=======
+      success_url: `${process.env.CLIENT_URL}/myorders`,
+>>>>>>> Frontend
       cancel_url: `${process.env.CLIENT_URL}/cart`,
     });
 
-    // Save order with pending status
-    const newOrder = new Order({
+    // ✅ Save order BEFORE payment (pending)
+    const newOrder = await Order.create({
+      userId,
       name,
       email,
-      userId,
       products: cart.products,
       total: cart.total,
       stripeSessionId: session.id,
       paymentStatus: "pending",
     });
-    await newOrder.save();
 
+<<<<<<< HEAD
     res.status(200).json({ url: session.url });
   } catch (err) {
     console.error("❌ Stripe checkout error:", err);
@@ -63,10 +77,26 @@ router.post("/create-checkout-session", async (req, res) => {
   }
 });
 
+=======
+    res.status(200).json({
+      url: session.url,
+      orderId: newOrder._id,
+    });
+
+  } catch (error) {
+    console.error("Stripe error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+>>>>>>> Frontend
 // ================= FETCH ORDER BY STRIPE SESSION =================
 router.get("/orders/stripe/:sessionId", async (req, res) => {
   try {
-    const order = await Order.findOne({ stripeSessionId: req.params.sessionId });
+    const order = await Order.findOne({
+      stripeSessionId: req.params.sessionId,
+    });
 
     if (!order) return res.status(404).json({ error: "Order not found" });
 
@@ -76,6 +106,7 @@ router.get("/orders/stripe/:sessionId", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
 
 // ================= STRIPE WEBHOOK =================
 router.post(
@@ -96,19 +127,27 @@ router.post(
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
+<<<<<<< HEAD
     // Handle checkout.session.completed event
+=======
+    // ✅ Payment successful
+>>>>>>> Frontend
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
 
       try {
+<<<<<<< HEAD
         // Find the order and mark it as paid
         const order = await Order.findOneAndUpdate(
+=======
+        await Order.findOneAndUpdate(
+>>>>>>> Frontend
           { stripeSessionId: session.id },
           { paymentStatus: "paid" },
           { new: true }
         );
 
-        console.log("✅ Payment succeeded for order:", order?._id || "not found");
+        console.log("✅ Payment successful for session:", session.id);
       } catch (err) {
         console.error("❌ Error updating order:", err.message);
       }
