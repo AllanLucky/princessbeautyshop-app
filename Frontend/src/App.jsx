@@ -20,57 +20,54 @@ import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NotFoundPage from "./pages/NotFoundPage";
+import VerifyAccounty from "./pages/VerifyAccounty";
 
 import Announcement from "./components/Announcement";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import VerifyAccounty from "./pages/VerifyAccounty";
 
 // ================= LAYOUT =================
-const Layout = () => {
-  return (
-    <>
-      <Announcement />
-      <Navbar />
-      <Outlet />
-      <Footer />
-    </>
-  );
-};
+const Layout = () => (
+  <>
+    <Announcement />
+    <Navbar />
+    <Outlet />
+    <Footer />
+  </>
+);
 
 // ================= AUTH GUARD =================
 const ProtectedRoute = ({ children }) => {
   const currentUser = useSelector((state) => state.user.currentUser);
 
-  if (!currentUser) {
+  if (!currentUser?._id) {
     return <Navigate to="/login" replace />;
   }
 
   return children;
 };
 
-// ================= PREVENT LOGIN IF LOGGED IN =================
+// ================= AUTH REDIRECT =================
 const AuthRedirect = ({ children }) => {
   const currentUser = useSelector((state) => state.user.currentUser);
 
-  if (currentUser) {
+  if (currentUser?._id) {
     return <Navigate to="/" replace />;
   }
 
   return children;
 };
 
-// ================= ROUTER =================
 function App() {
   const router = createBrowserRouter([
     {
       element: <Layout />,
-      errorElement: <NotFoundPage />,
+
       children: [
         { path: "/", element: <Home /> },
         { path: "/cart", element: <Cart /> },
 
-        // 🔐 AUTH PAGES (only if NOT logged in)
+        // AUTH PAGES
         {
           path: "/login",
           element: (
@@ -87,8 +84,7 @@ function App() {
             </AuthRedirect>
           ),
         },
-
-         {
+        {
           path: "/verify-account",
           element: (
             <AuthRedirect>
@@ -96,7 +92,6 @@ function App() {
             </AuthRedirect>
           ),
         },
-
         {
           path: "/forgot-password",
           element: (
@@ -114,7 +109,7 @@ function App() {
           ),
         },
 
-        // 🔐 Checkout flow (PROTECTED)
+        // CHECKOUT FLOW
         {
           path: "/checkout",
           element: (
@@ -127,7 +122,7 @@ function App() {
           path: "/payment",
           element: (
             <ProtectedRoute>
-              <Payment/>
+              <Payment />
             </ProtectedRoute>
           ),
         },
@@ -140,7 +135,7 @@ function App() {
           ),
         },
 
-        // 🔐 User Pages
+        // USER DASHBOARD
         {
           path: "/customer-dashboard/profile",
           element: (
@@ -149,19 +144,24 @@ function App() {
             </ProtectedRoute>
           ),
         },
-       {
-  path: "/customer-dashboard/myorders",
-  element: (
-    <ProtectedRoute>
-      <Orders />
-    </ProtectedRoute>
-  ),
-},
+        {
+          path: "/customer-dashboard/myorders",
+          element: (
+            <ProtectedRoute>
+              <Orders />
+            </ProtectedRoute>
+          ),
+        },
 
-
-        // 🛍️ Products
+        // PRODUCTS
         { path: "/product/:productId", element: <ProductDetails /> },
         { path: "/products/:searchterm", element: <ProductList /> },
+
+        // ⭐ 404 Catch All Route (IMPORTANT)
+        {
+          path: "*",
+          element: <NotFoundPage />,
+        },
       ],
     },
   ]);
