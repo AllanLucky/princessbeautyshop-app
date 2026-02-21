@@ -12,7 +12,10 @@ const Categories = () => {
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
 
-  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
+  const [paginationModel, setPaginationModel] = useState({
+    page: 0,
+    pageSize: 10,
+  });
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -22,7 +25,9 @@ const Categories = () => {
         const data = Array.isArray(res.data?.data) ? res.data.data : [];
         setCategories(data);
       } catch (error) {
-        toast.error(error.response?.data?.message || "Failed to fetch categories");
+        toast.error(
+          error.response?.data?.message || "Failed to fetch categories"
+        );
       } finally {
         setLoading(false);
       }
@@ -32,13 +37,16 @@ const Categories = () => {
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this category?")) return;
+
     try {
       setDeletingId(id);
       await userRequest.delete(`/categories/${id}`);
       setCategories((prev) => prev.filter((cat) => cat._id !== id));
       toast.success("Category deleted successfully 🗑️");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to delete category");
+      toast.error(
+        error.response?.data?.message || "Failed to delete category"
+      );
     } finally {
       setDeletingId(null);
     }
@@ -89,41 +97,57 @@ const Categories = () => {
   ];
 
   return (
-    <div className="p-8 bg-gray-100 min-h-screen w-full">
+    <div className="p-4 md:p-8 bg-gray-100 min-h-screen w-full">
       <ToastContainer />
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">All Categories</h1>
+
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
+          All Categories
+        </h1>
+
         <button
           onClick={() => navigate("/new-category")}
-          className="bg-green-600 text-white px-5 py-2 rounded-lg shadow hover:bg-green-700 transition"
+          className="bg-green-600 text-white px-5 py-2 rounded-lg shadow hover:bg-green-700 transition w-full sm:w-auto"
         >
           + Add Category
         </button>
       </div>
-      <div className="bg-white rounded-xl shadow p-4">
-        <DataGrid
-          rows={categories}
-          columns={categoryColumns}
-          getRowId={(row) => row._id}
-          loading={loading}
-          rowHeight={90}
-          autoHeight
-          pagination
-          paginationModel={paginationModel}
-          onPaginationModelChange={setPaginationModel}
-          pageSizeOptions={[5, 10, 20]}
-          disableRowSelectionOnClick
-          sx={{
-            border: "none",
-            "& .MuiDataGrid-columnHeaders": {
-              backgroundColor: "#f9fafb",
-              fontWeight: "600",
-            },
-            "& .MuiDataGrid-row": { alignItems: "center" },
-            "& .MuiDataGrid-row:hover": { backgroundColor: "#fdf2f8" },
-            "& .MuiDataGrid-cell": { borderBottom: "1px solid #f3f4f6" },
-          }}
-        />
+
+      {/* Responsive Table Wrapper */}
+      <div className="bg-white rounded-xl shadow p-4 overflow-x-auto">
+        {/* Minimum width ensures fixed column widths stay unchanged */}
+        <div className="min-w-[1120px]">
+          <DataGrid
+            rows={categories}
+            columns={categoryColumns}
+            getRowId={(row) => row._id}
+            loading={loading}
+            rowHeight={90}
+            autoHeight
+            pagination
+            paginationModel={paginationModel}
+            onPaginationModelChange={setPaginationModel}
+            pageSizeOptions={[5, 10, 20]}
+            disableRowSelectionOnClick
+            sx={{
+              border: "none",
+              "& .MuiDataGrid-columnHeaders": {
+                backgroundColor: "#f9fafb",
+                fontWeight: "600",
+              },
+              "& .MuiDataGrid-row": {
+                alignItems: "center",
+              },
+              "& .MuiDataGrid-row:hover": {
+                backgroundColor: "#fdf2f8",
+              },
+              "& .MuiDataGrid-cell": {
+                borderBottom: "1px solid #f3f4f6",
+              },
+            }}
+          />
+        </div>
       </div>
     </div>
   );
