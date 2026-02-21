@@ -42,6 +42,7 @@ import Payment from "./pages/Payment";
 import PaymentDetails from "./pages/PaymentDetails";
 import Returns from "./pages/Returns";
 import ReturnDetailPage from "./pages/ReturnDetailPage";
+import CreateReturn from "./pages/CreateReturn";
 
 // --- Routes ---
 const router = createBrowserRouter([
@@ -103,6 +104,7 @@ const router = createBrowserRouter([
       { path: "payment/:id", element: <PaymentDetails /> },
 
       { path: "returns", element: < Returns /> },
+       { path: "create-return", element: <CreateReturn /> },
       { path: "return/:id", element: <ReturnDetailPage /> },
      
 

@@ -6,16 +6,24 @@ import { toast } from "react-toastify";
 const ReturnDetailPage = () => {
   const { id } = useParams();
   const [ret, setRet] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const fetchReturn = async () => {
     try {
-      const res = await userRequest.get(`/returns`);
+      setLoading(true);
 
-      const data = res.data.returns?.find((r) => r._id === id);
+      const res = await userRequest.get(`/returns/${id}`);
 
-      setRet(data || null);
-    } catch {
-      toast.error("Failed to load return detail");
+      console.log("RETURN DETAIL:", res.data);
+
+      setRet(res.data.return || null);
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to load return detail"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -23,19 +31,54 @@ const ReturnDetailPage = () => {
     fetchReturn();
   }, [id]);
 
-  if (!ret) return <p className="p-6">Loading...</p>;
+  if (loading) return <p className="p-6">Loading...</p>;
+
+  if (!ret)
+    return <p className="p-6 text-gray-500">Return not found</p>;
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="bg-white shadow rounded-2xl p-6 max-w-3xl mx-auto border">
-        <h2 className="text-xl font-bold mb-4">Return Detail</h2>
 
-        <p className="mb-2">Order: {ret.orderId}</p>
-        <p className="mb-2">Reason: {ret.reason}</p>
+        <h2 className="text-xl font-bold mb-6">
+          Return Detail
+        </h2>
+
+        <p className="mb-2">
+          <strong>Order:</strong>{" "}
+          {ret.orderId?._id || ret.orderId}
+        </p>
+
+        <p className="mb-2">
+          <strong>Product:</strong>{" "}
+          {ret.productId?.title || ret.productId}
+        </p>
+
+        <p className="mb-2">
+          <strong>User:</strong>{" "}
+          {ret.userId?.name || ret.userId}
+        </p>
+
+        <p className="mb-2">
+          <strong>Reason:</strong> {ret.reason}
+        </p>
 
         <p className="mb-2 capitalize">
-          Status: <strong>{ret.status}</strong>
+          <strong>Status:</strong> {ret.status}
         </p>
+
+        {ret.refundAmount > 0 && (
+          <p className="mb-2 text-green-600">
+            Refund Amount: {ret.refundAmount}
+          </p>
+        )}
+
+        {ret.adminNote && (
+          <p className="mb-2 text-gray-600">
+            Admin Note: {ret.adminNote}
+          </p>
+        )}
+
       </div>
     </div>
   );
