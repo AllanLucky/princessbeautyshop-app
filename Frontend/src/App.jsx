@@ -6,6 +6,7 @@ import {
 } from "react-router-dom";
 import { useSelector } from "react-redux";
 
+/* Pages */
 import Home from "./pages/Home";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
@@ -22,11 +23,13 @@ import ResetPassword from "./pages/ResetPassword";
 import NotFoundPage from "./pages/NotFoundPage";
 import VerifyAccounty from "./pages/VerifyAccounty";
 
+/* Components */
 import Announcement from "./components/Announcement";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 
-// ================= LAYOUT =================
+/* ================= LAYOUT ================= */
+
 const Layout = () => (
   <>
     <Announcement />
@@ -36,11 +39,10 @@ const Layout = () => (
   </>
 );
 
-// ================= AUTH GUARD =================
+/* ================= AUTH GUARD ================= */
+
 const ProtectedRoute = ({ children }) => {
-  const currentUser = useSelector(
-    (state) => state?.user?.currentUser
-  );
+  const currentUser = useSelector((state) => state?.user?.currentUser);
 
   if (!currentUser?._id) {
     return <Navigate to="/login" replace />;
@@ -49,11 +51,10 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-// ================= AUTH REDIRECT =================
+/* ================= AUTH REDIRECT ================= */
+
 const AuthRedirect = ({ children }) => {
-  const currentUser = useSelector(
-    (state) => state?.user?.currentUser
-  );
+  const currentUser = useSelector((state) => state?.user?.currentUser);
 
   if (currentUser?._id) {
     return <Navigate to="/" replace />;
@@ -61,6 +62,8 @@ const AuthRedirect = ({ children }) => {
 
   return children;
 };
+
+/* ================= APP ROUTER ================= */
 
 function App() {
   const router = createBrowserRouter([
@@ -71,7 +74,7 @@ function App() {
         { path: "/", element: <Home /> },
         { path: "/cart", element: <Cart /> },
 
-        // AUTH
+        /* AUTH */
         {
           path: "/login",
           element: (
@@ -117,7 +120,7 @@ function App() {
           ),
         },
 
-        // CHECKOUT FLOW
+        /* CHECKOUT FLOW */
         {
           path: "/checkout",
           element: (
@@ -136,9 +139,9 @@ function App() {
           ),
         },
 
-        // ⭐ Stripe success redirect route
+        /* ⭐ Stripe Success Verification Page */
         {
-          path: "/myorders",
+          path: "/payment-success",
           element: (
             <ProtectedRoute>
               <PaymentSuccess />
@@ -146,7 +149,7 @@ function App() {
           ),
         },
 
-        // DASHBOARD
+        /* DASHBOARD */
         {
           path: "/customer-dashboard/profile",
           element: (
@@ -165,11 +168,11 @@ function App() {
           ),
         },
 
-        // PRODUCTS
+        /* PRODUCTS */
         { path: "/product/:productId", element: <ProductDetails /> },
         { path: "/products/:searchterm", element: <ProductList /> },
 
-        // 404
+        /* 404 */
         {
           path: "*",
           element: <NotFoundPage />,
