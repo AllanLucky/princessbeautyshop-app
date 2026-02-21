@@ -40,6 +40,8 @@ import EditCoupon from "./pages/EditCoupon";
 import ProductReviews from "./pages/ProductReviews";
 import Payment from "./pages/Payment";
 import PaymentDetails from "./pages/PaymentDetails";
+import Returns from "./pages/Returns";
+import ReturnDetailPage from "./pages/ReturnDetailPage";
 
 // --- Routes ---
 const router = createBrowserRouter([
@@ -99,6 +101,9 @@ const router = createBrowserRouter([
        // Coupons
       { path: "payments", element: <Payment /> },
       { path: "payment/:id", element: <PaymentDetails /> },
+
+      { path: "returns", element: < Returns /> },
+      { path: "return/:id", element: <ReturnDetailPage /> },
      
 
       // Analytics & Logs
