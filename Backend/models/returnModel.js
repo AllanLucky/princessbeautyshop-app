@@ -27,11 +27,19 @@ const returnSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      minlength: 5,
+      maxlength: 500,
     },
 
     status: {
       type: String,
-      enum: ["pending", "approved", "rejected", "processing", "completed"],
+      enum: [
+        "pending",
+        "approved",
+        "rejected",
+        "processing",
+        "completed",
+      ],
       default: "pending",
       index: true,
     },
@@ -39,25 +47,62 @@ const returnSchema = new mongoose.Schema(
     refundAmount: {
       type: Number,
       default: 0,
+      min: 0,
+    },
+
+    refundMethod: {
+      type: String,
+      enum: ["stripe", "manual", "wallet", null],
+      default: null,
+    },
+
+    refundTransactionId: {
+      type: String,
+      default: null,
     },
 
     adminNote: {
       type: String,
+      trim: true,
       default: "",
+      maxlength: 1000,
     },
 
-    refundedAt: Date,
+    attachments: [
+      {
+        type: String, // image URLs
+      },
+    ],
+
+    refundedAt: {
+      type: Date,
+      default: null,
+    },
+
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
 
 /*
-==========================================
-INDEXING (PERFORMANCE + SCALABILITY)
-==========================================
+====================================================
+ PERFORMANCE INDEXES
+====================================================
 */
 
+// User dashboard filtering
 returnSchema.index({ userId: 1, status: 1 });
+
+// Order-level filtering
 returnSchema.index({ orderId: 1, status: 1 });
+
+// Prevent duplicate return for same product in same order by same user
+returnSchema.index(
+  { orderId: 1, productId: 1, userId: 1 },
+  { unique: true }
+);
 
 export default mongoose.model("Return", returnSchema);
