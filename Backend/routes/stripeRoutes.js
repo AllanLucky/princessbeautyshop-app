@@ -89,10 +89,7 @@ router.post("/create-checkout-session", async (req, res) => {
             productId: String(product._id || ""),
           },
         },
-
-        unit_amount: Math.round(
-          Number(product.price || 0) * 100
-        ),
+        unit_amount: product.price * 100, // convert to cents
       },
 
       quantity: Math.max(1, Number(product.quantity || 1)),
@@ -106,13 +103,10 @@ router.post("/create-checkout-session", async (req, res) => {
 
     const session = await stripe.checkout.sessions.create({
       customer: customer.id,
-
       payment_method_types: ["card"],
-
       line_items,
 
       mode: "payment",
-
       success_url: `${process.env.CLIENT_URL}/myorders`,
       cancel_url: `${process.env.CLIENT_URL}/cart`,
 
@@ -148,10 +142,24 @@ router.post("/create-checkout-session", async (req, res) => {
       paymentStatus: "pending",
     });
 
-    return res.status(200).json({
+    res.status(200).json({
       url: session.url,
       orderId: newOrder._id,
     });
+  } catch (error) {
+    console.error("Stripe error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+// ================= FETCH ORDER BY STRIPE SESSION =================
+router.get("/orders/stripe/:sessionId", async (req, res) => {
+  try {
+    const order = await Order.findOne({
+      stripeSessionId: req.params.sessionId,
+    });
+
   } catch (error) {
     console.error("Stripe error:", error.message);
 
@@ -161,12 +169,11 @@ router.post("/create-checkout-session", async (req, res) => {
   }
 });
 
-/*
-=====================================================
-WEBHOOK
-=====================================================
-*/
+//WEBHOOK
 
+
+
+// ================= STRIPE WEBHOOK =================
 router.post(
   "/webhook",
   express.raw({ type: "application/json" }),
