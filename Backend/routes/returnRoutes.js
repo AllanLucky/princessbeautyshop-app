@@ -1,15 +1,32 @@
 import express from "express";
 import { protect, adminOnly } from "../middlewares/authMiddleware.js";
-import { createReturn, getReturns, updateReturn } from "../controllers/returnController.js";
+import {
+  createReturn,
+  getReturns,
+  updateReturn,
+} from "../controllers/returnController.js";
 
 const router = express.Router();
 
-// Users can create return
+/*
+====================================================
+ USER ROUTES
+====================================================
+*/
+
+// User create return request
 router.post("/", protect, createReturn);
 
-// Admin routes
-router.use(protect, adminOnly);
-router.get("/", getReturns);
-router.put("/:id", updateReturn);
+/*
+====================================================
+ ADMIN ROUTES
+====================================================
+*/
+
+// Admin get all returns
+router.get("/", protect, adminOnly, getReturns);
+
+// Admin update return status
+router.put("/:id", protect, adminOnly, updateReturn);
 
 export default router;
