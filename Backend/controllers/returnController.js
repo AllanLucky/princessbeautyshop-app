@@ -1,4 +1,5 @@
 import Return from "../models/returnModel.js";
+import Order from "../models/orderModel.js";
 import asyncHandler from "express-async-handler";
 
 /*
@@ -8,21 +9,44 @@ import asyncHandler from "express-async-handler";
 */
 
 export const createReturn = asyncHandler(async (req, res) => {
-  if (!req.body.orderId || !req.body.reason) {
+  const { orderId, productId, reason, refundAmount } = req.body;
+
+  if (!orderId || !productId || !reason) {
     res.status(400);
-    throw new Error("Order ID and reason are required");
+    throw new Error("Order ID, Product ID and reason are required");
+  }
+
+  // ✅ Check order exists
+  const order = await Order.findById(orderId);
+  if (!order) {
+    res.status(404);
+    throw new Error("Order not found");
+  }
+
+  // ✅ Prevent duplicate return for same product in same order
+  const existingReturn = await Return.findOne({
+    orderId,
+    productId,
+    userId: req.user._id,
+  });
+
+  if (existingReturn) {
+    res.status(400);
+    throw new Error("Return already requested for this product");
   }
 
   const returnRequest = await Return.create({
     userId: req.user._id,
-    orderId: req.body.orderId,
-    reason: req.body.reason,
-    refundAmount: req.body.refundAmount || 0,
+    orderId,
+    productId,
+    reason,
+    refundAmount: refundAmount || 0,
     status: "pending",
   });
 
   res.status(201).json({
     success: true,
+    message: "Return request created",
     return: returnRequest,
   });
 });
@@ -41,7 +65,27 @@ export const getReturns = asyncHandler(async (req, res) => {
 
   const returns = await Return.find()
     .populate("userId", "name email")
-    .populate("orderId")
+    .populate("orderId", "_id total createdAt")
+    .populate("productId", "title price")
+    .sort({ createdAt: -1 });
+
+  res.json({
+    success: true,
+    total: returns.length,
+    returns,
+  });
+});
+
+/*
+====================================================
+ GET USER RETURNS (USER)
+====================================================
+*/
+
+export const getUserReturns = asyncHandler(async (req, res) => {
+  const returns = await Return.find({ userId: req.user._id })
+    .populate("orderId", "_id total createdAt")
+    .populate("productId", "title price")
     .sort({ createdAt: -1 });
 
   res.json({
@@ -63,15 +107,29 @@ export const updateReturn = asyncHandler(async (req, res) => {
     throw new Error("Admin only");
   }
 
-  const allowedUpdates = ["status", "adminNote", "refundAmount"];
+  const { status, adminNote, refundAmount } = req.body;
+
+  const allowedStatuses = [
+    "pending",
+    "approved",
+    "rejected",
+    "processing",
+    "completed",
+  ];
 
   const updates = {};
 
-  allowedUpdates.forEach((field) => {
-    if (req.body[field] !== undefined) {
-      updates[field] = req.body[field];
-    }
-  });
+  if (status && allowedStatuses.includes(status)) {
+    updates.status = status;
+  }
+
+  if (adminNote !== undefined) {
+    updates.adminNote = adminNote;
+  }
+
+  if (refundAmount !== undefined) {
+    updates.refundAmount = refundAmount;
+  }
 
   const ret = await Return.findByIdAndUpdate(
     req.params.id,
@@ -86,6 +144,7 @@ export const updateReturn = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
+    message: "Return updated successfully",
     return: ret,
   });
 });
