@@ -65,12 +65,7 @@ router.post("/create-checkout-session", async (req, res) => {
       },
     });
 
-    /*
-    -----------------------------------------------------
-    LINE ITEMS
-    -----------------------------------------------------
-    */
-
+    // Create line items
     const line_items = cart.products.map((product) => ({
       price_data: {
         currency: "KES",
@@ -107,7 +102,6 @@ router.post("/create-checkout-session", async (req, res) => {
       line_items,
 
       mode: "payment",
-
       success_url: `${process.env.CLIENT_URL}/myorders`,
       cancel_url: `${process.env.CLIENT_URL}/cart`,
 
@@ -136,7 +130,7 @@ router.post("/create-checkout-session", async (req, res) => {
       paymentStatus: "pending",
     });
 
-    return res.status(200).json({
+    res.status(200).json({
       url: session.url,
       orderId: newOrder._id,
     });
@@ -144,8 +138,12 @@ router.post("/create-checkout-session", async (req, res) => {
   } catch (error) {
     console.error("Stripe error:", error.message);
 
-    return res.status(500).json({
-      error: "Payment session creation failed",
+
+// ================= FETCH ORDER BY STRIPE SESSION =================
+router.get("/orders/stripe/:sessionId", async (req, res) => {
+  try {
+    const order = await Order.findOne({
+      stripeSessionId: req.params.sessionId,
     });
   }
 });
@@ -175,12 +173,7 @@ router.post(
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    /*
-    -----------------------------------------------------
-    PAYMENT SUCCESS
-    -----------------------------------------------------
-    */
-
+    // ✅ Payment successful
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
 
