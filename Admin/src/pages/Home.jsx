@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { userRequest } from "../requestMethods";
+
 import {
   IoCartOutline,
   IoCashOutline,
   IoPeopleOutline,
   IoClipboardOutline,
 } from "react-icons/io5";
+
 import {
   BarChart,
   Bar,
@@ -20,219 +22,291 @@ import {
   Legend,
 } from "recharts";
 
-const COLORS = ["#4f46e5", "#ef4444", "#facc15"];
-const RADIAN = Math.PI / 180;
+/*
+=====================================================
+CONFIG
+=====================================================
+*/
 
-// Fake Buyer Data in percentages
+const COLORS = ["#4f46e5", "#ef4444", "#facc15"];
+
 const FakeBuyerData = [
   { name: "Male", value: 35 },
   { name: "Female", value: 50 },
   { name: "Other", value: 15 },
 ];
 
+/*
+=====================================================
+HOME DASHBOARD
+=====================================================
+*/
+
 const Home = () => {
   const [orders, setOrders] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  /*
+  -----------------------------------------------------
+  FORMAT MONEY
+  -----------------------------------------------------
+  */
+
   const formatKES = (amount) =>
-    Number(amount || 0).toLocaleString("en-KE", { style: "currency", currency: "KES" });
+    Number(amount || 0).toLocaleString("en-KE", {
+      style: "currency",
+      currency: "KES",
+    });
+
+  /*
+  -----------------------------------------------------
+  ORDER TOTAL CALCULATOR
+  -----------------------------------------------------
+  */
 
   const calculateOrderTotal = (order) => {
-    if (!order.products) return 0;
+    if (!order?.products) return 0;
+
     return order.products.reduce((sum, p) => {
-      const price = p.price || 0;
-      return sum + price * (p.quantity || 1);
+      return sum + (p.price || 0) * (p.quantity || 1);
     }, 0);
   };
 
+  /*
+  -----------------------------------------------------
+  FETCH DASHBOARD DATA
+  -----------------------------------------------------
+  */
+
   useEffect(() => {
-    const fetchDashboardData = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
+
         const [ordersRes, usersRes] = await Promise.all([
           userRequest.get("/orders"),
           userRequest.get("/users"),
         ]);
-        setOrders(Array.isArray(ordersRes.data.orders) ? ordersRes.data.orders : []);
-        setUsers(Array.isArray(usersRes.data.users) ? usersRes.data.users : []);
+
+        setOrders(ordersRes?.data?.orders || []);
+        setUsers(usersRes?.data?.users || []);
       } catch (err) {
-        console.error("Failed to fetch dashboard data:", err.response || err);
+        console.error("Dashboard load error", err);
       } finally {
         setLoading(false);
       }
     };
-    fetchDashboardData();
+
+    fetchData();
   }, []);
 
-  const totalRevenue = Array.isArray(orders)
-    ? orders.reduce((acc, order) => acc + calculateOrderTotal(order), 0)
-    : 0;
+  /*
+  -----------------------------------------------------
+  DASHBOARD METRICS
+  -----------------------------------------------------
+  */
 
-  // Revenue bar chart
-  const barData = orders.map((o, idx) => ({
-    name: `Order ${idx + 1}`,
-    Revenue: calculateOrderTotal(o),
-  }));
+  const totalRevenue = orders.reduce(
+    (acc, order) => acc + calculateOrderTotal(order),
+    0
+  );
 
-  // Render percentage inside Pie slices
-  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-    const y = cy + radius * Math.sin(-midAngle * RADIAN);
-    return (
-      <text
-        x={x}
-        y={y}
-        fill="white"
-        textAnchor={x > cx ? "start" : "end"}
-        dominantBaseline="central"
-        fontSize={12}
-        fontWeight="bold"
-      >
-        {`${(percent * 100).toFixed(0)}%`}
-      </text>
-    );
-  };
+  const barData = orders
+    .slice()
+    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+    .map((o, index) => ({
+      name: `Order ${index + 1}`,
+      Revenue: calculateOrderTotal(o),
+    }));
+
+  /*
+  =====================================================
+  UI
+  =====================================================
+  */
 
   return (
-    <div className="flex flex-col bg-gray-50 min-h-screen p-1">
-      {/* Stats Boxes */}
-      <div className="flex flex-wrap gap-4 w-full mb-6">
+    <div className="flex flex-col bg-gray-50 min-h-screen p-4">
+
+      {/* ================= STATS ================= */}
+      <div className="flex flex-wrap gap-4 mb-6">
         <StatBox
-          icon={<IoCartOutline className="text-2xl text-white" />}
-          iconBg="bg-sky-500"
-          title="Total Revenue"
+          icon={<IoCartOutline className="text-white text-xl" />}
+          bg="bg-indigo-500"
+          title="Revenue"
           value={formatKES(totalRevenue)}
         />
+
         <StatBox
-          icon={<IoCashOutline className="text-2xl text-white" />}
-          iconBg="bg-red-500"
-          title="Total Expenses"
+          icon={<IoCashOutline className="text-white text-xl" />}
+          bg="bg-red-500"
+          title="Expenses"
           value={formatKES(totalRevenue * 0.3)}
         />
+
         <StatBox
-          icon={<IoPeopleOutline className="text-2xl text-white" />}
-          iconBg="bg-yellow-500"
-          title="Total Customers"
+          icon={<IoPeopleOutline className="text-white text-xl" />}
+          bg="bg-yellow-500"
+          title="Customers"
           value={users.length}
         />
+
         <StatBox
-          icon={<IoClipboardOutline className="text-2xl text-white" />}
-          iconBg="bg-green-500"
-          title="Total Orders"
+          icon={<IoClipboardOutline className="text-white text-xl" />}
+          bg="bg-green-500"
+          title="Orders"
           value={orders.length}
         />
       </div>
 
-      {/* Charts Section */}
+      {/* ================= CHARTS ================= */}
       <div className="flex flex-wrap gap-6 mb-6">
-        {/* Revenue Bar Chart */}
-        <div className="flex-1 md:flex-[3] bg-white rounded shadow-lg p-6 min-w-[250px] h-[22rem] flex flex-col">
-          <h3 className="text-2xl font-bold mb-4 text-gray-700">Revenue Overview</h3>
-          <ResponsiveContainer width="100%" height="85%">
-            <BarChart data={barData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+
+        {/* Revenue Chart */}
+        <ChartCard title="Revenue Overview">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={barData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" hide />
               <YAxis />
-              <Tooltip formatter={(value) => formatKES(value)} />
+              <Tooltip formatter={(v) => formatKES(v)} />
               <Bar dataKey="Revenue" fill="#4f46e5" />
             </BarChart>
           </ResponsiveContainer>
-        </div>
+        </ChartCard>
 
-        {/* Buyer Profile Pie Chart */}
-        <div className="flex-1 md:flex-[1] bg-white rounded shadow-lg p-6 min-w-[200px] h-[22rem] flex flex-col items-center">
-          <h3 className="text-2xl font-bold mb-4 text-gray-700">Buyer Profile</h3>
-          <ResponsiveContainer width="100%" height="85%">
+        {/* Buyer Profile */}
+        <ChartCard title="Buyer Profile">
+          <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={FakeBuyerData}
                 cx="50%"
                 cy="50%"
-                labelLine={false}
-                label={renderCustomizedLabel}
                 outerRadius={90}
                 dataKey="value"
+                label
               >
-                {FakeBuyerData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                {FakeBuyerData.map((_, i) => (
+                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
                 ))}
               </Pie>
-              <Legend verticalAlign="bottom" height={36} />
+              <Legend />
             </PieChart>
           </ResponsiveContainer>
-        </div>
+        </ChartCard>
+
       </div>
 
-      {/* Latest Transactions Table */}
-      <div className="bg-white rounded shadow-lg p-6">
-        <h3 className="text-2xl font-bold mb-4 text-gray-700">Latest Transactions</h3>
+      {/* ================= LATEST TRANSACTIONS ================= */}
+
+      <div className="bg-white rounded shadow p-6">
+        <h2 className="text-xl font-bold mb-4">
+          Latest Transactions
+        </h2>
+
         {loading ? (
-          <p className="text-gray-500">Loading orders...</p>
-        ) : orders.length === 0 ? (
-          <p className="text-gray-500">No orders yet.</p>
+          <p className="text-gray-500">Loading...</p>
+        ) : !orders.length ? (
+          <p className="text-gray-400">No transactions</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full table-auto border-collapse text-left">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="py-3 px-4 text-gray-600 font-semibold">Customer</th>
-                  <th className="py-3 px-4 text-gray-600 font-semibold">Phone</th>
-                  <th className="py-3 px-4 text-gray-600 font-semibold">Address</th>
-                  <th className="py-3 px-4 text-gray-600 font-semibold">Amount</th>
-                  <th className="py-3 px-4 text-gray-600 font-semibold">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders.slice(-5).reverse().map((order, idx) => (
+          <table className="w-full text-sm">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="p-3 text-left">Customer</th>
+                <th className="p-3 text-left">Phone</th>
+                <th className="p-3 text-left">Amount</th>
+                <th className="p-3 text-left">Status</th>
+                <th className="p-3 text-left">Date</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {orders
+                .slice()
+                .sort(
+                  (a, b) =>
+                    new Date(b.createdAt) - new Date(a.createdAt)
+                )
+                .slice(0, 5)
+                .map((order) => (
                   <tr
                     key={order._id}
-                    className={`border-b transition hover:bg-gray-50 ${
-                      idx % 2 === 0 ? "bg-gray-50" : ""
-                    }`}
+                    className="border-b hover:bg-gray-50 transition"
                   >
-                    <td className="py-3 px-4 font-medium">{order.name}</td>
-                    <td className="py-3 px-4">{order.phone || "N/A"}</td>
-                    <td className="py-3 px-4">{order.address || "N/A"}</td>
-                    <td className="py-3 px-4 font-semibold">{formatKES(calculateOrderTotal(order))}</td>
-                    <td
-                      className={`py-3 px-4 font-medium ${
-                        order.status === 2
-                          ? "text-green-600"
-                          : order.status === 1
-                          ? "text-blue-600"
-                          : "text-yellow-500"
-                      }`}
-                    >
-                      {order.status === 2
-                        ? "Delivered"
-                        : order.status === 1
-                        ? "Processing"
-                        : "Pending"}
+                    <td className="p-3">{order.name}</td>
+
+                    <td className="p-3">
+                      {order.phone || "N/A"}
+                    </td>
+
+                    <td className="p-3 font-semibold text-indigo-600">
+                      {formatKES(order.total)}
+                    </td>
+
+                    <td className="p-3">
+                      <StatusBadge status={order.paymentStatus} />
+                    </td>
+
+                    <td className="p-3 text-gray-500">
+                      {new Date(order.createdAt).toLocaleDateString()}
                     </td>
                   </tr>
                 ))}
-              </tbody>
-            </table>
-          </div>
+            </tbody>
+          </table>
         )}
       </div>
+
     </div>
   );
 };
 
 export default Home;
 
-// StatBox Component
-function StatBox({ icon, iconBg, title, value }) {
+/*
+=====================================================
+UI COMPONENTS
+=====================================================
+*/
+
+function StatBox({ icon, bg, title, value }) {
   return (
-    <div className="bg-white rounded-sm p-4 border border-gray-200 flex-1 flex min-w-[12rem] items-center">
-      <div className={`rounded-full w-12 h-12 flex items-center justify-center ${iconBg}`}>{icon}</div>
-      <div className="pl-4 flex flex-col">
-        <span className="text-sm text-gray-500 font-light">{title}</span>
-        <strong className="text-xl text-gray-700 font-semibold">{value}</strong>
+    <div className="bg-white border rounded-lg p-4 flex-1 min-w-[180px] flex items-center gap-4">
+      <div
+        className={`w-12 h-12 rounded-full flex items-center justify-center ${bg}`}
+      >
+        {icon}
+      </div>
+
+      <div>
+        <p className="text-sm text-gray-500">{title}</p>
+        <h3 className="text-lg font-semibold">{value}</h3>
       </div>
     </div>
+  );
+}
+
+function ChartCard({ title, children }) {
+  return (
+    <div className="flex-1 min-w-[280px] bg-white rounded shadow p-4 h-[22rem]">
+      <h3 className="text-lg font-semibold mb-4">{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+function StatusBadge({ status }) {
+  const map = {
+    paid: "bg-green-100 text-green-700",
+    pending: "bg-yellow-100 text-yellow-700",
+    failed: "bg-red-100 text-red-700",
+  };
+
+  return (
+    <span className={`px-3 py-1 rounded text-xs font-semibold ${map[status] || map.pending}`}>
+      {status || "pending"}
+    </span>
   );
 }
