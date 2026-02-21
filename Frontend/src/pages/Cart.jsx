@@ -3,25 +3,28 @@ import { useDispatch, useSelector } from "react-redux";
 import { removeProduct, updateQuantity, clearCart } from "../redux/cartRedux";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 
 const Cart = () => {
-  const cart = useSelector((state) => state.cart);
+  const cart = useSelector((state) => state.cart || {});
   const user = useSelector((state) => state.user?.currentUser);
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const products = cart?.products || [];
+  const products = Array.isArray(cart?.products) ? cart.products : [];
 
   // ================= REMOVE =================
   const handleRemoveProduct = (product) => {
+    if (!product) return;
+
     dispatch(removeProduct(product));
     toast.info(`${product.title} removed`);
   };
 
-  // ================= DECREASE =================
+  // ================= QUANTITY CONTROL =================
   const handleDecrease = (product) => {
-    if (product.quantity <= 1) return;
+    if (!product || product.quantity <= 1) return;
 
     dispatch(
       updateQuantity({
@@ -31,9 +34,10 @@ const Cart = () => {
     );
   };
 
-  // ================= INCREASE (WITH STOCK CHECK) =================
   const handleIncrease = (product) => {
-    const stock = product.stock ?? product.countInStock ?? 0;
+    if (!product) return;
+
+    const stock = product.stock ?? product.countInStock ?? Infinity;
 
     if (product.quantity >= stock) {
       toast.error(`Only ${stock} items available in stock`);
@@ -48,25 +52,28 @@ const Cart = () => {
     );
   };
 
-  // ================= CLEAR =================
+  // ================= CLEAR CART =================
   const handleClearCart = () => {
     if (!products.length) return;
+
     if (!window.confirm("Clear entire cart?")) return;
 
     dispatch(clearCart());
     toast.error("Cart cleared");
   };
 
-  // ================= TOTAL =================
+  // ================= TOTAL CALCULATION =================
   const subtotal = products.reduce(
-    (acc, item) => acc + item.price * item.quantity,
+    (acc, item) =>
+      acc + Number(item.price || 0) * Number(item.quantity || 0),
     0
   );
 
   const deliveryFee = products.length ? 150 : 0;
   const total = subtotal + deliveryFee;
 
-  const format = (num) => `KES ${Number(num).toLocaleString()}`;
+  const formatCurrency = (num) =>
+    `KES ${Number(num || 0).toLocaleString()}`;
 
   // ================= CHECKOUT =================
   const handleProceedCheckout = () => {
@@ -81,10 +88,11 @@ const Cart = () => {
       return;
     }
 
-    // check stock before checkout
-    for (let item of products) {
-      const stock = item.stock ?? item.countInStock ?? 0;
-      if (item.quantity > stock) {
+    // Stock validation
+    for (const item of products) {
+      const stock = item.stock ?? item.countInStock ?? Infinity;
+
+      if (Number(item.quantity) > Number(stock)) {
         toast.error(`${item.title} exceeds available stock`);
         return;
       }
@@ -110,7 +118,7 @@ const Cart = () => {
 
           {products.length ? (
             products.map((item) => {
-              const stock = item.stock ?? item.countInStock ?? 0;
+              const stock = item.stock ?? item.countInStock ?? Infinity;
 
               return (
                 <div
@@ -128,20 +136,17 @@ const Cart = () => {
                   />
 
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-800">
-                      {item.title}
-                    </h4>
+                    <h4 className="font-semibold">{item.title}</h4>
 
                     <p className="text-sm text-gray-500 line-clamp-2">
                       {item.desc}
                     </p>
 
-                    {/* STOCK */}
                     <p className="text-xs text-gray-400 mt-1">
                       Stock: {stock}
                     </p>
 
-                    {/* QTY */}
+                    {/* Quantity Control */}
                     <div className="flex items-center gap-4 mt-4">
                       <button
                         onClick={() => handleDecrease(item)}
@@ -156,6 +161,7 @@ const Cart = () => {
 
                       <button
                         onClick={() => handleIncrease(item)}
+                        disabled={item.quantity >= stock}
                         className={`p-2 rounded-full text-white ${
                           item.quantity >= stock
                             ? "bg-gray-400 cursor-not-allowed"
@@ -167,10 +173,9 @@ const Cart = () => {
                     </div>
                   </div>
 
-                  {/* PRICE */}
                   <div className="flex flex-col justify-between items-end">
                     <span className="font-bold text-pink-600 text-lg">
-                      {format(item.price * item.quantity)}
+                      {formatCurrency(item.price * item.quantity)}
                     </span>
 
                     <FaTrashAlt
@@ -206,17 +211,19 @@ const Cart = () => {
           <div className="space-y-4">
             <div className="flex justify-between text-gray-600">
               <span>Subtotal</span>
-              <span>{format(subtotal)}</span>
+              <span>{formatCurrency(subtotal)}</span>
             </div>
 
             <div className="flex justify-between text-gray-600">
               <span>Delivery</span>
-              <span>{format(deliveryFee)}</span>
+              <span>{formatCurrency(deliveryFee)}</span>
             </div>
 
             <div className="flex justify-between font-bold text-lg border-t pt-4">
               <span>Total</span>
-              <span className="text-pink-600">{format(total)}</span>
+              <span className="text-pink-600">
+                {formatCurrency(total)}
+              </span>
             </div>
 
             <button

@@ -35,36 +35,33 @@ CHECKOUT SESSION
 
 router.post("/create-checkout-session", async (req, res) => {
   try {
-    const { userId, email, name, phone, address, cart, total } =
-      req.body;
-
-    if (!cart?.products?.length) {
-      return res.status(400).json({ error: "Cart is empty" });
-    }
-
-    /*
-    ✅ Prevent duplicate unpaid orders
-    */
-    const existingOrder = await Order.findOne({
+    const {
       userId,
-      paymentStatus: "pending",
-    });
+      email,
+      name,
+      phone,
+      address,
+      cart,
+      total,
+    } = req.body;
 
-    if (existingOrder) {
-      await Order.deleteOne({ _id: existingOrder._id });
+    if (!cart || !Array.isArray(cart.products) || cart.products.length === 0) {
+      return res.status(400).json({
+        error: "Cart is empty",
+      });
     }
 
     /*
-    =====================================================
+    -----------------------------------------------------
     CREATE STRIPE CUSTOMER
-    =====================================================
+    -----------------------------------------------------
     */
 
     const customer = await stripe.customers.create({
       email,
       name,
       metadata: {
-        userId: String(userId || ""),
+        userId: userId?.toString() || "",
         phone: phone || "",
         address: address || "",
       },
@@ -124,9 +121,9 @@ router.post("/create-checkout-session", async (req, res) => {
     });
 
     /*
-    =====================================================
+    -----------------------------------------------------
     SAVE PENDING ORDER
-    =====================================================
+    -----------------------------------------------------
     */
 
     const newOrder = await Order.create({
@@ -135,14 +132,7 @@ router.post("/create-checkout-session", async (req, res) => {
       email,
       phone,
       address,
-      products: cart.products.map((p) => ({
-        productId: p._id,
-        title: p.title,
-        desc: p.desc || "",
-        price: Number(p.price || 0),
-        quantity: Number(p.quantity || 1),
-        img: Array.isArray(p.img) ? p.img[0] : p.img || "",
-      })),
+      products: cart.products,
       total: Number(total || 0),
       stripeSessionId: session.id,
       paymentStatus: "pending",
@@ -152,21 +142,25 @@ router.post("/create-checkout-session", async (req, res) => {
       url: session.url,
       orderId: newOrder._id,
     });
+ /*
+WEBHOOK
+*/
+
+
   } catch (error) {
     console.error("Stripe error:", error.message);
 
-    return res.status(500).json({
-      error: "Payment session creation failed",
+
+// ================= FETCH ORDER BY STRIPE SESSION =================
+router.get("/orders/stripe/:sessionId", async (req, res) => {
+  try {
+    const order = await Order.findOne({
+      stripeSessionId: req.params.sessionId,
     });
   }
 });
 
 /*
-=====================================================
-WEBHOOK
-=====================================================
-*/
-
 router.post(
   "/webhook",
   express.raw({ type: "application/json" }),
@@ -204,6 +198,7 @@ router.post(
         );
 
         console.log("✅ Payment confirmed:", session.id);
+
       } catch (err) {
         console.error("Order update error:", err.message);
       }
