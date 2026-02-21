@@ -1,4 +1,4 @@
-import React from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import { FaLock } from "react-icons/fa";
@@ -12,34 +12,51 @@ const Payment = () => {
     (state) => state.user.currentUser
   );
 
-  // ✅ Safe session storage parsing
-  let checkoutData = null;
+  const [checkoutData, setCheckoutData] = useState(null);
 
-  try {
-    checkoutData = JSON.parse(
-      sessionStorage.getItem("checkoutData")
-    );
-  } catch (error) {
-    console.error("Checkout data parse error:", error);
-  }
+  /*
+  =====================================================
+  LOAD CHECKOUT DATA SAFELY (React Best Practice ⭐)
+  =====================================================
+  */
 
-  // ✅ Validate checkout data
-  if (!checkoutData || !checkoutData.form || !checkoutData.cart) {
-    toast.error("Missing order details.");
-    navigate("/cart");
-    return null;
-  }
+  useEffect(() => {
+    try {
+      const data = JSON.parse(
+        sessionStorage.getItem("checkoutData")
+      );
+
+      if (!data || !data.form || !data.cart) {
+        toast.error("Missing order details.");
+        navigate("/cart");
+        return;
+      }
+
+      setCheckoutData(data);
+
+    } catch (error) {
+      console.error("Checkout parse error:", error);
+      navigate("/cart");
+    }
+  }, [navigate]);
+
+  if (!checkoutData) return null;
 
   const { form, cart, total } = checkoutData;
 
-  // ================= HANDLE PAYMENT =================
+  /*
+  =====================================================
+  PAYMENT HANDLER
+  =====================================================
+  */
+
   const handlePayment = async () => {
     try {
       const requestBody = {
-        name: form.name,
-        email: form.email,
-        phone: form.phone,
-        address: form.address,
+        name: form?.name,
+        email: form?.email,
+        phone: form?.phone,
+        address: form?.address,
         cart,
         total,
       };
@@ -65,12 +82,22 @@ const Payment = () => {
     }
   };
 
+  /*
+  =====================================================
+  FORMAT PRICE
+  =====================================================
+  */
+
+  const formatPrice = (value) =>
+    `KES ${Number(value || 0).toLocaleString()}`;
+
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-10">
       <ToastContainer />
 
       <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
 
+        {/* CUSTOMER INFO */}
         <div className="lg:col-span-2 bg-white rounded-xl shadow p-6">
 
           <div className="flex items-center gap-2 mb-6">
@@ -115,13 +142,13 @@ const Payment = () => {
           <div className="space-y-3 text-sm text-gray-700">
             {cart?.products?.map((item, index) => (
               <div
-                key={`${item._id}-${index}`}
+                key={`${item._id || index}`}
                 className="flex justify-between"
               >
                 <span>
                   {item.title} × {item.quantity}
                 </span>
-                <span>KES {item.price * item.quantity}</span>
+                <span>{formatPrice(item.price * item.quantity)}</span>
               </div>
             ))}
           </div>
@@ -130,17 +157,19 @@ const Payment = () => {
 
             <div className="flex justify-between">
               <span>Subtotal</span>
-              <span>KES {total - 150}</span>
+              <span>{formatPrice(total - 150)}</span>
             </div>
 
             <div className="flex justify-between">
               <span>Delivery Fee</span>
-              <span>KES 150</span>
+              <span>{formatPrice(150)}</span>
             </div>
 
             <div className="flex justify-between font-bold text-lg">
               <span>Total</span>
-              <span>KES {total}</span>
+              <span className="text-green-600">
+                {formatPrice(total)}
+              </span>
             </div>
 
           </div>
@@ -149,7 +178,7 @@ const Payment = () => {
             onClick={handlePayment}
             className="w-full mt-6 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition"
           >
-            Pay KES {total}
+            Pay {formatPrice(total)}
           </button>
 
         </div>
