@@ -1,29 +1,50 @@
 import { userRequest } from "../requestMethod";
-import { loginFailure, loginStart, loginSuccess, logout } from "./userRedux";
+import {
+  loginFailure,
+  loginStart,
+  loginSuccess,
+  logout,
+} from "./userRedux";
 
-// Login user
-export const login = async (dispatch, user) => {
+
+// ================= LOGIN USER =================
+export const login = async (dispatch, credentials) => {
   dispatch(loginStart());
+
   try {
-    const res = await userRequest.post("/auth/login/", user);
-    dispatch(loginSuccess(res.data)); // res.data should include currentUser info
+    const res = await userRequest.post("/auth/login/", credentials);
+
+    // ✅ Backend returns { success, message, user }
+    const loggedInUser = res.data.user;
+
+    if (!loggedInUser) {
+      throw new Error("User data not received");
+    }
+
+    dispatch(loginSuccess(loggedInUser));
+
   } catch (error) {
-    dispatch(loginFailure());
-    console.error("Login failed:", error.response?.data?.message || error.message);
+    const message =
+      error.response?.data?.message || "Login failed. Please try again.";
+
+    dispatch(loginFailure(message));
+    console.error("Login failed:", message);
   }
 };
 
-// Logout user
+
+// ================= LOGOUT USER =================
 export const logoutUser = async (dispatch) => {
   try {
-    // Make a request to backend to destroy the cookie / token
+    // Destroy cookie on backend
     await userRequest.post("/auth/logout");
   } catch (error) {
-    console.error("Logout failed:", error.response?.data?.message || error.message);
+    console.error(
+      "Logout failed:",
+      error.response?.data?.message || error.message
+    );
   } finally {
-    // Clear Redux state
+    // Always clear Redux + localStorage
     dispatch(logout());
   }
 };
-
-
