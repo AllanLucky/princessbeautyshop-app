@@ -7,23 +7,30 @@ import {
   deleteBlog,
 } from "../controllers/blogController.js";
 
-import { protect, adminOnly } from "../middlewares/authMiddleware.js";
+import {
+  protect,
+  adminOnly,
+} from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-/* =========================================================
-   PUBLIC ROUTES
-   ========================================================= */
+/*
+====================================================
+ PUBLIC BLOG ROUTES
+====================================================
+*/
 
-// Get all blogs
+// Get all blogs (public)
 router.get("/", getAllBlogs);
 
-// Get single blog
+// Get single blog by ID (public)
 router.get("/:id", getBlog);
 
-/* =========================================================
-   ADMIN ROUTES
-   ========================================================= */
+/*
+====================================================
+ ADMIN BLOG MANAGEMENT ROUTES
+====================================================
+*/
 
 // Create blog
 router.post("/", protect, adminOnly, createBlog);
