@@ -1,12 +1,12 @@
 import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
 
-// Layout
+/* Layout */
 import Layout from "./components/Layout";
 
-// Components
+/* Components */
 import ProtectedRoute from "./components/ProtectedRoute";
 
-// Pages
+/* Pages */
 import Home from "./pages/Home";
 import Users from "./pages/Users";
 import Products from "./pages/Products";
@@ -27,32 +27,47 @@ import AdminInvoices from "./pages/AdminInvoices";
 import EditUser from "./pages/EditUser";
 import MyWishlist from "./pages/MyWishlist";
 
-// New Admin Pages
+/* Vendors */
 import Vendors from "./pages/Vendors";
 import CreateVendor from "./pages/CreateVendor";
 import EditVendor from "./pages/EditVendor";
+
+/* Categories */
 import CategoryList from "./pages/CategoryList";
 import EditCategory from "./pages/EditCategory";
 import CreateCategory from "./pages/CreateCategory";
+
+/* Coupons */
 import Coupons from "./pages/Coupons";
 import CreateCoupon from "./pages/CreateCoupon";
 import EditCoupon from "./pages/EditCoupon";
+
+/* Reviews */
 import ProductReviews from "./pages/ProductReviews";
+
+/* Payment */
 import Payment from "./pages/Payment";
 import PaymentDetails from "./pages/PaymentDetails";
+
+/* Returns */
 import Returns from "./pages/Returns";
 import ReturnDetailPage from "./pages/ReturnDetailPage";
 import CreateReturn from "./pages/CreateReturn";
+import Blogs from "./pages/Blogs";
+import CreateBlog from "./pages/CreateBlog";
+import EditBlog from "./pages/EditBlog";
+import BlogDetail from "./pages/BlogDetail";
 
-// --- Routes ---
+/* --- Routes --- */
+
 const router = createBrowserRouter([
-  // Public route
+  /* Public Route */
   {
     path: "/login",
     element: <Login />,
   },
 
-  // Protected admin routes
+  /* Protected Admin Routes */
   {
     path: "/",
     element: (
@@ -65,72 +80,86 @@ const router = createBrowserRouter([
       { path: "admin-dashboard", element: <Home /> },
       { path: "profile", element: <Myaccounts /> },
 
-      // Users
+      /* Users */
       { path: "users", element: <Users /> },
       { path: "user/:id", element: <EditUser /> },
 
-      // Products
+      /* Products */
       { path: "products", element: <Products /> },
       { path: "newproduct", element: <NewProduct /> },
       { path: "product/:productId", element: <Product /> },
       { path: "admin/product/features/:id", element: <ProductFeaturePage /> },
 
-      // Reviews & Wishlist (Admin)
-      { path: "/reviews/:id", element: <ProductReviews /> },
+      /* Reviews */
+      { path: "reviews/:id", element: <ProductReviews /> },
       { path: "my-wishlist", element: <MyWishlist /> },
 
-      // Orders & Inventory
+      /* Orders */
       { path: "orders", element: <Orders /> },
       { path: "create-order", element: <CreateOrder /> },
       { path: "inventory", element: <Inventory /> },
       { path: "invoices", element: <AdminInvoices /> },
 
-      // Marketing & Content
+      /* Marketing */
       { path: "banners", element: <Banners /> },
       { path: "vendors", element: <Vendors /> },
       { path: "create-vendor", element: <CreateVendor /> },
       { path: "vendor/:id", element: <EditVendor /> },
+
+      /* Categories */
       { path: "categories", element: <CategoryList /> },
       { path: "new-category", element: <CreateCategory /> },
       { path: "category/:id", element: <EditCategory /> },
 
-      // Coupons
+      /* Coupons */
       { path: "coupons", element: <Coupons /> },
       { path: "new-coupon", element: <CreateCoupon /> },
       { path: "coupon/:id", element: <EditCoupon /> },
 
-       // Coupons
+      /* Payment */
       { path: "payments", element: <Payment /> },
       { path: "payment/:id", element: <PaymentDetails /> },
 
-      { path: "returns", element: < Returns /> },
-       { path: "create-return", element: <CreateReturn /> },
+      /* Returns */
+      { path: "returns", element: <Returns /> },
+      { path: "create-return", element: <CreateReturn /> },
       { path: "return/:id", element: <ReturnDetailPage /> },
-     
 
-      // Analytics & Logs
+      // Blogs
+      { path: "/blogs", element: <Blogs /> },
+      { path: "create-blog", element: <CreateBlog /> },
+      { path: "blog/:id", element: <EditBlog /> },
+      { path: "blog-detail/:id", element: <BlogDetail /> },
+
+
+
+      /* Analytics */
       { path: "charts", element: <Charts /> },
       { path: "all-logs", element: <Alllogs /> },
 
-      // Settings
+      /* Settings */
       { path: "settings", element: <Settings /> },
       { path: "backups", element: <Backups /> },
     ],
   },
 
-  // 404 fallback
+  /* 404 Page */
   {
     path: "*",
     element: (
       <div className="flex items-center justify-center min-h-screen text-center">
-        <h1 className="text-4xl font-bold text-red-500">404 Not Found</h1>
-        <p className="mt-2 text-gray-600">The page you are looking for does not exist.</p>
+        <h1 className="text-4xl font-bold text-red-500">
+          404 Not Found
+        </h1>
+        <p className="mt-2 text-gray-600">
+          The page you are looking for does not exist.
+        </p>
       </div>
     ),
   },
 ]);
 
-// --- App Component ---
+/* App Component */
 const App = () => <RouterProvider router={router} />;
 
 export default App;

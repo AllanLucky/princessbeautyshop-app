@@ -139,8 +139,8 @@ const Menu = ({ collapsed }) => {
             <FaEnvelope /> {linkLabel("Notifications")}
           </NavLink>
 
-          <NavLink to="/blog" className={navStyle}>
-            <FaClipboard /> {linkLabel("Blog")}
+          <NavLink to="/blogs" className={navStyle}>
+            <FaClipboard /> {linkLabel("Blogs")}
           </NavLink>
 
           <hr className={`my-4 border-gray-200 ${collapsed ? "hidden" : ""}`} />
