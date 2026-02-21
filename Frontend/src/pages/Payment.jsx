@@ -13,31 +13,41 @@ const Payment = () => {
   );
 
   const [checkoutData, setCheckoutData] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   /*
   =====================================================
-  LOAD CHECKOUT DATA SAFELY (React Best Practice ⭐)
+  LOAD CHECKOUT DATA SAFELY
   =====================================================
   */
 
   useEffect(() => {
-    try {
-      const data = JSON.parse(
-        sessionStorage.getItem("checkoutData")
-      );
+    const loadCheckout = () => {
+      try {
+        const stored = sessionStorage.getItem("checkoutData");
 
-      if (!data || !data.form || !data.cart) {
-        toast.error("Missing order details.");
-        navigate("/cart");
-        return;
+        if (!stored) {
+          toast.error("Missing order details.");
+          navigate("/cart", { replace: true });
+          return;
+        }
+
+        const data = JSON.parse(stored);
+
+        if (!data?.form || !data?.cart) {
+          toast.error("Invalid checkout data.");
+          navigate("/cart", { replace: true });
+          return;
+        }
+
+        setCheckoutData(data);
+      } catch (error) {
+        console.error("Checkout parse error:", error);
+        navigate("/cart", { replace: true });
       }
+    };
 
-      setCheckoutData(data);
-
-    } catch (error) {
-      console.error("Checkout parse error:", error);
-      navigate("/cart");
-    }
+    loadCheckout();
   }, [navigate]);
 
   if (!checkoutData) return null;
@@ -52,6 +62,8 @@ const Payment = () => {
 
   const handlePayment = async () => {
     try {
+      setLoading(true);
+
       const requestBody = {
         name: form?.name,
         email: form?.email,
@@ -71,14 +83,17 @@ const Payment = () => {
       );
 
       if (response?.data?.url) {
-        window.location.assign(response.data.url);
-      } else {
-        toast.error("Failed to create Stripe session.");
+        window.location.href = response.data.url;
+        return;
       }
 
+      toast.error("Failed to create Stripe session.");
+
     } catch (err) {
-      console.error(err);
+      console.error("Payment error:", err);
       toast.error("Payment failed.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -176,9 +191,10 @@ const Payment = () => {
 
           <button
             onClick={handlePayment}
-            className="w-full mt-6 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition"
+            disabled={loading}
+            className="w-full mt-6 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white py-3 rounded-lg font-semibold transition"
           >
-            Pay {formatPrice(total)}
+            {loading ? "Processing..." : `Pay ${formatPrice(total)}`}
           </button>
 
         </div>
