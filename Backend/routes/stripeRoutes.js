@@ -14,11 +14,11 @@ HELPER FUNCTIONS
 =====================================================
 */
 
-// Normalize image array safely
+// Normalize image safely for Stripe
 const normalizeImages = (img) => {
   if (!img) return [];
 
-  if (Array.isArray(img)) return img;
+  if (Array.isArray(img)) return [img[0]].filter(Boolean);
 
   if (typeof img === "object") {
     return Object.values(img).filter(Boolean);
@@ -27,48 +27,53 @@ const normalizeImages = (img) => {
   return [img];
 };
 
-// =====================================================
-// CREATE CHECKOUT SESSION
-// =====================================================
+/*
+=====================================================
+CHECKOUT SESSION
+=====================================================
+*/
 
 router.post("/create-checkout-session", async (req, res) => {
   try {
-    const {
-      userId,
-      email,
-      name,
-      phone,
-      address,
-      cart,
-      total,
-    } = req.body;
+    const { userId, email, name, phone, address, cart, total } =
+      req.body;
 
-    if (!cart || !Array.isArray(cart.products) || cart.products.length === 0) {
-      return res.status(400).json({
-        error: "Cart is empty",
-      });
+    if (!cart?.products?.length) {
+      return res.status(400).json({ error: "Cart is empty" });
     }
 
     /*
-    -----------------------------------------------------
+    ✅ Prevent duplicate unpaid orders
+    */
+    const existingOrder = await Order.findOne({
+      userId,
+      paymentStatus: "pending",
+    });
+
+    if (existingOrder) {
+      await Order.deleteOne({ _id: existingOrder._id });
+    }
+
+    /*
+    =====================================================
     CREATE STRIPE CUSTOMER
-    -----------------------------------------------------
+    =====================================================
     */
 
     const customer = await stripe.customers.create({
       email,
       name,
       metadata: {
-        userId: userId?.toString() || "",
+        userId: String(userId || ""),
         phone: phone || "",
         address: address || "",
       },
     });
 
     /*
-    -----------------------------------------------------
+    =====================================================
     LINE ITEMS
-    -----------------------------------------------------
+    =====================================================
     */
 
     const line_items = cart.products.map((product) => ({
@@ -81,7 +86,7 @@ router.post("/create-checkout-session", async (req, res) => {
 
           description: product.desc || "",
           metadata: {
-            productId: product._id?.toString() || "",
+            productId: String(product._id || ""),
           },
         },
 
@@ -90,13 +95,13 @@ router.post("/create-checkout-session", async (req, res) => {
         ),
       },
 
-      quantity: Number(product.quantity || 1),
+      quantity: Math.max(1, Number(product.quantity || 1)),
     }));
 
     /*
-    -----------------------------------------------------
-    CREATE SESSION
-    -----------------------------------------------------
+    =====================================================
+    CREATE CHECKOUT SESSION
+    =====================================================
     */
 
     const session = await stripe.checkout.sessions.create({
@@ -112,16 +117,16 @@ router.post("/create-checkout-session", async (req, res) => {
       cancel_url: `${process.env.CLIENT_URL}/cart`,
 
       metadata: {
-        userId: userId?.toString() || "",
+        userId: String(userId || ""),
         email: email || "",
         name: name || "",
       },
     });
 
     /*
-    -----------------------------------------------------
+    =====================================================
     SAVE PENDING ORDER
-    -----------------------------------------------------
+    =====================================================
     */
 
     const newOrder = await Order.create({
@@ -130,7 +135,14 @@ router.post("/create-checkout-session", async (req, res) => {
       email,
       phone,
       address,
-      products: cart.products,
+      products: cart.products.map((p) => ({
+        productId: p._id,
+        title: p.title,
+        desc: p.desc || "",
+        price: Number(p.price || 0),
+        quantity: Number(p.quantity || 1),
+        img: Array.isArray(p.img) ? p.img[0] : p.img || "",
+      })),
       total: Number(total || 0),
       stripeSessionId: session.id,
       paymentStatus: "pending",
@@ -140,7 +152,6 @@ router.post("/create-checkout-session", async (req, res) => {
       url: session.url,
       orderId: newOrder._id,
     });
-
   } catch (error) {
     console.error("Stripe error:", error.message);
 
@@ -176,9 +187,7 @@ router.post(
     }
 
     /*
-    -----------------------------------------------------
-    PAYMENT SUCCESS
-    -----------------------------------------------------
+    ✅ PAYMENT SUCCESS
     */
 
     if (event.type === "checkout.session.completed") {
@@ -195,7 +204,6 @@ router.post(
         );
 
         console.log("✅ Payment confirmed:", session.id);
-
       } catch (err) {
         console.error("Order update error:", err.message);
       }

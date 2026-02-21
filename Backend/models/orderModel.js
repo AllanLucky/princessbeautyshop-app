@@ -4,7 +4,11 @@ const OrderSchema = new mongoose.Schema(
   {
     // Customer info
     name: { type: String, required: true },
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     email: { type: String, required: true },
     phone: { type: String },
     address: { type: String },
@@ -12,22 +16,51 @@ const OrderSchema = new mongoose.Schema(
     // Products
     products: [
       {
-        productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
-        title: String,
-        desc: String, // optional: keep product description
-        price: Number,
-        quantity: { type: Number, required: true, min: 1 },
-        img: String,
+        productId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Product",
+          required: true,
+        },
+
+        title: { type: String, required: true },
+
+        desc: { type: String },
+
+        price: {
+          type: Number,
+          required: true,
+          min: 0,
+        },
+
+        quantity: {
+          type: Number,
+          required: true,
+          min: 1,
+        },
+
+        // ⭐ IMPORTANT → Force string (Stripe safe)
+        img: {
+          type: String,
+          default: "",
+        },
       },
     ],
 
     // Money
-    total: { type: Number, required: true },
-    currency: { type: String, default: "KES" },
+    total: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
 
-    // Stripe info
-    paymentIntentId: { type: String },
-    stripeSessionId: { type: String },
+    currency: {
+      type: String,
+      default: "KES",
+    },
+
+    // Stripe tracking
+    paymentIntentId: String,
+    stripeSessionId: String,
 
     // Payment status
     paymentStatus: {
@@ -35,7 +68,8 @@ const OrderSchema = new mongoose.Schema(
       enum: ["pending", "paid", "failed", "refunded"],
       default: "pending",
     },
-    declineReason: { type: String }, // capture failed payment reason
+
+    declineReason: String,
 
     // Order lifecycle
     orderStatus: {
@@ -44,14 +78,20 @@ const OrderSchema = new mongoose.Schema(
       default: "processing",
     },
 
-    isDelivered: { type: Boolean, default: false },
-    deliveredAt: { type: Date },
-    refundedAt: { type: Date }, // capture refund date
+    isDelivered: {
+      type: Boolean,
+      default: false,
+    },
+
+    deliveredAt: Date,
+    refundedAt: Date,
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
-// Prevent OverwriteModelError in dev hot-reload
-const Order = mongoose.models.Order || mongoose.model("Order", OrderSchema);
+const Order =
+  mongoose.models.Order || mongoose.model("Order", OrderSchema);
 
 export default Order;
