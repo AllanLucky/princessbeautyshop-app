@@ -1,6 +1,12 @@
 import mongoose from "mongoose";
 import slugify from "slugify";
 
+/*
+====================================================
+ BLOG SCHEMA
+====================================================
+*/
+
 const blogSchema = new mongoose.Schema(
   {
     title: {
@@ -13,7 +19,7 @@ const blogSchema = new mongoose.Schema(
     slug: {
       type: String,
       unique: true,
-      index: true,
+      sparse: true,
     },
 
     content: {
@@ -23,14 +29,14 @@ const blogSchema = new mongoose.Schema(
 
     excerpt: {
       type: String,
-      trim: true,
       default: "",
+      trim: true,
     },
 
     image: {
       type: String,
-      trim: true,
       default: "",
+      trim: true,
     },
 
     author: {
@@ -42,22 +48,20 @@ const blogSchema = new mongoose.Schema(
 
     category: {
       type: String,
+      default: "uncategorized",
       trim: true,
       index: true,
-      default: "uncategorized",
     },
 
     tags: {
       type: [String],
       default: [],
-      index: true,
     },
 
     status: {
       type: String,
       enum: ["draft", "published", "archived"],
       default: "draft",
-      index: true,
     },
 
     views: {
@@ -78,6 +82,7 @@ const blogSchema = new mongoose.Schema(
         user: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "User",
+          required: true,
         },
 
         content: {
@@ -92,6 +97,16 @@ const blogSchema = new mongoose.Schema(
         },
       },
     ],
+
+    metaTitle: {
+      type: String,
+      default: "",
+    },
+
+    metaDescription: {
+      type: String,
+      default: "",
+    },
   },
   {
     timestamps: true,
@@ -100,23 +115,23 @@ const blogSchema = new mongoose.Schema(
 
 /*
 ====================================================
- AUTO SLUG GENERATION
+ SAFE SLUG GENERATION
 ====================================================
 */
 
-blogSchema.pre("validate", function (next) {
-  if (this.title && !this.slug) {
+// ✅ Clean async/promise style — no `next`
+blogSchema.pre("validate", function () {
+  if (this.title) {
     this.slug = slugify(this.title, {
       lower: true,
       strict: true,
     });
   }
-  next();
 });
 
 /*
 ====================================================
- TEXT SEARCH INDEXING
+ TEXT SEARCH INDEX
 ====================================================
 */
 
@@ -128,7 +143,7 @@ blogSchema.index({
 
 /*
 ====================================================
- MODEL EXPORT
+ MODEL EXPORT (VERY IMPORTANT FIX ⭐)
 ====================================================
 */
 

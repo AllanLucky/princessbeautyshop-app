@@ -3,12 +3,12 @@ import asyncHandler from "express-async-handler";
 
 /*
 ====================================================
- CREATE BLOG (ADMIN ONLY USUALLY)
+ CREATE BLOG (ADMIN ONLY)
 ====================================================
 */
 
-const createBlog = asyncHandler(async (req, res) => {
-  const { title, content, tags, img, author } = req.body;
+const createBlog = asyncHandler(async (req, res, next) => {
+  const { title, content, tags, image, author, excerpt, category } = req.body;
 
   if (!title || !content) {
     res.status(400);
@@ -18,9 +18,15 @@ const createBlog = asyncHandler(async (req, res) => {
   const blog = await Blog.create({
     title,
     content,
-    tags: Array.isArray(tags) ? tags : [],
-    img: img || "",
-    author: author || req.user?._id,
+    excerpt: excerpt || "",
+    category: category || "Uncategorized",
+    tags: Array.isArray(tags)
+      ? tags
+      : typeof tags === "string"
+      ? tags.split(",").map((t) => t.trim())
+      : [],
+    image: image || "",
+    author: author || req.user?.id,
   });
 
   res.status(201).json({
@@ -35,7 +41,7 @@ const createBlog = asyncHandler(async (req, res) => {
 ====================================================
 */
 
-const getAllBlogs = asyncHandler(async (req, res) => {
+const getAllBlogs = asyncHandler(async (req, res, next) => {
   const blogs = await Blog.find()
     .sort({ createdAt: -1 })
     .lean();
@@ -53,7 +59,7 @@ const getAllBlogs = asyncHandler(async (req, res) => {
 ====================================================
 */
 
-const getBlog = asyncHandler(async (req, res) => {
+const getBlog = asyncHandler(async (req, res, next) => {
   const blog = await Blog.findById(req.params.id).lean();
 
   if (!blog) {
@@ -69,16 +75,18 @@ const getBlog = asyncHandler(async (req, res) => {
 
 /*
 ====================================================
- UPDATE BLOG (SAFE PATCH STYLE)
+ UPDATE BLOG
 ====================================================
 */
 
-const updateBlog = asyncHandler(async (req, res) => {
+const updateBlog = asyncHandler(async (req, res, next) => {
   const allowedFields = [
     "title",
     "content",
+    "excerpt",
+    "category",
     "tags",
-    "img",
+    "image",
     "author",
   ];
 
@@ -90,10 +98,17 @@ const updateBlog = asyncHandler(async (req, res) => {
     }
   });
 
+  if (updates.tags && typeof updates.tags === "string") {
+    updates.tags = updates.tags.split(",").map((t) => t.trim());
+  }
+
   const blog = await Blog.findByIdAndUpdate(
     req.params.id,
     { $set: updates },
-    { new: true, runValidators: true }
+    {
+      new: true,
+      runValidators: true,
+    }
   );
 
   if (!blog) {
@@ -113,7 +128,7 @@ const updateBlog = asyncHandler(async (req, res) => {
 ====================================================
 */
 
-const deleteBlog = asyncHandler(async (req, res) => {
+const deleteBlog = asyncHandler(async (req, res, next) => {
   const blog = await Blog.findByIdAndDelete(req.params.id);
 
   if (!blog) {
