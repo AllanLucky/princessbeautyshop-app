@@ -38,7 +38,9 @@ const Layout = () => (
 
 // ================= AUTH GUARD =================
 const ProtectedRoute = ({ children }) => {
-  const currentUser = useSelector((state) => state.user.currentUser);
+  const currentUser = useSelector(
+    (state) => state?.user?.currentUser
+  );
 
   if (!currentUser?._id) {
     return <Navigate to="/login" replace />;
@@ -49,7 +51,9 @@ const ProtectedRoute = ({ children }) => {
 
 // ================= AUTH REDIRECT =================
 const AuthRedirect = ({ children }) => {
-  const currentUser = useSelector((state) => state.user.currentUser);
+  const currentUser = useSelector(
+    (state) => state?.user?.currentUser
+  );
 
   if (currentUser?._id) {
     return <Navigate to="/" replace />;
@@ -67,7 +71,7 @@ function App() {
         { path: "/", element: <Home /> },
         { path: "/cart", element: <Cart /> },
 
-        // AUTH PAGES
+        // AUTH
         {
           path: "/login",
           element: (
@@ -76,6 +80,7 @@ function App() {
             </AuthRedirect>
           ),
         },
+
         {
           path: "/create-account",
           element: (
@@ -84,6 +89,7 @@ function App() {
             </AuthRedirect>
           ),
         },
+
         {
           path: "/verify-account",
           element: (
@@ -92,6 +98,7 @@ function App() {
             </AuthRedirect>
           ),
         },
+
         {
           path: "/forgot-password",
           element: (
@@ -100,6 +107,7 @@ function App() {
             </AuthRedirect>
           ),
         },
+
         {
           path: "/reset-password/:token",
           element: (
@@ -118,6 +126,7 @@ function App() {
             </ProtectedRoute>
           ),
         },
+
         {
           path: "/payment",
           element: (
@@ -126,8 +135,10 @@ function App() {
             </ProtectedRoute>
           ),
         },
+
+        // ⭐ Stripe success redirect route
         {
-          path: "/success",
+          path: "/myorders",
           element: (
             <ProtectedRoute>
               <PaymentSuccess />
@@ -135,7 +146,7 @@ function App() {
           ),
         },
 
-        // USER DASHBOARD
+        // DASHBOARD
         {
           path: "/customer-dashboard/profile",
           element: (
@@ -144,6 +155,7 @@ function App() {
             </ProtectedRoute>
           ),
         },
+
         {
           path: "/customer-dashboard/myorders",
           element: (
@@ -157,7 +169,7 @@ function App() {
         { path: "/product/:productId", element: <ProductDetails /> },
         { path: "/products/:searchterm", element: <ProductList /> },
 
-        // ⭐ 404 Catch All Route (IMPORTANT)
+        // 404
         {
           path: "*",
           element: <NotFoundPage />,

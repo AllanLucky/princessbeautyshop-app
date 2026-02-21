@@ -36,6 +36,13 @@ const PaymentSuccess = () => {
 
         toast.success("Payment successful 🎉");
 
+        // ⭐ Auto redirect after 3 seconds (Professional UX)
+        setTimeout(() => {
+          navigate("/customer-dashboard/myorders", {
+            replace: true,
+          });
+        }, 3000);
+
       } catch (err) {
         console.error(err);
         toast.error("Order verification failed");
@@ -93,9 +100,9 @@ const PaymentSuccess = () => {
       </div>
 
       <button
-        className="mt-6 bg-pink-600 text-white px-6 py-3 rounded"
+        className="mt-6 bg-pink-600 hover:bg-pink-700 text-white px-6 py-3 rounded transition"
         onClick={() =>
-          navigate("/customer-dashboard/my-orders", {
+          navigate("/customer-dashboard/myorders", {
             replace: true,
           })
         }
