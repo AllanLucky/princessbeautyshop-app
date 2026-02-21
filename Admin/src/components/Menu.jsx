@@ -119,7 +119,7 @@ const Menu = ({ collapsed }) => {
             <FaClipboardList /> {linkLabel("Orders")}
           </NavLink>
 
-          <NavLink to="/returns" className={navStyle}>
+          <NavLink to="/create-return" className={navStyle}>
             <FaUndo /> {linkLabel("Returns")}
           </NavLink>
 
