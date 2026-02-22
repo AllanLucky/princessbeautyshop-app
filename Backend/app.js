@@ -103,7 +103,7 @@ app.use("/api/v1/returns", returnRoutes);
 
 // ================= EXTRA MODULES =================
 app.use("/api/v1/coupons", couponRoutes);
-app.use("/api/v1/support-tickets", supportTicketRoutes);
+app.use("/api/v1/tickets", supportTicketRoutes);
 app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1/blogs", blogRoutes);
 

@@ -19,10 +19,10 @@ import Inventory from "./pages/Inventory";
 import Banners from "./pages/Banners";
 import Settings from "./pages/Settings";
 import Backups from "./pages/Backups";
-import Charts from "./pages/Charts";
+import ChartsPage from "./pages/Charts";
 import Myaccounts from "./pages/Myaccounts";
 import Login from "./pages/Login";
-import Alllogs from "./pages/Alllogs";
+import AlllogsPage from "./pages/Alllogs";
 import AdminInvoices from "./pages/AdminInvoices";
 import EditUser from "./pages/EditUser";
 import MyWishlist from "./pages/MyWishlist";
@@ -60,11 +60,12 @@ import CreateBlog from "./pages/CreateBlog";
 import EditBlog from "./pages/EditBlog";
 import BlogDetail from "./pages/BlogDetail";
 
-/* Analytics */
-import ChartsPage from "./pages/Charts";
-import AlllogsPage from "./pages/Alllogs";
-
-/* Routes */
+/* Support & Notification */
+import SupportTicketList from "./pages/SupportTicketList";
+import SupportTicketDetail from "./pages/SupportTicketDetail";
+import NotificationList from "./pages/NotificationList";
+import NotificationCreate from "./pages/NotificationCreate";
+import NotificationDetail from "./pages/NotificationDetail";
 
 const router = createBrowserRouter([
   {
@@ -93,7 +94,7 @@ const router = createBrowserRouter([
       { path: "products", element: <Products /> },
       { path: "newproduct", element: <NewProduct /> },
       { path: "product/:productId", element: <Product /> },
-      { path: "admin/product/features/:id", element: <ProductFeaturePage /> },
+      { path: "features/:id", element: <ProductFeaturePage /> },
 
       /* Reviews */
       { path: "reviews/:id", element: <ProductReviews /> },
@@ -135,6 +136,17 @@ const router = createBrowserRouter([
       { path: "create-blog", element: <CreateBlog /> },
       { path: "blog/:id", element: <EditBlog /> },
       { path: "blog-detail/:id", element: <BlogDetail /> },
+
+      /* Support Tickets */
+      { path: "tickets", element: <SupportTicketList /> },
+      { path: "tickets/:id", element: <SupportTicketDetail /> },
+
+      /* Notifications */
+      { path: "notifications", element: <NotificationList /> },
+      { path: "notifications/create", element: <NotificationCreate /> },
+      {path: "/notifications/:id",element: <NotificationDetail />},
+  
+
 
       /* Analytics */
       { path: "charts", element: <ChartsPage /> },
