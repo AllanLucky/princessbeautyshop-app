@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
 import { userRequest } from "../requestMethods";
-
 import {
   IoCartOutline,
   IoCashOutline,
   IoPeopleOutline,
   IoClipboardOutline,
 } from "react-icons/io5";
-
 import {
   BarChart,
   Bar,
@@ -22,13 +20,8 @@ import {
   Legend,
 } from "recharts";
 
-/*
-=====================================================
-CONFIG
-=====================================================
-*/
-
 const COLORS = ["#4f46e5", "#ef4444", "#facc15"];
+const RADIAN = Math.PI / 180;
 
 const FakeBuyerData = [
   { name: "Male", value: 35 },
@@ -36,22 +29,10 @@ const FakeBuyerData = [
   { name: "Other", value: 15 },
 ];
 
-/*
-=====================================================
-HOME DASHBOARD
-=====================================================
-*/
-
 const Home = () => {
   const [orders, setOrders] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  /*
-  -----------------------------------------------------
-  FORMAT MONEY
-  -----------------------------------------------------
-  */
 
   const formatKES = (amount) =>
     Number(amount || 0).toLocaleString("en-KE", {
@@ -59,204 +40,296 @@ const Home = () => {
       currency: "KES",
     });
 
-  /*
-  -----------------------------------------------------
-  ORDER TOTAL CALCULATOR
-  -----------------------------------------------------
-  */
-
   const calculateOrderTotal = (order) => {
-    if (!order?.products) return 0;
+    if (!order.products) return 0;
 
     return order.products.reduce((sum, p) => {
-      return sum + (p.price || 0) * (p.quantity || 1);
+      const price = p.price || 0;
+      return sum + price * (p.quantity || 1);
     }, 0);
   };
 
   /*
-  -----------------------------------------------------
+  =====================================================
   FETCH DASHBOARD DATA
-  -----------------------------------------------------
+  =====================================================
   */
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchDashboardData = async () => {
       try {
         setLoading(true);
 
         const [ordersRes, usersRes] = await Promise.all([
-          userRequest.get("/orders"),
+          userRequest.get("/orders?sort=-createdAt&limit=20"),
           userRequest.get("/users"),
         ]);
 
-        setOrders(ordersRes?.data?.orders || []);
-        setUsers(usersRes?.data?.users || []);
+        setOrders(
+          Array.isArray(ordersRes?.data?.orders)
+            ? ordersRes.data.orders
+            : []
+        );
+
+        setUsers(
+          Array.isArray(usersRes?.data?.users)
+            ? usersRes.data.users
+            : []
+        );
       } catch (err) {
-        console.error("Dashboard load error", err);
+        console.error("Failed to fetch dashboard data:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    fetchDashboardData();
   }, []);
 
   /*
-  -----------------------------------------------------
-  DASHBOARD METRICS
-  -----------------------------------------------------
+  =====================================================
+  METRICS
+  =====================================================
   */
 
-  const totalRevenue = orders.reduce(
-    (acc, order) => acc + calculateOrderTotal(order),
-    0
-  );
+  const totalRevenue = Array.isArray(orders)
+    ? orders.reduce((acc, order) => acc + calculateOrderTotal(order), 0)
+    : 0;
 
   const barData = orders
     .slice()
     .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
-    .map((o, index) => ({
-      name: `Order ${index + 1}`,
+    .map((o, idx) => ({
+      name: `Order ${idx + 1}`,
       Revenue: calculateOrderTotal(o),
     }));
 
   /*
   =====================================================
-  UI
+  PIE LABEL RENDERER
+  =====================================================
+  */
+
+  const renderCustomizedLabel = ({
+    cx,
+    cy,
+    midAngle,
+    innerRadius,
+    outerRadius,
+    percent,
+  }) => {
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    return (
+      <text
+        x={x}
+        y={y}
+        fill="white"
+        textAnchor={x > cx ? "start" : "end"}
+        dominantBaseline="central"
+        fontSize={12}
+        fontWeight="bold"
+      >
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
+  };
+
+  /*
+  =====================================================
+  LOADING STATE
+  =====================================================
+  */
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gray-50">
+        <p className="text-gray-500 animate-pulse text-lg">
+          Loading dashboard...
+        </p>
+      </div>
+    );
+  }
+
+  /*
+  =====================================================
+  UI RENDER
   =====================================================
   */
 
   return (
-    <div className="flex flex-col bg-gray-50 min-h-screen p-4">
+    <div className="flex flex-col bg-gray-50 min-h-screen p-1">
 
-      {/* ================= STATS ================= */}
-      <div className="flex flex-wrap gap-4 mb-6">
+      {/* Stats Boxes */}
+      <div className="flex flex-wrap gap-4 w-full mb-6">
+
         <StatBox
-          icon={<IoCartOutline className="text-white text-xl" />}
-          bg="bg-indigo-500"
-          title="Revenue"
+          icon={<IoCartOutline className="text-2xl text-white" />}
+          iconBg="bg-sky-500"
+          title="Total Revenue"
           value={formatKES(totalRevenue)}
         />
 
         <StatBox
-          icon={<IoCashOutline className="text-white text-xl" />}
-          bg="bg-red-500"
-          title="Expenses"
+          icon={<IoCashOutline className="text-2xl text-white" />}
+          iconBg="bg-red-500"
+          title="Total Expenses"
           value={formatKES(totalRevenue * 0.3)}
         />
 
         <StatBox
-          icon={<IoPeopleOutline className="text-white text-xl" />}
-          bg="bg-yellow-500"
-          title="Customers"
+          icon={<IoPeopleOutline className="text-2xl text-white" />}
+          iconBg="bg-yellow-500"
+          title="Total Customers"
           value={users.length}
         />
 
         <StatBox
-          icon={<IoClipboardOutline className="text-white text-xl" />}
-          bg="bg-green-500"
-          title="Orders"
+          icon={<IoClipboardOutline className="text-2xl text-white" />}
+          iconBg="bg-green-500"
+          title="Total Orders"
           value={orders.length}
         />
+
       </div>
 
-      {/* ================= CHARTS ================= */}
+      {/* Charts Section */}
       <div className="flex flex-wrap gap-6 mb-6">
 
         {/* Revenue Chart */}
-        <ChartCard title="Revenue Overview">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="flex-1 md:flex-[3] bg-white rounded shadow-lg p-6 min-w-[250px] h-[22rem] flex flex-col">
+          <h3 className="text-2xl font-bold mb-4 text-gray-700">
+            Revenue Overview
+          </h3>
+
+          <ResponsiveContainer width="100%" height="85%">
             <BarChart data={barData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" hide />
               <YAxis />
-              <Tooltip formatter={(v) => formatKES(v)} />
+              <Tooltip formatter={(value) => formatKES(value)} />
               <Bar dataKey="Revenue" fill="#4f46e5" />
             </BarChart>
           </ResponsiveContainer>
-        </ChartCard>
+        </div>
 
-        {/* Buyer Profile */}
-        <ChartCard title="Buyer Profile">
-          <ResponsiveContainer width="100%" height="100%">
+        {/* Buyer Profile Pie Chart */}
+        <div className="flex-1 md:flex-[1] bg-white rounded shadow-lg p-6 min-w-[200px] h-[22rem] flex flex-col items-center">
+          <h3 className="text-2xl font-bold mb-4 text-gray-700">
+            Buyer Profile
+          </h3>
+
+          <ResponsiveContainer width="100%" height="85%">
             <PieChart>
               <Pie
                 data={FakeBuyerData}
                 cx="50%"
                 cy="50%"
+                labelLine={false}
+                label={renderCustomizedLabel}
                 outerRadius={90}
                 dataKey="value"
-                label
               >
-                {FakeBuyerData.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                {FakeBuyerData.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
                 ))}
               </Pie>
-              <Legend />
+
+              <Legend verticalAlign="bottom" height={36} />
+              <Tooltip />
+
             </PieChart>
           </ResponsiveContainer>
-        </ChartCard>
+        </div>
 
       </div>
 
-      {/* ================= LATEST TRANSACTIONS ================= */}
+      {/* Latest Transactions */}
+      <div className="bg-white rounded shadow-lg p-6">
 
-      <div className="bg-white rounded shadow p-6">
-        <h2 className="text-xl font-bold mb-4">
+        <h3 className="text-2xl font-bold mb-4 text-gray-700">
           Latest Transactions
-        </h2>
+        </h3>
 
         {loading ? (
-          <p className="text-gray-500">Loading...</p>
-        ) : !orders.length ? (
-          <p className="text-gray-400">No transactions</p>
+          <p className="text-gray-500">Loading orders...</p>
+        ) : orders.length === 0 ? (
+          <p className="text-gray-500">No orders yet.</p>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="p-3 text-left">Customer</th>
-                <th className="p-3 text-left">Phone</th>
-                <th className="p-3 text-left">Amount</th>
-                <th className="p-3 text-left">Status</th>
-                <th className="p-3 text-left">Date</th>
-              </tr>
-            </thead>
+          <div className="overflow-x-auto">
 
-            <tbody>
-              {orders
-                .slice()
-                .sort(
-                  (a, b) =>
-                    new Date(b.createdAt) - new Date(a.createdAt)
-                )
-                .slice(0, 5)
-                .map((order) => (
-                  <tr
-                    key={order._id}
-                    className="border-b hover:bg-gray-50 transition"
-                  >
-                    <td className="p-3">{order.name}</td>
+            <table className="w-full table-auto border-collapse text-left">
 
-                    <td className="p-3">
-                      {order.phone || "N/A"}
-                    </td>
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="py-3 px-4">Customer</th>
+                  <th className="py-3 px-4">Phone</th>
+                  <th className="py-3 px-4">Address</th>
+                  <th className="py-3 px-4">Amount</th>
+                  <th className="py-3 px-4">Status</th>
+                </tr>
+              </thead>
 
-                    <td className="p-3 font-semibold text-indigo-600">
-                      {formatKES(order.total)}
-                    </td>
+              <tbody>
 
-                    <td className="p-3">
-                      <StatusBadge status={order.paymentStatus} />
-                    </td>
+                {orders
+                  .slice()
+                  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                  .slice(0, 5)
+                  .map((order, idx) => (
+                    <tr
+                      key={order._id}
+                      className={`border-b hover:bg-gray-50 ${
+                        idx % 2 === 0 ? "bg-gray-50" : ""
+                      }`}
+                    >
+                      <td className="py-3 px-4 font-medium">
+                        {order.name || "Customer"}
+                      </td>
 
-                    <td className="p-3 text-gray-500">
-                      {new Date(order.createdAt).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
+                      <td className="py-3 px-4">
+                        {order.phone || "N/A"}
+                      </td>
+
+                      <td className="py-3 px-4">
+                        {order.address || "N/A"}
+                      </td>
+
+                      <td className="py-3 px-4 font-semibold">
+                        {formatKES(calculateOrderTotal(order))}
+                      </td>
+
+                      <td
+                        className={`py-3 px-4 font-medium ${
+                          order.status === 2
+                            ? "text-green-600"
+                            : order.status === 1
+                            ? "text-blue-600"
+                            : "text-yellow-500"
+                        }`}
+                      >
+                        {order.status === 2
+                          ? "Delivered"
+                          : order.status === 1
+                          ? "Processing"
+                          : "Pending"}
+                      </td>
+
+                    </tr>
+                  ))}
+
+              </tbody>
+
+            </table>
+
+          </div>
         )}
+
       </div>
 
     </div>
@@ -267,46 +340,21 @@ export default Home;
 
 /*
 =====================================================
-UI COMPONENTS
+STAT BOX COMPONENT
 =====================================================
 */
 
-function StatBox({ icon, bg, title, value }) {
+function StatBox({ icon, iconBg, title, value }) {
   return (
-    <div className="bg-white border rounded-lg p-4 flex-1 min-w-[180px] flex items-center gap-4">
-      <div
-        className={`w-12 h-12 rounded-full flex items-center justify-center ${bg}`}
-      >
+    <div className="bg-white rounded-sm p-4 border border-gray-200 flex-1 flex min-w-[12rem] items-center">
+      <div className={`rounded-full w-12 h-12 flex items-center justify-center ${iconBg}`}>
         {icon}
       </div>
 
-      <div>
-        <p className="text-sm text-gray-500">{title}</p>
-        <h3 className="text-lg font-semibold">{value}</h3>
+      <div className="pl-4 flex flex-col">
+        <span className="text-sm text-gray-500 font-light">{title}</span>
+        <strong className="text-xl text-gray-700 font-semibold">{value}</strong>
       </div>
     </div>
-  );
-}
-
-function ChartCard({ title, children }) {
-  return (
-    <div className="flex-1 min-w-[280px] bg-white rounded shadow p-4 h-[22rem]">
-      <h3 className="text-lg font-semibold mb-4">{title}</h3>
-      {children}
-    </div>
-  );
-}
-
-function StatusBadge({ status }) {
-  const map = {
-    paid: "bg-green-100 text-green-700",
-    pending: "bg-yellow-100 text-yellow-700",
-    failed: "bg-red-100 text-red-700",
-  };
-
-  return (
-    <span className={`px-3 py-1 rounded text-xs font-semibold ${map[status] || map.pending}`}>
-      {status || "pending"}
-    </span>
   );
 }

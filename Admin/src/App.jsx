@@ -3,7 +3,7 @@ import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom"
 /* Layout */
 import Layout from "./components/Layout";
 
-/* Components */
+/* Auth */
 import ProtectedRoute from "./components/ProtectedRoute";
 
 /* Pages */
@@ -53,21 +53,25 @@ import PaymentDetails from "./pages/PaymentDetails";
 import Returns from "./pages/Returns";
 import ReturnDetailPage from "./pages/ReturnDetailPage";
 import CreateReturn from "./pages/CreateReturn";
+
+/* Blogs */
 import Blogs from "./pages/Blogs";
 import CreateBlog from "./pages/CreateBlog";
 import EditBlog from "./pages/EditBlog";
 import BlogDetail from "./pages/BlogDetail";
 
-/* --- Routes --- */
+/* Analytics */
+import ChartsPage from "./pages/Charts";
+import AlllogsPage from "./pages/Alllogs";
+
+/* Routes */
 
 const router = createBrowserRouter([
-  /* Public Route */
   {
     path: "/login",
     element: <Login />,
   },
 
-  /* Protected Admin Routes */
   {
     path: "/",
     element: (
@@ -76,7 +80,8 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { path: "", element: <Navigate to="/admin-dashboard" /> },
+      { index: true, element: <Navigate to="/admin-dashboard" /> },
+
       { path: "admin-dashboard", element: <Home /> },
       { path: "profile", element: <Myaccounts /> },
 
@@ -125,17 +130,15 @@ const router = createBrowserRouter([
       { path: "create-return", element: <CreateReturn /> },
       { path: "return/:id", element: <ReturnDetailPage /> },
 
-      // Blogs
-      { path: "/blogs", element: <Blogs /> },
+      /* Blogs */
+      { path: "blogs", element: <Blogs /> },
       { path: "create-blog", element: <CreateBlog /> },
       { path: "blog/:id", element: <EditBlog /> },
       { path: "blog-detail/:id", element: <BlogDetail /> },
 
-
-
       /* Analytics */
-      { path: "charts", element: <Charts /> },
-      { path: "all-logs", element: <Alllogs /> },
+      { path: "charts", element: <ChartsPage /> },
+      { path: "all-logs", element: <AlllogsPage /> },
 
       /* Settings */
       { path: "settings", element: <Settings /> },
@@ -143,14 +146,11 @@ const router = createBrowserRouter([
     ],
   },
 
-  /* 404 Page */
   {
     path: "*",
     element: (
       <div className="flex items-center justify-center min-h-screen text-center">
-        <h1 className="text-4xl font-bold text-red-500">
-          404 Not Found
-        </h1>
+        <h1 className="text-4xl font-bold text-red-500">404 Not Found</h1>
         <p className="mt-2 text-gray-600">
           The page you are looking for does not exist.
         </p>
@@ -159,7 +159,6 @@ const router = createBrowserRouter([
   },
 ]);
 
-/* App Component */
 const App = () => <RouterProvider router={router} />;
 
 export default App;
