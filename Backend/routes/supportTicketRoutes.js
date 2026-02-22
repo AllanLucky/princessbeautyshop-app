@@ -15,23 +15,23 @@ const router = express.Router();
    USER ROUTES
    ========================================================= */
 
-// Create a ticket (any logged-in user)
+// Create support ticket (authenticated user)
 router.post("/", protect, createTicket);
 
-// Get a single ticket (user/admin)
-router.get("/:id", protect, getTicket);
+// Get user's own ticket detail
+router.get("/detail/:id", protect, getTicket);
 
 /* =========================================================
    ADMIN ROUTES
    ========================================================= */
 
-// Get all tickets
-router.get("/", protect, adminOnly, getAllTickets);
+// Get all tickets (admin only)
+router.get("/admin/all", protect, adminOnly, getAllTickets);
 
-// Update ticket
-router.put("/:id", protect, adminOnly, updateTicket);
+// Update ticket (admin only)
+router.put("/admin/:id", protect, adminOnly, updateTicket);
 
-// Delete ticket
-router.delete("/:id", protect, adminOnly, deleteTicket);
+// Delete ticket (admin only)
+router.delete("/admin/:id", protect, adminOnly, deleteTicket);
 
 export default router;

@@ -7,35 +7,68 @@ const supportTicketSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+
     subject: {
       type: String,
       required: true,
       trim: true,
+      index: true,
     },
+
     message: {
       type: String,
       required: true,
       trim: true,
     },
+
     status: {
       type: String,
       enum: ["open", "in progress", "resolved", "closed"],
       default: "open",
+      index: true,
     },
+
     priority: {
       type: String,
       enum: ["low", "medium", "high", "urgent"],
       default: "medium",
     },
+
     assignedTo: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin", // admin handling the ticket
+      ref: "User", // admin or support agent
     },
+
+    attachments: [
+      {
+        url: String,
+        publicId: String,
+      },
+    ],
+
     responses: [
       {
-        message: { type: String, required: true, trim: true },
-        postedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        createdAt: { type: Date, default: Date.now },
+        message: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+
+        postedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+
+        postedByModel: {
+          type: String,
+          enum: ["User", "Admin"],
+          default: "User",
+        },
+
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
       },
     ],
   },
@@ -43,6 +76,12 @@ const supportTicketSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+/* ================= INDEXING FOR PERFORMANCE ================= */
+
+supportTicketSchema.index({ user: 1, status: 1 });
+supportTicketSchema.index({ priority: 1 });
+supportTicketSchema.index({ createdAt: -1 });
 
 const SupportTicket =
   mongoose.models.SupportTicket ||
