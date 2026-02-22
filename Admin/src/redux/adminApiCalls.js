@@ -1,54 +1,94 @@
-import { loginStart, loginSuccess, loginFailure } from "./adminRedux";
+import {
+  loginStart,
+  loginSuccess,
+  loginFailure,
+  deleteAccountStart,
+  deleteAccountSuccess,
+  deleteAccountFailure,
+  updateAdmin,
+} from "./adminRedux";
+
 import { userRequest } from "../requestMethods";
 
-// ================= LOGIN ADMIN =================
+// ==================================================
+// 🔐 LOGIN ADMIN
+// ==================================================
 export const loginAdmin = async (dispatch, adminCredentials) => {
   dispatch(loginStart());
 
   try {
     const res = await userRequest.post("/auth/login", adminCredentials);
-    console.log("LOGIN RESPONSE:", res.data);
 
-    // 🔐 Ensure admin role (correct path)
-    if (res.data.user.role !== "admin") {
+    const { user, access_token } = res.data;
+
+    // Allow admin + super_admin
+    if (!["admin", "super_admin"].includes(user.role)) {
       dispatch(loginFailure());
       return { error: "Access denied. Admin only." };
     }
 
-    // store admin + token
     const adminData = {
-      ...res.data.user,
-      access_token: res.data.access_token,
+      ...user,
+      access_token,
     };
 
     dispatch(loginSuccess(adminData));
-    localStorage.setItem("admin", JSON.stringify(adminData));
 
     return { success: true };
 
   } catch (err) {
-    console.log("LOGIN ERROR:", err.response?.data);
     dispatch(loginFailure());
-    return { error: err.response?.data?.message || "Login failed" };
+    return {
+      error: err.response?.data?.message || "Login failed",
+    };
   }
 };
 
-
-// ================= UPDATE ADMIN =================
-export const updateAdminCredentials = async (dispatch, adminId, updatedData) => {
+// ==================================================
+// ✏️ UPDATE ADMIN PROFILE
+// ==================================================
+export const updateAdminCredentials = async (
+  dispatch,
+  adminId,
+  updatedData
+) => {
   try {
     const res = await userRequest.put(`/users/${adminId}`, updatedData);
 
-    // update redux + localStorage if needed
-    dispatch(loginSuccess(res.data));
-    localStorage.setItem("admin", JSON.stringify(res.data));
+    // Backend returns { success, message, user }
+    const updatedAdmin = res.data.user;
 
-    return { success: true, data: res.data };
+    dispatch(updateAdmin(updatedAdmin));
+
+    return { success: true, data: updatedAdmin };
 
   } catch (err) {
-    return { 
-      success: false, 
-      error: err.response?.data?.message || "Update failed" 
+    return {
+      success: false,
+      error: err.response?.data?.message || "Update failed",
+    };
+  }
+};
+
+// ==================================================
+// ❌ DELETE ADMIN ACCOUNT
+// ==================================================
+export const deleteAdminAccount = async (dispatch) => {
+  dispatch(deleteAccountStart());
+
+  try {
+    await userRequest.delete("/users/delete-account");
+
+    dispatch(deleteAccountSuccess());
+
+    return { success: true };
+
+  } catch (err) {
+    dispatch(deleteAccountFailure());
+
+    return {
+      success: false,
+      error: err.response?.data?.message || "Account deletion failed",
     };
   }
 };

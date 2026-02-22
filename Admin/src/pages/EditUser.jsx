@@ -12,6 +12,7 @@ const EditUser = () => {
   const [user, setUser] = useState({});
   const [inputs, setInputs] = useState({});
   const [selectedImage, setSelectedImage] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   // ================= GET USER =================
   useEffect(() => {
@@ -20,9 +21,10 @@ const EditUser = () => {
         const res = await userRequest.get(`/users/${id}`);
         setUser(res.data.user);
       } catch (err) {
-        console.log(err);
+        toast.error(err);
       }
     };
+
     getUser();
   }, [id]);
 
@@ -36,7 +38,7 @@ const EditUser = () => {
 
   // ================= IMAGE CHANGE =================
   const handleImageChange = (e) => {
-    if (e.target.files[0]) {
+    if (e.target.files?.[0]) {
       setSelectedImage(e.target.files[0]);
     }
   };
@@ -46,21 +48,26 @@ const EditUser = () => {
     e.preventDefault();
 
     try {
+      setLoading(true);
+
       let avatarUrl = user.avatar;
 
-      // upload image if selected
+      // Upload new image if selected
       if (selectedImage) {
-        const data = new FormData();
-        data.append("file", selectedImage);
-        data.append("upload_preset", "uploads");
+        const formData = new FormData();
+        formData.append("file", selectedImage);
+        formData.append("upload_preset", "uploads");
 
         const uploadRes = await fetch(
           "https://api.cloudinary.com/v1_1/dkdx7xytz/image/upload",
-          { method: "POST", body: data }
+          {
+            method: "POST",
+            body: formData,
+          }
         );
 
         const uploadData = await uploadRes.json();
-        avatarUrl = uploadData.url;
+        avatarUrl = uploadData.secure_url || uploadData.url;
       }
 
       await userRequest.put(`/users/${id}`, {
@@ -69,107 +76,135 @@ const EditUser = () => {
       });
 
       toast.success("User updated successfully");
-      setInputs({});
-      setSelectedImage(null);
+
     } catch (err) {
-      console.log(err);
-      toast.error("Failed to update user");
+      toast.error(
+        err.response?.data?.message || "Failed to update user"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="p-5 bg-gray-100 min-h-screen w-full">
-      <ToastContainer />
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6 md:p-10">
 
-      {/* HEADER */}
-      <div className="flex items-center justify-between mb-5">
-        <h3 className="text-3xl font-semibold">Edit User</h3>
-        <Link to="/users">
-          <button className="bg-slate-500 text-white py-2 px-4 rounded-lg">
-            Back
-          </button>
-        </Link>
-      </div>
+      <ToastContainer position="top-right" autoClose={2000} />
 
-      {/* USER CARD */}
-      <div className="bg-white p-5 rounded-lg shadow-lg mb-5">
-        <div className="flex items-center gap-5">
-          {/* <img
-            src={selectedImage ? URL.createObjectURL(selectedImage) : user.avatar || "/avatar.png"}
-            className="h-20 w-20 rounded-full object-cover"
-          /> */}
+      <div className="max-w-5xl mx-auto space-y-6">
+
+        {/* HEADER */}
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+
           <div>
-            <h2 className="text-xl font-semibold">{user.name}</h2>
-            <p className="text-gray-500 text-sm">{user.email}</p>
-            <span className="text-xs bg-pink-100 text-pink-600 px-2 py-1 rounded-full">
-              {user.role}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* UPDATE FORM */}
-      <div className="bg-white p-5 rounded-lg shadow-lg">
-        <form
-          onSubmit={handleUpdate}
-          className="flex flex-col md:flex-row gap-5"
-        >
-          {/* LEFT */}
-          <div className="flex-1 space-y-4">
-            <input
-              name="name"
-              placeholder={user.name}
-              onChange={handleChange}
-              value={inputs.name || ""}
-              className="w-full border p-2 rounded"
-            />
-
-            <input
-              name="email"
-              placeholder={user.email}
-              onChange={handleChange}
-              value={inputs.email || ""}
-              className="w-full border p-2 rounded"
-            />
-
-            <select
-              name="role"
-              onChange={handleChange}
-              value={inputs.role || user.role}
-              className="w-full border p-2 rounded"
-            >
-              <option value="user">User</option>
-              <option value="admin">Admin</option>
-            </select>
-
-            <select
-              name="isActive"
-              onChange={handleChange}
-              value={inputs.isActive ?? user.isActive}
-              className="w-full border p-2 rounded"
-            >
-              <option value={true}>Active</option>
-              <option value={false}>Disabled</option>
-            </select>
+            <h1 className="text-4xl font-bold text-gray-800">
+              Edit User
+            </h1>
+            <p className="text-gray-500 mt-1 text-sm">
+              Update user profile information
+            </p>
           </div>
 
-          {/* RIGHT */}
-          <div className="flex-1 flex flex-col items-center gap-5">
-            <img
-              src={selectedImage ? URL.createObjectURL(selectedImage) : user.avatar || "/avatar.png"}
-              className="h-32 w-32 rounded-full object-cover"
-            />
-
-            <input type="file" hidden id="file" onChange={handleImageChange} />
-            <label htmlFor="file" className="cursor-pointer">
-              <FaUpload className="text-3xl text-gray-700" />
-            </label>
-
-            <button className="bg-slate-600 text-white py-3 px-6 rounded-lg">
-              Update User
+          <Link to="/users">
+            <button className="bg-gray-800 hover:bg-black text-white px-6 py-2 rounded-xl transition shadow">
+              Back
             </button>
-          </div>
-        </form>
+          </Link>
+
+        </div>
+
+        {/* PROFILE CARD */}
+        <div className="bg-white rounded-3xl shadow-xl p-8">
+
+          <form onSubmit={handleUpdate} className="grid md:grid-cols-2 gap-8">
+
+            {/* LEFT FORM */}
+            <div className="space-y-5">
+
+              <input
+                name="name"
+                placeholder={user.name}
+                value={inputs.name || ""}
+                onChange={handleChange}
+                className="w-full border border-gray-200 rounded-xl p-4 focus:ring-2 focus:ring-indigo-400 outline-none transition"
+              />
+
+              <input
+                name="email"
+                placeholder={user.email}
+                value={inputs.email || ""}
+                onChange={handleChange}
+                className="w-full border border-gray-200 rounded-xl p-4 focus:ring-2 focus:ring-indigo-400 outline-none transition"
+              />
+
+              <select
+                name="role"
+                onChange={handleChange}
+                value={inputs.role || user.role || "user"}
+                className="w-full border border-gray-200 rounded-xl p-4 focus:ring-2 focus:ring-indigo-400 outline-none transition"
+              >
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+
+              <select
+                name="isActive"
+                onChange={handleChange}
+                value={
+                  inputs.isActive !== undefined
+                    ? inputs.isActive
+                    : user.isActive ?? true
+                }
+                className="w-full border border-gray-200 rounded-xl p-4 focus:ring-2 focus:ring-indigo-400 outline-none transition"
+              >
+                <option value={true}>Active</option>
+                <option value={false}>Disabled</option>
+              </select>
+
+            </div>
+
+            {/* RIGHT PROFILE IMAGE */}
+            <div className="flex flex-col items-center justify-center gap-6">
+
+              <div className="relative group">
+
+                <img
+                  src={
+                    selectedImage
+                      ? URL.createObjectURL(selectedImage)
+                      : user.avatar || "/avatar.png"
+                  }
+                  className="w-40 h-40 rounded-full object-cover shadow-lg border-4 border-white"
+                />
+
+                <label
+                  htmlFor="file"
+                  className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition cursor-pointer rounded-full text-white"
+                >
+                  <FaUpload className="text-2xl" />
+                </label>
+
+              </div>
+
+              <input
+                type="file"
+                id="file"
+                hidden
+                onChange={handleImageChange}
+              />
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-4 rounded-2xl shadow-lg transition disabled:opacity-60 font-semibold"
+              >
+                {loading ? "Updating..." : "Update User"}
+              </button>
+
+            </div>
+
+          </form>
+        </div>
       </div>
     </div>
   );

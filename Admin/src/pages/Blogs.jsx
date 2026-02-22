@@ -19,9 +19,7 @@ const Blogs = () => {
 
       setBlogs(res.data?.blogs || []);
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Failed to load blogs"
-      );
+      toast.error(error.response?.data?.message || "Failed to load blogs");
     } finally {
       setLoading(false);
     }
@@ -33,7 +31,7 @@ const Blogs = () => {
 
   // ================= DELETE BLOG =================
   const deleteBlog = async (id) => {
-    if (!window.confirm("Delete this blog?")) return;
+    if (!window.confirm("Are you sure you want to delete this blog?")) return;
 
     try {
       await userRequest.delete(`/blogs/${id}`, {
@@ -43,92 +41,96 @@ const Blogs = () => {
       toast.success("Blog deleted successfully");
       fetchBlogs();
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Delete failed"
-      );
+      toast.error(error.response?.data?.message || "Delete failed");
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 px-3 sm:px-6 py-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-10 px-4 sm:px-8">
       <ToastContainer position="top-right" autoClose={3000} />
 
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
 
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        {/* ================= HEADER ================= */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-10">
 
-          <h1 className="text-2xl sm:text-3xl font-semibold text-gray-800 text-center sm:text-left">
-            All Blogs
-          </h1>
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
+              Blog Management
+            </h1>
+            <p className="text-gray-500 mt-1 text-sm md:text-base">
+              Manage, edit and create blog posts easily.
+            </p>
+          </div>
 
-          <Link to="/create-blog" className="w-full sm:w-auto">
-            <button className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition shadow-md">
+          <Link to="/create-blog">
+            <button className="w-full md:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-medium shadow-lg transition-all duration-300 hover:scale-[1.03]">
               + Create Blog
             </button>
           </Link>
-
         </div>
 
-        {/* Loading */}
+        {/* ================= LOADING ================= */}
         {loading && (
-          <div className="text-center py-10 text-gray-500">
-            Loading blogs...
+          <div className="flex justify-center items-center py-20">
+            <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
           </div>
         )}
 
-        {/* Empty State */}
+        {/* ================= EMPTY STATE ================= */}
         {!loading && blogs.length === 0 && (
-          <div className="text-center py-10 text-gray-400">
-            No blogs found.
+          <div className="bg-white rounded-2xl shadow-md p-10 text-center text-gray-400">
+            No blogs found. Start by creating one.
           </div>
         )}
 
-        {/* Blog Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* ================= BLOG GRID ================= */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
           {blogs.map((blog) => (
             <div
               key={blog._id}
-              className="bg-white shadow-md hover:shadow-lg transition rounded-2xl overflow-hidden border flex flex-col"
+              className="bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden flex flex-col group"
             >
               {blog.image && (
-                <img
-                  src={blog.image}
-                  alt={blog.title}
-                  className="w-full h-48 object-cover"
-                />
+                <div className="overflow-hidden">
+                  <img
+                    src={blog.image}
+                    alt={blog.title}
+                    className="w-full h-52 object-cover group-hover:scale-105 transition duration-500"
+                  />
+                </div>
               )}
 
-              <div className="p-5 flex flex-col flex-1 justify-between">
+              <div className="p-6 flex flex-col flex-1 justify-between">
 
                 <div>
-                  <h2 className="text-lg font-semibold mb-2 line-clamp-2">
+                  <h2 className="text-xl font-semibold text-gray-800 mb-2 line-clamp-2">
                     {blog.title}
                   </h2>
 
-                  <p className="text-sm text-gray-500 line-clamp-3">
+                  <p className="text-gray-500 text-sm line-clamp-3">
                     {blog.excerpt || blog.content}
                   </p>
                 </div>
 
-                {/* Buttons */}
-                <div className="flex flex-wrap gap-2 mt-4">
+                {/* ACTION BUTTONS */}
+                <div className="flex flex-wrap gap-3 mt-6">
 
                   <Link to={`/blog-detail/${blog._id}`}>
-                    <button className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-lg text-sm transition">
+                    <button className="px-4 py-2 bg-gray-700 hover:bg-gray-800 text-white text-sm rounded-lg transition shadow">
                       View
                     </button>
                   </Link>
 
                   <Link to={`/blog/${blog._id}`}>
-                    <button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm transition">
+                    <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition shadow">
                       Edit
                     </button>
                   </Link>
 
                   <button
                     onClick={() => deleteBlog(blog._id)}
-                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm transition"
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition shadow"
                   >
                     Delete
                   </button>
