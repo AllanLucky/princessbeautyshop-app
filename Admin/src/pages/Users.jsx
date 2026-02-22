@@ -17,39 +17,39 @@ const Users = () => {
   });
 
   // ================= GET USERS =================
+  const getUsers = async () => {
+    try {
+      setLoading(true);
+
+      const res = await userRequest.get("/users");
+
+      const onlyUsers = res.data.users.filter(
+        (u) => u.role === "user" || u.role === "customer"
+      );
+
+      setUsers(
+        onlyUsers.map((u) => ({
+          ...u,
+          isActive: true,
+        }))
+      );
+
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Failed to fetch users"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const getUsers = async () => {
-      try {
-        setLoading(true);
-        const res = await userRequest.get("/users");
-
-        // show only normal users
-        const onlyUsers = res.data.users.filter(
-          (u) => u.role === "user" || u.role === "customer"
-        );
-
-        // ✅ force isActive to true
-        const activeUsers = onlyUsers.map((u) => ({ ...u, isActive: true }));
-
-        setUsers(activeUsers);
-      } catch (error) {
-        console.error("Failed to fetch users:", error.response?.data || error);
-
-        toast.error("Failed to fetch users", {
-          position: "top-right",
-          autoClose: 2500,
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
     getUsers();
   }, []);
 
   // ================= DELETE USER =================
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this user?")) return;
+    if (!window.confirm("Delete this user?")) return;
 
     try {
       setDeletingId(id);
@@ -58,17 +58,13 @@ const Users = () => {
 
       setUsers((prev) => prev.filter((user) => user._id !== id));
 
-      toast.success("User deleted successfully 🗑️", {
-        position: "top-right",
-        autoClose: 2500,
-      });
-    } catch (error) {
-      console.error("Delete failed:", error.response?.data || error);
+      toast.success("User deleted successfully 🗑️");
 
-      toast.error(error.response?.data?.message || "Delete failed", {
-        position: "top-right",
-        autoClose: 3000,
-      });
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Delete failed"
+      );
+
     } finally {
       setDeletingId(null);
     }
@@ -76,20 +72,31 @@ const Users = () => {
 
   // ================= TABLE COLUMNS =================
   const userColumns = [
-    { field: "_id", headerName: "ID", width: 220 },
+    {
+      field: "_id",
+      headerName: "ID",
+      width: 220,
+    },
 
     {
-      field: "name",
-      headerName: "User",
-      width: 280,
-      renderCell: (params) => (
-        <div className="flex items-center gap-3">
-          <div className="flex flex-col">
-            <span className="font-medium text-gray-800">{params.row.name}</span>
-            <span className="text-xs text-gray-500">{params.row.email}</span>
+      field: "user",
+      headerName: "User Info",
+      width: 320,
+      renderCell: (params) => {
+        const user = params.row;
+
+        return (
+          <div className="flex flex-col justify-center h-full leading-tight">
+            <span className="font-semibold text-gray-800">
+              {user?.name || "No Name"}
+            </span>
+
+            <span className="text-sm text-gray-500">
+              {user?.email || "No Email"}
+            </span>
           </div>
-        </div>
-      ),
+        );
+      },
     },
 
     {
@@ -97,8 +104,8 @@ const Users = () => {
       headerName: "Role",
       width: 140,
       renderCell: (params) => (
-        <span className="px-3 py-1 rounded-full text-xs bg-pink-100 text-pink-600 font-semibold">
-          {params.value}
+        <span className="px-3 py-1 rounded-full text-xs bg-pink-100 text-pink-600 font-semibold capitalize">
+          {params.value || "user"}
         </span>
       ),
     },
@@ -117,37 +124,53 @@ const Users = () => {
     {
       field: "action",
       headerName: "Actions",
-      width: 190,
+      width: 180,
+      sortable: false,
       renderCell: (params) => (
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-6">
+
           <Link to={`/user/${params.row._id}`}>
-               <FaEye className="text-purple-600 text-2xl cursor-pointer mr-10" />
+            <FaEye className="text-purple-600 text-xl cursor-pointer hover:scale-110 transition" />
           </Link>
 
           <button
             disabled={deletingId === params.row._id}
             onClick={() => handleDelete(params.row._id)}
-            className="group relative flex items-center justify-center"
           >
-            <div className="p-2 rounded-full bg-red-50 group-hover:bg-red-100 transition">
-              <FaTrash className="text-red-500 group-hover:text-red-700 text-xl" />
+            <div className="p-2 rounded-full bg-red-50 hover:bg-red-100 transition">
+              <FaTrash className="text-red-500 hover:text-red-700 text-lg" />
             </div>
           </button>
+
         </div>
       ),
     },
   ];
 
   return (
-    <div className="p-8 bg-gray-100 min-h-screen w-full overflow-x-hidden">
+    <div className="p-6 md:p-8 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+
       <ToastContainer position="top-right" autoClose={2000} />
 
-      <div className="flex flex-col md:flex-row items-center justify-between mb-5 gap-2">
-        <h1 className="text-2xl font-semibold text-gray-800">All Customers</h1>
-        <span className="text-sm text-gray-500">Total: {users.length}</span>
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-3">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800">
+            Customers
+          </h1>
+          <p className="text-gray-500 text-sm mt-1">
+            Manage registered users
+          </p>
+        </div>
+
+        <span className="bg-white shadow px-4 py-2 rounded-lg text-sm">
+          Total Users: {users.length}
+        </span>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm p-4 w-full overflow-hidden">
+      {/* Table */}
+      <div className="bg-white rounded-2xl shadow-xl p-5 overflow-hidden">
+
         <DataGrid
           rows={users}
           columns={userColumns}
@@ -159,21 +182,26 @@ const Users = () => {
           onPaginationModelChange={setPaginationModel}
           pageSizeOptions={[5, 10, 20, 50]}
           disableRowSelectionOnClick
+
           sx={{
             border: "none",
+
             "& .MuiDataGrid-columnHeaders": {
               backgroundColor: "#f9fafb",
-              color: "#374151",
               fontWeight: "600",
             },
+
             "& .MuiDataGrid-row:hover": {
               backgroundColor: "#fdf2f8",
             },
+
             "& .MuiDataGrid-cell": {
               borderBottom: "1px solid #f3f4f6",
+              fontSize: "14px",
             },
           }}
         />
+
       </div>
     </div>
   );

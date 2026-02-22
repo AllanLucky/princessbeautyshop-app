@@ -21,7 +21,6 @@ const adminSlice = createSlice({
       state.currentAdmin = action.payload;
       state.error = false;
 
-      // 🔐 persist admin
       localStorage.setItem("admin", JSON.stringify(action.payload));
     },
 
@@ -43,13 +42,40 @@ const adminSlice = createSlice({
     // ================= UPDATE ADMIN =================
     updateAdmin: (state, action) => {
       state.currentAdmin = action.payload;
-      // persist updated profile
       localStorage.setItem("admin", JSON.stringify(action.payload));
+    },
+
+    // ================= DELETE ACCOUNT =================
+    deleteAccountStart: (state) => {
+      state.isFetching = true;
+      state.error = false;
+    },
+
+    deleteAccountSuccess: (state) => {
+      state.isFetching = false;
+      state.currentAdmin = null;
+      state.error = false;
+
+      // Remove admin from storage after deletion
+      localStorage.removeItem("admin");
+    },
+
+    deleteAccountFailure: (state) => {
+      state.isFetching = false;
+      state.error = true;
     },
   },
 });
 
-export const { loginStart, loginSuccess, loginFailure, logout, updateAdmin } =
-  adminSlice.actions;
+export const {
+  loginStart,
+  loginSuccess,
+  loginFailure,
+  logout,
+  updateAdmin,
+  deleteAccountStart,
+  deleteAccountSuccess,
+  deleteAccountFailure,
+} = adminSlice.actions;
 
 export default adminSlice.reducer;

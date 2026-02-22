@@ -2,7 +2,7 @@ import { useState } from "react";
 import { userRequest } from "../requestMethods";
 import { useNavigate, Link } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
-import { FaPlus, FaTrash } from "react-icons/fa";
+import { FaPlus } from "react-icons/fa";
 import axios from "axios";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -45,7 +45,6 @@ const CreateBlog = () => {
       category: "",
       tags: "",
     });
-
     setSelectedImage(null);
     setUploading("");
   };
@@ -68,7 +67,6 @@ const CreateBlog = () => {
       setLoading(true);
       setUploading("Uploading image...");
 
-      // Upload image to Cloudinary
       const data = new FormData();
       data.append("file", selectedImage);
       data.append("upload_preset", "uploads");
@@ -89,12 +87,10 @@ const CreateBlog = () => {
             ? form.tags.split(",").map((t) => t.trim())
             : [],
         },
-        {
-          withCredentials: true,
-        }
+        { withCredentials: true }
       );
 
-      toast.success("Blog created successfully 🔥");
+      toast.success("Blog published successfully 🚀");
 
       resetForm();
 
@@ -102,8 +98,6 @@ const CreateBlog = () => {
         navigate("/blogs");
       }, 1000);
     } catch (error) {
-      console.error(error);
-
       toast.error(
         error.response?.data?.message || "Create blog failed"
       );
@@ -113,38 +107,47 @@ const CreateBlog = () => {
     }
   };
 
-  // ================= UI =================
   return (
-    <div className="min-h-screen bg-gray-100 flex justify-center items-start px-3 sm:px-6 py-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-8">
       <ToastContainer position="top-right" autoClose={3000} />
 
-      <div className="w-full max-w-3xl bg-white shadow-lg rounded-2xl p-6">
+      <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-2xl p-8 md:p-10">
 
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold">Add New Blog</h1>
+        {/* ================= HEADER ================= */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-10">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
+              Create New Blog
+            </h1>
+            <p className="text-gray-500 mt-1">
+              Share your thoughts with a beautifully crafted post.
+            </p>
+          </div>
 
           <Link to="/blogs">
-            <button className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg transition">
-              Back
+            <button className="bg-gray-700 hover:bg-gray-800 text-white px-6 py-3 rounded-xl transition shadow-md">
+              Back to Blogs
             </button>
           </Link>
         </div>
 
-        <form className="space-y-4" onSubmit={submitBlog}>
+        <form onSubmit={submitBlog} className="space-y-6">
 
-          {/* IMAGE UPLOAD */}
+          {/* ================= IMAGE UPLOAD ================= */}
           <div>
-            <label className="font-semibold block mb-2">
+            <label className="block text-gray-700 font-semibold mb-3">
               Blog Image
             </label>
 
-            <div className="relative w-32 h-32 border rounded-xl flex items-center justify-center cursor-pointer overflow-hidden">
+            <div className="relative w-full h-56 border-2 border-dashed border-gray-300 rounded-2xl flex items-center justify-center overflow-hidden hover:border-indigo-500 transition">
 
               {!selectedImage ? (
-                <label htmlFor="file" className="flex flex-col items-center text-gray-500 cursor-pointer">
-                  <FaPlus className="text-2xl mb-1" />
-                  Select Image
+                <label
+                  htmlFor="file"
+                  className="flex flex-col items-center text-gray-400 cursor-pointer"
+                >
+                  <FaPlus className="text-3xl mb-2" />
+                  Click to Upload Image
                 </label>
               ) : (
                 <img
@@ -163,58 +166,88 @@ const CreateBlog = () => {
             </div>
 
             {uploading && (
-              <p className="text-green-600 text-sm mt-1">
+              <p className="text-indigo-600 text-sm mt-2 animate-pulse">
                 {uploading}
               </p>
             )}
           </div>
 
-          <input
-            name="title"
-            placeholder="Blog title"
-            className="w-full border p-3 rounded-lg"
-            onChange={handleChange}
-            value={form.title}
-          />
-
-          <textarea
-            name="content"
-            placeholder="Blog content"
-            className="w-full border p-3 rounded-lg h-40"
-            onChange={handleChange}
-            value={form.content}
-          />
-
-          <input
-            name="excerpt"
-            placeholder="Excerpt"
-            className="w-full border p-3 rounded-lg"
-            onChange={handleChange}
-            value={form.excerpt}
-          />
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* ================= TITLE ================= */}
+          <div>
+            <label className="block text-gray-700 font-semibold mb-2">
+              Title
+            </label>
             <input
-              name="category"
-              placeholder="Category"
-              className="border p-3 rounded-lg"
+              name="title"
+              placeholder="Enter blog title"
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-400 outline-none transition"
               onChange={handleChange}
-              value={form.category}
-            />
-
-            <input
-              name="tags"
-              placeholder="Tags (comma separated)"
-              className="border p-3 rounded-lg"
-              onChange={handleChange}
-              value={form.tags}
+              value={form.title}
             />
           </div>
 
+          {/* ================= CONTENT ================= */}
+          <div>
+            <label className="block text-gray-700 font-semibold mb-2">
+              Content
+            </label>
+            <textarea
+              name="content"
+              placeholder="Write your blog content here..."
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 h-48 focus:ring-2 focus:ring-indigo-400 outline-none transition resize-none"
+              onChange={handleChange}
+              value={form.content}
+            />
+          </div>
+
+          {/* ================= EXCERPT ================= */}
+          <div>
+            <label className="block text-gray-700 font-semibold mb-2">
+              Excerpt
+            </label>
+            <input
+              name="excerpt"
+              placeholder="Short description of blog"
+              className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-400 outline-none transition"
+              onChange={handleChange}
+              value={form.excerpt}
+            />
+          </div>
+
+          {/* ================= CATEGORY & TAGS ================= */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2">
+                Category
+              </label>
+              <input
+                name="category"
+                placeholder="Technology, Business..."
+                className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-400 outline-none transition"
+                onChange={handleChange}
+                value={form.category}
+              />
+            </div>
+
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2">
+                Tags
+              </label>
+              <input
+                name="tags"
+                placeholder="react, javascript, web"
+                className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-400 outline-none transition"
+                onChange={handleChange}
+                value={form.tags}
+              />
+            </div>
+          </div>
+
+          {/* ================= SUBMIT BUTTON ================= */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl transition disabled:opacity-60"
+            className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold rounded-2xl shadow-lg transition-all duration-300 hover:scale-[1.02] disabled:opacity-60"
           >
             {loading ? "Publishing..." : "Publish Blog"}
           </button>
