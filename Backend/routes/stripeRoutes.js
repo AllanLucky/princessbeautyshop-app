@@ -45,7 +45,7 @@ router.post("/create-checkout-session", async (req, res) => {
     }
 
     /*
-    ✅ Remove old pending order if exists
+    Remove old pending order if exists
     */
 
     await Order.deleteMany({
@@ -54,9 +54,7 @@ router.post("/create-checkout-session", async (req, res) => {
     });
 
     /*
-    =====================================================
     CREATE CUSTOMER
-    =====================================================
     */
 
     const customer = await stripe.customers.create({
@@ -70,9 +68,7 @@ router.post("/create-checkout-session", async (req, res) => {
     });
 
     /*
-    =====================================================
     LINE ITEMS
-    =====================================================
     */
 
     const line_items = cart.products.map((product) => ({
@@ -95,10 +91,10 @@ router.post("/create-checkout-session", async (req, res) => {
     }));
 
     /*
-    =====================================================
-    CREATE SESSION ⭐ IMPORTANT PART
-    =====================================================
+    CREATE SESSION ⭐ UPDATED URL HERE
     */
+
+    const frontendUrl = process.env.CLIENT_BASE_URL;
 
     const session = await stripe.checkout.sessions.create({
       customer: customer.id,
@@ -109,12 +105,9 @@ router.post("/create-checkout-session", async (req, res) => {
 
       mode: "payment",
 
-      /*
-      ⭐ Redirect to PaymentSuccess page
-      */
-      success_url: `${process.env.CLIENT_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${frontendUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
 
-      cancel_url: `${process.env.CLIENT_URL}/cart`,
+      cancel_url: `${frontendUrl}/cart`,
 
       metadata: {
         userId: String(userId || ""),
@@ -124,9 +117,7 @@ router.post("/create-checkout-session", async (req, res) => {
     });
 
     /*
-    =====================================================
     SAVE PENDING ORDER
-    =====================================================
     */
 
     const newOrder = await Order.create({
@@ -167,7 +158,7 @@ router.post("/create-checkout-session", async (req, res) => {
 
 /*
 =====================================================
-WEBHOOK (SOURCE OF TRUTH ⭐ VERY IMPORTANT)
+WEBHOOK ⭐ SOURCE OF TRUTH
 =====================================================
 */
 
