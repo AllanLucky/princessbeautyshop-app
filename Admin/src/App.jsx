@@ -66,6 +66,10 @@ import SupportTicketDetail from "./pages/SupportTicketDetail";
 import NotificationList from "./pages/NotificationList";
 import NotificationCreate from "./pages/NotificationCreate";
 import NotificationDetail from "./pages/NotificationDetail";
+import Analytics from "./pages/Analytics;";
+import ClinicAssessments from "./pages/ClinicAssessments";
+import Bundles from "./pages/Bundles";
+import NewBundle from "./pages/NewBundle"
 
 const router = createBrowserRouter([
   {
@@ -150,6 +154,10 @@ const router = createBrowserRouter([
 
       /* Analytics */
       { path: "charts", element: <ChartsPage /> },
+      { path: "analytics", element: <Analytics /> },
+      {path: "clinic-assessments", element: <ClinicAssessments/>},
+      {path: "bundles", element: <Bundles/>},
+      {path: "bundles/create", element:<NewBundle/>},
       { path: "all-logs", element: <AlllogsPage /> },
 
       /* Settings */

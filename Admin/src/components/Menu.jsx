@@ -1,24 +1,31 @@
 import {
   FaHome,
-  FaBox,
-  FaClipboardList,
-  FaElementor,
-  FaCog,
-  FaHdd,
-  FaChartBar,
-  FaClipboard,
-  FaSignOutAlt,
+  FaUserShield,
   FaUsers,
-  FaTachometerAlt,
-  FaPlusCircle,
-  FaTag,
+  FaUserTie,
+  FaBoxOpen,
+  FaTags,
+  FaWarehouse,
+  FaTicketAlt,
   FaHeart,
-  FaEnvelope,
+  FaShoppingCart,
+  FaUndo,
+  FaHeadset,
+  FaImage,
+  FaBell,
+  FaBlog,
+  FaChartLine,
+  FaChartPie,
+  FaClinicMedical,
+  FaGift,
+  FaClipboardList,
+  FaCog,
+  FaDatabase,
   FaCreditCard,
   FaTruck,
   FaPercent,
-  FaUndo,
-  FaHeadset,
+  FaSignOutAlt,
+  FaTachometerAlt,
 } from "react-icons/fa";
 
 import { NavLink, useNavigate } from "react-router-dom";
@@ -28,12 +35,10 @@ import { useDispatch, useSelector } from "react-redux";
 const Menu = ({ collapsed }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
   const admin = useSelector((state) => state.admin.currentAdmin);
 
   const handleLogout = () => {
     if (!window.confirm("Are you sure you want to logout?")) return;
-
     dispatch(logout());
     navigate("/login");
   };
@@ -56,31 +61,25 @@ const Menu = ({ collapsed }) => {
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-5 border-b">
         <FaTachometerAlt className="text-pink-500 text-2xl flex-shrink-0" />
-
         {!collapsed && (
           <div className="leading-tight">
-            <h1 className="text-xl font-bold text-gray-800">
-              Admin Panel
-            </h1>
-
+            <h1 className="text-xl font-bold text-gray-800">Admin Panel</h1>
             {admin && (
-              <p className="text-xs text-gray-500 truncate">
-                {admin.name}
-              </p>
+              <p className="text-xs text-gray-500 truncate">{admin.name}</p>
             )}
           </div>
         )}
       </div>
 
       {/* Navigation */}
-      <div className="flex-1 overflow-y-auto px-2 py-3 space-y-1 scrollbar-thin scrollbar-thumb-pink-300 scrollbar-track-gray-100">
+      <div className="flex-1 overflow-y-auto px-2 py-3 space-y-1">
 
         <NavLink to="/admin-dashboard" className={navStyle}>
           <FaHome /> {linkLabel("Dashboard")}
         </NavLink>
 
         <NavLink to="/profile" className={navStyle}>
-          <FaUsers /> {linkLabel("Profile")}
+          <FaUserShield /> {linkLabel("Profile")}
         </NavLink>
 
         <hr className={`my-3 border-gray-200 ${collapsed ? "hidden" : ""}`} />
@@ -90,23 +89,23 @@ const Menu = ({ collapsed }) => {
         </NavLink>
 
         <NavLink to="/vendors" className={navStyle}>
-          <FaUsers /> {linkLabel("Vendors")}
+          <FaUserTie /> {linkLabel("Vendors")}
         </NavLink>
 
         <NavLink to="/products" className={navStyle}>
-          <FaBox /> {linkLabel("Products")}
+          <FaBoxOpen /> {linkLabel("Products")}
         </NavLink>
 
         <NavLink to="/categories" className={navStyle}>
-          <FaClipboardList /> {linkLabel("Categories")}
+          <FaTags /> {linkLabel("Categories")}
         </NavLink>
 
         <NavLink to="/inventory" className={navStyle}>
-          <FaPlusCircle /> {linkLabel("Inventory")}
+          <FaWarehouse /> {linkLabel("Inventory")}
         </NavLink>
 
         <NavLink to="/coupons" className={navStyle}>
-          <FaTag /> {linkLabel("Coupons")}
+          <FaTicketAlt /> {linkLabel("Coupons")}
         </NavLink>
 
         <NavLink to="/my-wishlist" className={navStyle}>
@@ -114,14 +113,13 @@ const Menu = ({ collapsed }) => {
         </NavLink>
 
         <NavLink to="/orders" className={navStyle}>
-          <FaClipboardList /> {linkLabel("Orders")}
+          <FaShoppingCart /> {linkLabel("Orders")}
         </NavLink>
 
         <NavLink to="/returns" className={navStyle}>
           <FaUndo /> {linkLabel("Returns")}
         </NavLink>
 
-        {/* Support Tickets */}
         <NavLink to="/tickets" className={navStyle}>
           <FaHeadset /> {linkLabel("Support Tickets")}
         </NavLink>
@@ -129,25 +127,37 @@ const Menu = ({ collapsed }) => {
         <hr className={`my-3 border-gray-200 ${collapsed ? "hidden" : ""}`} />
 
         <NavLink to="/banners" className={navStyle}>
-          <FaElementor /> {linkLabel("Banners")}
+          <FaImage /> {linkLabel("Banners")}
         </NavLink>
 
         <NavLink to="/notifications" className={navStyle}>
-          <FaEnvelope /> {linkLabel("Notifications")}
+          <FaBell /> {linkLabel("Notifications")}
         </NavLink>
 
         <NavLink to="/blogs" className={navStyle}>
-          <FaClipboard /> {linkLabel("Blogs")}
+          <FaBlog /> {linkLabel("Blogs")}
         </NavLink>
 
         <hr className={`my-3 border-gray-200 ${collapsed ? "hidden" : ""}`} />
 
         <NavLink to="/charts" className={navStyle}>
-          <FaChartBar /> {linkLabel("Analytics")}
+          <FaChartLine /> {linkLabel("Charts")}
+        </NavLink>
+
+        <NavLink to="/analytics" className={navStyle}>
+          <FaChartPie /> {linkLabel("Analytics")}
+        </NavLink>
+
+        <NavLink to="/clinic-assessments" className={navStyle}>
+          <FaClinicMedical /> {linkLabel("Clinic Assessments")}
+        </NavLink>
+
+        <NavLink to="/bundles" className={navStyle}>
+          <FaGift /> {linkLabel("Bundles")}
         </NavLink>
 
         <NavLink to="/all-logs" className={navStyle}>
-          <FaClipboard /> {linkLabel("Logs")}
+          <FaClipboardList /> {linkLabel("Logs")}
         </NavLink>
 
         <hr className={`my-3 border-gray-200 ${collapsed ? "hidden" : ""}`} />
@@ -157,7 +167,7 @@ const Menu = ({ collapsed }) => {
         </NavLink>
 
         <NavLink to="/backups" className={navStyle}>
-          <FaHdd /> {linkLabel("Backups")}
+          <FaDatabase /> {linkLabel("Backups")}
         </NavLink>
 
         <NavLink to="/payments" className={navStyle}>
