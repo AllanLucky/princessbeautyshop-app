@@ -11,25 +11,26 @@ const BlogDetail = () => {
   const [loading, setLoading] = useState(false);
 
   // ================= FETCH BLOG DETAIL =================
-  const fetchBlog = async () => {
-    try {
-      setLoading(true);
-
-      const res = await userRequest.get(`/blogs/${id}`, {
-        withCredentials: true,
-      });
-
-      setBlog(res.data?.blog || res.data);
-    } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Load blog failed"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchBlog = async () => {
+      try {
+        setLoading(true);
+        const res = await userRequest.get(`/blogs/${id}`);
+
+        // ✅ Handle both object and array responses safely
+        const data = Array.isArray(res.data)
+          ? res.data[0]
+          : res.data.blog || res.data;
+
+        setBlog(data);
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to fetch blog detail");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (id) fetchBlog();
   }, [id]);
 
@@ -39,9 +40,7 @@ const BlogDetail = () => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-200">
         <div className="text-center space-y-3">
           <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-gray-500 animate-pulse">
-            Loading blog detail...
-          </p>
+          <p className="text-gray-500 animate-pulse">Loading blog detail...</p>
         </div>
       </div>
     );
@@ -61,12 +60,9 @@ const BlogDetail = () => {
       <ToastContainer position="top-right" autoClose={3000} />
 
       <div className="max-w-5xl mx-auto bg-white shadow-2xl rounded-3xl overflow-hidden">
-
         {/* ================= HERO HEADER ================= */}
         <div className="p-6 md:p-10 border-b">
-
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-
             <h1 className="text-3xl md:text-5xl font-bold text-gray-800 leading-tight">
               {blog.title}
             </h1>
@@ -76,7 +72,6 @@ const BlogDetail = () => {
                 Back to Blogs
               </button>
             </Link>
-
           </div>
         </div>
 
@@ -93,7 +88,6 @@ const BlogDetail = () => {
 
         {/* ================= CONTENT BODY ================= */}
         <div className="p-6 md:p-10 space-y-6">
-
           {/* Excerpt */}
           {blog.excerpt && (
             <p className="text-gray-600 italic text-lg border-l-4 border-indigo-400 pl-4">
@@ -108,11 +102,8 @@ const BlogDetail = () => {
 
           {/* ================= META SECTION ================= */}
           <div className="pt-8 border-t grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
-
             <div>
-              <p className="font-semibold text-gray-700 mb-2">
-                Category
-              </p>
+              <p className="font-semibold text-gray-700 mb-2">Category</p>
               <span className="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-xl text-xs md:text-sm inline-block">
                 {blog.category || "Uncategorized"}
               </span>
@@ -120,10 +111,7 @@ const BlogDetail = () => {
 
             {/* Tags */}
             <div>
-              <p className="font-semibold text-gray-700 mb-2">
-                Tags
-              </p>
-
+              <p className="font-semibold text-gray-700 mb-2">Tags</p>
               <div className="flex flex-wrap gap-2">
                 {blog.tags?.length > 0 ? (
                   blog.tags.map((tag, i) => (
@@ -141,15 +129,9 @@ const BlogDetail = () => {
             </div>
 
             <div>
-              <p className="font-semibold text-gray-700 mb-2">
-                Views
-              </p>
-
-              <span className="text-gray-600">
-                👁 {blog.views || 0} views
-              </span>
+              <p className="font-semibold text-gray-700 mb-2">Views</p>
+              <span className="text-gray-600">👁 {blog.views || 0} views</span>
             </div>
-
           </div>
         </div>
       </div>
