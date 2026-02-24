@@ -63,7 +63,8 @@ const Blogs = () => {
             </p>
           </div>
 
-          <Link to="/create-blog">
+          {/* ✅ FIXED ROUTE */}
+          <Link to="/admin/create-blog">
             <button className="w-full md:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-medium shadow-lg transition-all duration-300 hover:scale-[1.03]">
               + Create Blog
             </button>
@@ -113,21 +114,24 @@ const Blogs = () => {
                   </p>
                 </div>
 
-                {/* ACTION BUTTONS */}
+                {/* ================= ACTION BUTTONS ================= */}
                 <div className="flex flex-wrap gap-3 mt-6">
 
+                  {/* ✅ PUBLIC BLOG DETAIL */}
                   <Link to={`/blog-detail/${blog._id}`}>
                     <button className="px-4 py-2 bg-gray-700 hover:bg-gray-800 text-white text-sm rounded-lg transition shadow">
                       View
                     </button>
                   </Link>
 
+                  {/* ✅ ADMIN EDIT BLOG */}
                   <Link to={`/blog/${blog._id}`}>
                     <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition shadow">
                       Edit
                     </button>
                   </Link>
 
+                  {/* ✅ DELETE */}
                   <button
                     onClick={() => deleteBlog(blog._id)}
                     className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition shadow"
