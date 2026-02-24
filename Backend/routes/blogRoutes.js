@@ -7,10 +7,7 @@ import {
   deleteBlog,
 } from "../controllers/blogController.js";
 
-import {
-  protect,
-  adminOnly,
-} from "../middlewares/authMiddleware.js";
+import { protect, adminOnly } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
@@ -20,10 +17,10 @@ const router = express.Router();
 ====================================================
 */
 
-// Get all blogs (public)
+// Get all blogs (public, frontend accessible)
 router.get("/", getAllBlogs);
 
-// Get single blog by ID (public)
+// Get single blog by ID (public, frontend accessible)
 router.get("/:id", getBlog);
 
 /*
@@ -32,13 +29,13 @@ router.get("/:id", getBlog);
 ====================================================
 */
 
-// Create blog
+// Create a new blog (admin only)
 router.post("/", protect, adminOnly, createBlog);
 
-// Update blog
+// Update an existing blog (admin only)
 router.put("/:id", protect, adminOnly, updateBlog);
 
-// Delete blog
+// Delete a blog (admin only)
 router.delete("/:id", protect, adminOnly, deleteBlog);
 
 export default router;
