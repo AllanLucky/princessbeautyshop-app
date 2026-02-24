@@ -6,7 +6,6 @@ import "react-toastify/dist/ReactToastify.css";
 
 const BlogDetail = () => {
   const { id } = useParams();
-
   const [blog, setBlog] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -16,12 +15,9 @@ const BlogDetail = () => {
       try {
         setLoading(true);
         const res = await userRequest.get(`/blogs/${id}`);
-
-        // ✅ Handle both object and array responses safely
         const data = Array.isArray(res.data)
           ? res.data[0]
           : res.data.blog || res.data;
-
         setBlog(data);
       } catch (err) {
         console.error(err);
@@ -30,11 +26,10 @@ const BlogDetail = () => {
         setLoading(false);
       }
     };
-
     if (id) fetchBlog();
   }, [id]);
 
-  // ================= LOADING =================
+  // ================= LOADING STATE =================
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-200">
@@ -46,7 +41,7 @@ const BlogDetail = () => {
     );
   }
 
-  // ================= NOT FOUND =================
+  // ================= BLOG NOT FOUND =================
   if (!blog) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -60,13 +55,12 @@ const BlogDetail = () => {
       <ToastContainer position="top-right" autoClose={3000} />
 
       <div className="max-w-5xl mx-auto bg-white shadow-2xl rounded-3xl overflow-hidden">
-        {/* ================= HERO HEADER ================= */}
+        {/* ================= HEADER ================= */}
         <div className="p-6 md:p-10 border-b">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <h1 className="text-3xl md:text-5xl font-bold text-gray-800 leading-tight">
               {blog.title}
             </h1>
-
             <Link to="/blogs">
               <button className="bg-gray-800 hover:bg-black text-white px-6 py-3 rounded-xl transition shadow-md">
                 Back to Blogs
@@ -86,7 +80,7 @@ const BlogDetail = () => {
           </div>
         )}
 
-        {/* ================= CONTENT BODY ================= */}
+        {/* ================= CONTENT ================= */}
         <div className="p-6 md:p-10 space-y-6">
           {/* Excerpt */}
           {blog.excerpt && (
@@ -95,13 +89,14 @@ const BlogDetail = () => {
             </p>
           )}
 
-          {/* Content */}
+          {/* Full Content */}
           <div className="text-gray-700 leading-relaxed whitespace-pre-line text-base md:text-lg">
             {blog.content}
           </div>
 
-          {/* ================= META SECTION ================= */}
+          {/* ================= META INFORMATION ================= */}
           <div className="pt-8 border-t grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
+            {/* Category */}
             <div>
               <p className="font-semibold text-gray-700 mb-2">Category</p>
               <span className="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-xl text-xs md:text-sm inline-block">
@@ -128,6 +123,7 @@ const BlogDetail = () => {
               </div>
             </div>
 
+            {/* Views */}
             <div>
               <p className="font-semibold text-gray-700 mb-2">Views</p>
               <span className="text-gray-600">👁 {blog.views || 0} views</span>

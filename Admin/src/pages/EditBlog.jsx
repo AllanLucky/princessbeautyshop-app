@@ -31,22 +31,15 @@ const EditBlog = () => {
     }
   };
 
-  const removeSelectedImage = () => {
-    setSelectedImage(null);
-  };
+  const removeSelectedImage = () => setSelectedImage(null);
 
   // ================= FETCH BLOG =================
   useEffect(() => {
     const fetchBlog = async () => {
       try {
         setFetching(true);
-
-        const res = await userRequest.get(`/blogs/${id}`, {
-          withCredentials: true,
-        });
-
+        const res = await userRequest.get(`/blogs/${id}`, { withCredentials: true });
         const blog = res.data?.blog;
-
         if (blog) {
           setForm({
             title: blog.title || "",
@@ -63,7 +56,6 @@ const EditBlog = () => {
         setFetching(false);
       }
     };
-
     if (id) fetchBlog();
   }, [id]);
 
@@ -78,25 +70,19 @@ const EditBlog = () => {
   // ================= UPDATE BLOG =================
   const updateBlog = async (e) => {
     e.preventDefault();
-
     try {
       setLoading(true);
-
       let imageUrl = form.image;
 
-      // Upload new image if selected
       if (selectedImage) {
         setUploading(true);
-
         const data = new FormData();
         data.append("file", selectedImage);
         data.append("upload_preset", "uploads");
-
         const uploadRes = await axios.post(
           "https://api.cloudinary.com/v1_1/dkdx7xytz/image/upload",
           data
         );
-
         imageUrl = uploadRes.data.secure_url;
       }
 
@@ -105,14 +91,12 @@ const EditBlog = () => {
         {
           ...form,
           image: imageUrl,
-          tags: form.tags
-            ? form.tags.split(",").map((t) => t.trim())
-            : [],
+          tags: form.tags ? form.tags.split(",").map((t) => t.trim()) : [],
         },
         { withCredentials: true }
       );
 
-      toast.success("Blog updated successfully");
+      toast.success("Blog updated successfully 🚀");
       setTimeout(() => navigate("/blogs"), 1200);
     } catch (error) {
       toast.error(error.response?.data?.message || "Update failed");
@@ -122,19 +106,14 @@ const EditBlog = () => {
     }
   };
 
-  // ================= UI =================
   return (
     <div className="min-h-screen bg-gray-50 px-4 sm:px-6 py-8">
       <ToastContainer position="top-right" autoClose={3000} />
 
       <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-3xl p-6 sm:p-8">
-
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
-            Edit Blog
-          </h1>
-
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Edit Blog</h1>
           <Link to="/blogs">
             <button className="bg-gray-800 hover:bg-black text-white px-6 py-2 rounded-xl transition">
               Back to Blogs
@@ -143,29 +122,16 @@ const EditBlog = () => {
         </div>
 
         {fetching ? (
-          <div className="text-center py-12 text-gray-500">
-            Loading blog...
-          </div>
+          <div className="text-center py-12 text-gray-500">Loading blog...</div>
         ) : (
           <form className="space-y-6" onSubmit={updateBlog}>
-
             {/* IMAGE SECTION */}
             <div>
-              <label className="block font-semibold mb-3">
-                Blog Image
-              </label>
-
+              <label className="block font-semibold mb-3">Blog Image</label>
               <div className="relative w-full sm:w-64 h-48 border-2 border-dashed rounded-2xl overflow-hidden flex items-center justify-center bg-gray-50">
-
-                {/* If new image selected */}
                 {selectedImage ? (
                   <>
-                    <img
-                      src={URL.createObjectURL(selectedImage)}
-                      alt="preview"
-                      className="w-full h-full object-cover"
-                    />
-
+                    <img src={URL.createObjectURL(selectedImage)} alt="preview" className="w-full h-full object-cover" />
                     <button
                       type="button"
                       onClick={removeSelectedImage}
@@ -176,12 +142,7 @@ const EditBlog = () => {
                   </>
                 ) : form.image ? (
                   <>
-                    <img
-                      src={form.image}
-                      alt="existing"
-                      className="w-full h-full object-cover"
-                    />
-
+                    <img src={form.image} alt="existing" className="w-full h-full object-cover" />
                     <label
                       htmlFor="file"
                       className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 flex items-center justify-center text-white cursor-pointer transition"
@@ -190,28 +151,14 @@ const EditBlog = () => {
                     </label>
                   </>
                 ) : (
-                  <label
-                    htmlFor="file"
-                    className="flex flex-col items-center text-gray-500 cursor-pointer"
-                  >
+                  <label htmlFor="file" className="flex flex-col items-center text-gray-500 cursor-pointer">
                     <FaPlus className="text-3xl mb-2" />
                     Upload Image
                   </label>
                 )}
-
-                <input
-                  type="file"
-                  id="file"
-                  hidden
-                  onChange={imageChange}
-                />
+                <input type="file" id="file" hidden onChange={imageChange} />
               </div>
-
-              {uploading && (
-                <p className="text-green-600 text-sm mt-2">
-                  Uploading new image...
-                </p>
-              )}
+              {uploading && <p className="text-green-600 text-sm mt-2">Uploading new image...</p>}
             </div>
 
             {/* TITLE */}
@@ -252,7 +199,6 @@ const EditBlog = () => {
                 placeholder="Category"
                 className="border p-4 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
               />
-
               <input
                 name="tags"
                 value={form.tags}
@@ -270,7 +216,6 @@ const EditBlog = () => {
             >
               {loading ? "Updating..." : "Update Blog"}
             </button>
-
           </form>
         )}
       </div>

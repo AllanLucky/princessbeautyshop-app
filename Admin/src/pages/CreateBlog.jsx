@@ -79,18 +79,17 @@ const CreateBlog = () => {
 
       const imageUrl = uploadRes.data.secure_url;
 
+      // Prepare blog data
+      const blogData = {
+        ...form,
+        image: imageUrl,
+        tags: form.tags
+          ? form.tags.split(",").map((t) => t.trim())
+          : [],
+      };
+
       // Send blog data to server
-      await userRequest.post(
-        "/blogs",
-        {
-          ...form,
-          image: imageUrl,
-          tags: form.tags
-            ? form.tags.split(",").map((t) => t.trim())
-            : [],
-        },
-        { withCredentials: true }
-      );
+      await userRequest.post("/blogs", blogData, { withCredentials: true });
 
       toast.success("Blog published successfully 🚀");
       resetForm();
@@ -111,7 +110,6 @@ const CreateBlog = () => {
       <ToastContainer position="top-right" autoClose={3000} />
 
       <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-2xl p-8 md:p-10">
-
         {/* ================= HEADER ================= */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-10">
           <div>
@@ -131,7 +129,6 @@ const CreateBlog = () => {
         </div>
 
         <form onSubmit={submitBlog} className="space-y-6">
-
           {/* ================= IMAGE UPLOAD ================= */}
           <div>
             <label className="block text-gray-700 font-semibold mb-3">
@@ -139,7 +136,6 @@ const CreateBlog = () => {
             </label>
 
             <div className="relative w-full h-56 border-2 border-dashed border-gray-300 rounded-2xl flex items-center justify-center overflow-hidden hover:border-indigo-500 transition">
-
               {!selectedImage ? (
                 <label
                   htmlFor="file"
@@ -156,12 +152,7 @@ const CreateBlog = () => {
                 />
               )}
 
-              <input
-                type="file"
-                id="file"
-                hidden
-                onChange={imageChange}
-              />
+              <input type="file" id="file" hidden onChange={imageChange} />
             </div>
 
             {uploading && (
@@ -250,7 +241,6 @@ const CreateBlog = () => {
           >
             {loading ? "Publishing..." : "Publish Blog"}
           </button>
-
         </form>
       </div>
     </div>
