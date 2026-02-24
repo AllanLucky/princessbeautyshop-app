@@ -28,7 +28,7 @@ const CreateBlog = () => {
     }
   };
 
-  // ================= HANDLE CHANGE =================
+  // ================= HANDLE INPUT CHANGE =================
   const handleChange = (e) => {
     setForm((prev) => ({
       ...prev,
@@ -59,7 +59,7 @@ const CreateBlog = () => {
     }
 
     if (!selectedImage) {
-      toast.error("Please select blog image");
+      toast.error("Please select a blog image");
       return;
     }
 
@@ -67,6 +67,7 @@ const CreateBlog = () => {
       setLoading(true);
       setUploading("Uploading image...");
 
+      // Upload image to Cloudinary
       const data = new FormData();
       data.append("file", selectedImage);
       data.append("upload_preset", "uploads");
@@ -78,6 +79,7 @@ const CreateBlog = () => {
 
       const imageUrl = uploadRes.data.secure_url;
 
+      // Send blog data to server
       await userRequest.post(
         "/blogs",
         {
@@ -91,16 +93,13 @@ const CreateBlog = () => {
       );
 
       toast.success("Blog published successfully 🚀");
-
       resetForm();
 
       setTimeout(() => {
         navigate("/blogs");
       }, 1000);
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Create blog failed"
-      );
+      toast.error(error.response?.data?.message || "Create blog failed");
     } finally {
       setLoading(false);
       setUploading("");

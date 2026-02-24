@@ -66,17 +66,16 @@ import SupportTicketDetail from "./pages/SupportTicketDetail";
 import NotificationList from "./pages/NotificationList";
 import NotificationCreate from "./pages/NotificationCreate";
 import NotificationDetail from "./pages/NotificationDetail";
-import Analytics from "./pages/Analytics;";
 import ClinicAssessments from "./pages/ClinicAssessments";
 import Bundles from "./pages/Bundles";
-import NewBundle from "./pages/NewBundle"
+import NewBundle from "./pages/NewBundle";
+import Analytics from "./pages/Analytics;";
 
 const router = createBrowserRouter([
-  {
-    path: "/login",
-    element: <Login />,
-  },
+  // LOGIN PAGE
+  { path: "/login", element: <Login /> },
 
+  // PROTECTED ROUTES
   {
     path: "/",
     element: (
@@ -87,85 +86,85 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="/admin-dashboard" /> },
 
+      // DASHBOARD
       { path: "admin-dashboard", element: <Home /> },
       { path: "profile", element: <Myaccounts /> },
 
-      /* Users */
+      // USERS
       { path: "users", element: <Users /> },
       { path: "user/:id", element: <EditUser /> },
 
-      /* Products */
+      // PRODUCTS
       { path: "products", element: <Products /> },
       { path: "newproduct", element: <NewProduct /> },
       { path: "product/:productId", element: <Product /> },
       { path: "features/:id", element: <ProductFeaturePage /> },
 
-      /* Reviews */
+      // REVIEWS
       { path: "reviews/:id", element: <ProductReviews /> },
       { path: "my-wishlist", element: <MyWishlist /> },
 
-      /* Orders */
+      // ORDERS
       { path: "orders", element: <Orders /> },
       { path: "create-order", element: <CreateOrder /> },
       { path: "inventory", element: <Inventory /> },
       { path: "invoices", element: <AdminInvoices /> },
 
-      /* Marketing */
+      // MARKETING
       { path: "banners", element: <Banners /> },
       { path: "vendors", element: <Vendors /> },
       { path: "create-vendor", element: <CreateVendor /> },
       { path: "vendor/:id", element: <EditVendor /> },
 
-      /* Categories */
+      // CATEGORIES
       { path: "categories", element: <CategoryList /> },
       { path: "new-category", element: <CreateCategory /> },
       { path: "category/:id", element: <EditCategory /> },
 
-      /* Coupons */
+      // COUPONS
       { path: "coupons", element: <Coupons /> },
       { path: "new-coupon", element: <CreateCoupon /> },
       { path: "coupon/:id", element: <EditCoupon /> },
 
-      /* Payment */
+      // PAYMENT
       { path: "payments", element: <Payment /> },
       { path: "payment/:id", element: <PaymentDetails /> },
 
-      /* Returns */
+      // RETURNS
       { path: "returns", element: <Returns /> },
       { path: "create-return", element: <CreateReturn /> },
       { path: "return/:id", element: <ReturnDetailPage /> },
 
-      /* Blogs */
+      // BLOGS
       { path: "blogs", element: <Blogs /> },
       { path: "create-blog", element: <CreateBlog /> },
       { path: "blog/:id", element: <EditBlog /> },
       { path: "blog-detail/:id", element: <BlogDetail /> },
 
-      /* Support Tickets */
+      // SUPPORT TICKETS
       { path: "tickets", element: <SupportTicketList /> },
       { path: "tickets/:id", element: <SupportTicketDetail /> },
 
-      /* Notifications */
+      // NOTIFICATIONS
       { path: "notifications", element: <NotificationList /> },
       { path: "notifications/create", element: <NotificationCreate /> },
-      {path: "/notifications/:id",element: <NotificationDetail />},
-  
+      { path: "notifications/:id", element: <NotificationDetail /> },
 
-
-      /* Analytics */
+      // ANALYTICS & OTHER PAGES
       { path: "charts", element: <ChartsPage /> },
       { path: "analytics", element: <Analytics /> },
-      {path: "clinic-assessments", element: <ClinicAssessments/>},
-      {path: "bundles", element: <Bundles/>},
-      {path: "bundles/create", element:<NewBundle/>},
+      { path: "clinic-assessments", element: <ClinicAssessments /> },
+      { path: "bundles", element: <Bundles /> },
+      { path: "bundles/create", element: <NewBundle /> },
       { path: "all-logs", element: <AlllogsPage /> },
 
-      /* Settings */
+      // SETTINGS
       { path: "settings", element: <Settings /> },
       { path: "backups", element: <Backups /> },
     ],
   },
 
+  // 404 PAGE
   {
     path: "*",
     element: (
