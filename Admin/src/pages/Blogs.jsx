@@ -16,33 +16,34 @@ const Blogs = () => {
         setLoading(true);
         const res = await userRequest.get("/blogs");
 
-        // ✅ Ensure blogs is always an array
-        const data = Array.isArray(res.data)
-          ? res.data
+        // Always ensure blogs is an array
+        const data = Array.isArray(res.data.blogs)
+          ? res.data.blogs
           : res.data.blogs || [];
 
         setBlogs(data);
       } catch (err) {
-        console.log(err);
+        console.error(err);
         toast.error("Failed to fetch blogs");
       } finally {
         setLoading(false);
       }
     };
+
     getBlogs();
   }, []);
 
   // ================= DELETE BLOG =================
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this blog?")) return;
+    if (!window.confirm("Are you sure you want to delete this blog?")) return;
 
     try {
       setDeletingId(id);
       await userRequest.delete(`/blogs/${id}`);
-      setBlogs((prev) => prev.filter((p) => p._id !== id));
+      setBlogs((prev) => prev.filter((blog) => blog._id !== id));
       toast.success("Blog deleted successfully 🗑️");
     } catch (err) {
-      console.log(err);
+      console.error(err);
       toast.error(err?.response?.data?.message || "Delete failed");
     } finally {
       setDeletingId(null);
@@ -61,7 +62,7 @@ const Blogs = () => {
               Blog Management
             </h1>
             <p className="text-gray-500 mt-1 text-sm md:text-base">
-              Manage, edit and create blog posts easily.
+              Manage, edit, and create blog posts easily.
             </p>
           </div>
 
