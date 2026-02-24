@@ -69,7 +69,9 @@ import NotificationDetail from "./pages/NotificationDetail";
 import ClinicAssessments from "./pages/ClinicAssessments";
 import Bundles from "./pages/Bundles";
 import NewBundle from "./pages/NewBundle";
-import Analytics from "./pages/Analytics;";
+import Analytics from "./pages/Analytics";
+
+
 
 const router = createBrowserRouter([
   // LOGIN PAGE
@@ -138,8 +140,8 @@ const router = createBrowserRouter([
       // BLOGS
       { path: "blogs", element: <Blogs /> },
       { path: "create-blog", element: <CreateBlog /> },
-      { path: "blog/:id", element: <EditBlog /> },
-      { path: "blog-detail/:id", element: <BlogDetail /> },
+      { path: "edit-blog/:id", element: <EditBlog /> },
+      { path: "blog-detail/:id", element: <BlogDetail /> }, // ✅ detail route
 
       // SUPPORT TICKETS
       { path: "tickets", element: <SupportTicketList /> },
@@ -152,7 +154,9 @@ const router = createBrowserRouter([
 
       // ANALYTICS & OTHER PAGES
       { path: "charts", element: <ChartsPage /> },
-      { path: "analytics", element: <Analytics /> },
+
+      {path: "analytics", element:<Analytics/>},
+      // { path: "analytics", element: <Analytics /> },
       { path: "clinic-assessments", element: <ClinicAssessments /> },
       { path: "bundles", element: <Bundles /> },
       { path: "bundles/create", element: <NewBundle /> },
@@ -168,7 +172,7 @@ const router = createBrowserRouter([
   {
     path: "*",
     element: (
-      <div className="flex items-center justify-center min-h-screen text-center">
+      <div className="flex flex-col items-center justify-center min-h-screen text-center">
         <h1 className="text-4xl font-bold text-red-500">404 Not Found</h1>
         <p className="mt-2 text-gray-600">
           The page you are looking for does not exist.
