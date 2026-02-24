@@ -6,13 +6,14 @@ import asyncHandler from "express-async-handler";
  CREATE BLOG (ADMIN ONLY)
 ====================================================
 */
-
-const createBlog = asyncHandler(async (req, res, next) => {
+const createBlog = asyncHandler(async (req, res) => {
   const { title, content, tags, image, author, excerpt, category } = req.body;
 
   if (!title || !content) {
-    res.status(400);
-    throw new Error("Title and content are required");
+    return res.status(400).json({
+      success: false,
+      message: "Title and content are required",
+    });
   }
 
   const blog = await Blog.create({
@@ -37,11 +38,10 @@ const createBlog = asyncHandler(async (req, res, next) => {
 
 /*
 ====================================================
- GET ALL BLOGS
+ GET ALL BLOGS (PUBLIC)
 ====================================================
 */
-
-const getAllBlogs = asyncHandler(async (req, res, next) => {
+const getAllBlogs = asyncHandler(async (req, res) => {
   const blogs = await Blog.find()
     .sort({ createdAt: -1 })
     .lean();
@@ -55,16 +55,17 @@ const getAllBlogs = asyncHandler(async (req, res, next) => {
 
 /*
 ====================================================
- GET SINGLE BLOG
+ GET SINGLE BLOG (PUBLIC)
 ====================================================
 */
-
-const getBlog = asyncHandler(async (req, res, next) => {
+const getBlog = asyncHandler(async (req, res) => {
   const blog = await Blog.findById(req.params.id).lean();
 
   if (!blog) {
-    res.status(404);
-    throw new Error("Blog not found");
+    return res.status(404).json({
+      success: false,
+      message: "Blog not found",
+    });
   }
 
   res.status(200).json({
@@ -75,11 +76,10 @@ const getBlog = asyncHandler(async (req, res, next) => {
 
 /*
 ====================================================
- UPDATE BLOG
+ UPDATE BLOG (ADMIN ONLY)
 ====================================================
 */
-
-const updateBlog = asyncHandler(async (req, res, next) => {
+const updateBlog = asyncHandler(async (req, res) => {
   const allowedFields = [
     "title",
     "content",
@@ -102,18 +102,16 @@ const updateBlog = asyncHandler(async (req, res, next) => {
     updates.tags = updates.tags.split(",").map((t) => t.trim());
   }
 
-  const blog = await Blog.findByIdAndUpdate(
-    req.params.id,
-    { $set: updates },
-    {
-      new: true,
-      runValidators: true,
-    }
-  );
+  const blog = await Blog.findByIdAndUpdate(req.params.id, { $set: updates }, {
+    new: true,
+    runValidators: true,
+  });
 
   if (!blog) {
-    res.status(404);
-    throw new Error("Blog not found");
+    return res.status(404).json({
+      success: false,
+      message: "Blog not found",
+    });
   }
 
   res.status(200).json({
@@ -124,16 +122,17 @@ const updateBlog = asyncHandler(async (req, res, next) => {
 
 /*
 ====================================================
- DELETE BLOG
+ DELETE BLOG (ADMIN ONLY)
 ====================================================
 */
-
-const deleteBlog = asyncHandler(async (req, res, next) => {
+const deleteBlog = asyncHandler(async (req, res) => {
   const blog = await Blog.findByIdAndDelete(req.params.id);
 
   if (!blog) {
-    res.status(404);
-    throw new Error("Blog not found");
+    return res.status(404).json({
+      success: false,
+      message: "Blog not found",
+    });
   }
 
   res.status(200).json({
