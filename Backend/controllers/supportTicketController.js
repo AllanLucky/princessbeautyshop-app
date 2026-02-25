@@ -62,7 +62,7 @@ const getTicket = asyncHandler(async (req, res) => {
     throw new Error("Ticket not found");
   }
 
-  // Optional: Restrict users from viewing other users' tickets
+  // Restrict non-admin users from viewing other users' tickets
   if (req.user?.role !== "admin" && ticket.user.toString() !== req.user._id.toString()) {
     res.status(403);
     throw new Error("Access denied");
@@ -83,7 +83,7 @@ const updateTicket = asyncHandler(async (req, res) => {
     throw new Error("Ticket not found");
   }
 
-  // Optional: Only allow ticket owner or admin to update
+  // Only ticket owner or admin can update
   if (req.user?.role !== "admin" && ticket.user.toString() !== req.user._id.toString()) {
     res.status(403);
     throw new Error("Access denied");
@@ -121,7 +121,8 @@ const deleteTicket = asyncHandler(async (req, res) => {
     throw new Error("Access denied");
   }
 
-  await ticket.remove();
+  // Use deleteOne to avoid `.remove()` issues
+  await SupportTicket.deleteOne({ _id: ticket._id });
 
   res.status(200).json({
     success: true,
