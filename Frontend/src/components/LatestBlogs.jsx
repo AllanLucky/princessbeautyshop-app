@@ -9,7 +9,7 @@ const LatestBlogs = () => {
 
   const location = useLocation();
 
-  // ================= FETCH BLOGS =================
+  // ================= FETCH LATEST BLOGS =================
   const fetchBlogs = async () => {
     try {
       setLoading(true);
@@ -17,8 +17,12 @@ const LatestBlogs = () => {
 
       const res = await userRequest.get("/blogs");
 
-      const allBlogs = res.data?.blogs || [];
+      // Ensure blogs array exists
+      const allBlogs = Array.isArray(res.data)
+        ? res.data
+        : res.data.blogs || [];
 
+      // Take only latest 3 blogs
       setBlogs(allBlogs.slice(0, 3));
     } catch (err) {
       console.error(err);
@@ -32,7 +36,7 @@ const LatestBlogs = () => {
     fetchBlogs();
   }, []);
 
-  // ================= LOADING STATE =================
+  // ================= LOADING =================
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-12 text-center text-gray-500">
@@ -41,7 +45,7 @@ const LatestBlogs = () => {
     );
   }
 
-  // ================= ERROR STATE =================
+  // ================= ERROR =================
   if (error) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-12 text-center text-red-500">
@@ -53,41 +57,31 @@ const LatestBlogs = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
 
-      {/* Header */}
+      {/* ================= HEADER ================= */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
+        <h2 className="text-3xl font-bold text-gray-800">Latest Blogs</h2>
 
-        <h2 className="text-3xl font-bold text-gray-800">
-          Latest Blogs
-        </h2>
-
-        {/* View All */}
         <Link
-          to={location.pathname.startsWith("/admin")
-            ? "/admin/blogs"
-            : "/blogs"}
-          className="bg-pink-600 hover:bg-pink-700 text-white px-6 py-3 rounded-xl transition w-full sm:w-auto text-center"
-        >
-          View All →
+          to={location.pathname.startsWith("/admin") ? "/admin/blogs" : "/blogs"}>
+          <button className="mt-4 px-6 py-2 bg-pink-600 text-white font-semibold rounded-lg hover:bg-pink-700 transition duration-300 mb-3">
+           View All
+      </button>
         </Link>
-
       </div>
 
-      {/* Empty State */}
+      {/* ================= EMPTY STATE ================= */}
       {!blogs.length && (
-        <p className="text-center text-gray-400">
-          No blogs available
-        </p>
+        <p className="text-center text-gray-400">No blogs available</p>
       )}
 
-      {/* Blog Grid */}
+      {/* ================= BLOG GRID ================= */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {blogs.map((blog) => (
           <div
             key={blog._id}
             className="bg-white shadow-md rounded-2xl overflow-hidden hover:shadow-xl transition duration-300 flex flex-col"
           >
-
-            {/* Image */}
+            {/* Blog Image */}
             {blog.image && (
               <img
                 src={blog.image}
@@ -97,7 +91,6 @@ const LatestBlogs = () => {
             )}
 
             <div className="p-5 flex flex-col flex-grow">
-
               <h3 className="font-semibold text-lg mb-2 line-clamp-2">
                 {blog.title}
               </h3>
@@ -108,19 +101,19 @@ const LatestBlogs = () => {
 
               {/* Read More */}
               <Link
-                to={location.pathname.startsWith("/admin")
-                  ? `/admin/blog-detail/${blog._id}`
-                  : `/blog-detail/${blog._id}`}
+                to={
+                  location.pathname.startsWith("/admin")
+                    ? `/admin/blog-detail/${blog._id}`
+                    : `/blog-detail/${blog._id}`
+                }
                 className="mt-4 inline-block text-pink-600 font-semibold hover:underline"
               >
                 Read More →
               </Link>
-
             </div>
           </div>
         ))}
       </div>
-
     </div>
   );
 };
