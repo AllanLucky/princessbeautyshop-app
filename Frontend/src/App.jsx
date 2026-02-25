@@ -24,8 +24,13 @@ import NotFoundPage from "./pages/NotFoundPage";
 import VerifyAccounty from "./pages/VerifyAccounty";
 
 /* Blog Pages */
-import BlogList from "./pages/BlogList";         // public blog listing page
-import BlogDetail from "./pages/BlogDetail";     // public blog detail page
+import BlogList from "./pages/BlogList";         
+import BlogDetail from "./pages/BlogDetail";     
+
+/* Support Ticket Pages */
+import RaiseTicket from "./pages/RaiseTicket";
+import UserTicketList from "./pages/UserTicketList";
+import UserSupportTicketDetail from "./pages/UserSupportTicketDetail";
 
 /* Components */
 import Announcement from "./components/Announcement";
@@ -35,13 +40,8 @@ import AboutUs from "./components/AboutUs";
 import Contact from "./components/Contact";
 import Shop from "./components/Shop";
 import AboutUsReadme from "./components/AboutUsReadme";
-// import SkinClinic from "./pages/Clinic";
-// import BundleDetail from "./pages/PackageDetailed";
-// import Timetable from "./pages/Timetable";
-// import Packages from "./pages/Package";
 
 /* ================= LAYOUT ================= */
-
 const Layout = () => (
   <>
     <Announcement />
@@ -52,7 +52,6 @@ const Layout = () => (
 );
 
 /* ================= AUTH GUARD ================= */
-
 const ProtectedRoute = ({ children }) => {
   const currentUser = useSelector((state) => state?.user?.currentUser);
 
@@ -64,7 +63,6 @@ const ProtectedRoute = ({ children }) => {
 };
 
 /* ================= AUTH REDIRECT ================= */
-
 const AuthRedirect = ({ children }) => {
   const currentUser = useSelector((state) => state?.user?.currentUser);
 
@@ -76,7 +74,6 @@ const AuthRedirect = ({ children }) => {
 };
 
 /* ================= APP ROUTER ================= */
-
 function App() {
   const router = createBrowserRouter([
     {
@@ -176,23 +173,39 @@ function App() {
         { path: "/products/:searchterm", element: <ProductList /> },
 
         /* BLOGS (PUBLIC FRONTEND) */
-        { path: "/blogs", element: <BlogList /> },                // All blogs page
-        { path: "/blog-detail/:id", element: <BlogDetail /> },   // Single blog page
+        { path: "/blogs", element: <BlogList /> },                
+        { path: "/blog-detail/:id", element: <BlogDetail /> },   
 
-        {path: "/about-us", element: <AboutUs/>},
-        {path: "/about-us-readme", element: <AboutUsReadme/>},
-        {path: "/contact-us", element: <Contact/>},
-        {path: "/shop", element: <Shop/>},
+        { path: "/about-us", element: <AboutUs /> },
+        { path: "/about-us-readme", element: <AboutUsReadme /> },
+        { path: "/contact-us", element: <Contact /> },
+        { path: "/shop", element: <Shop /> },
 
-         
-        //  { path: "/skin-clinic", element: <SkinClinic />},
-        //  {  path: "/package/:packageId", element: <BundleDetail />},
-        //  {  path: "/skincare-timetable",element: <Timetable />,},
-        //  {path: "/packages", element: <Packages />,},
-          
-         
-        
-        
+        /* SUPPORT TICKETS (USER) */
+        {
+          path: "/support-tickets",
+          element: (
+            <ProtectedRoute>
+              <UserTicketList />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "/support-tickets/new",
+          element: (
+            <ProtectedRoute>
+              <RaiseTicket />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "/support-tickets/:id",
+          element: (
+            <ProtectedRoute>
+              <UserSupportTicketDetail />
+            </ProtectedRoute>
+          ),
+        },
 
         /* 404 */
         { path: "*", element: <NotFoundPage /> },

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { userRequest } from "../requestMethods";
+import { userRequest } from "../requestMethod";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 

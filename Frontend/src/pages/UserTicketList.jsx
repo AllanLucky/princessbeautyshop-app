@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { userRequest } from "../requestMethods";
+import { userRequest } from "../requestMethod";
 import { toast, ToastContainer } from "react-toastify";
 import { FaEye, FaTrash } from "react-icons/fa";
 import "react-toastify/dist/ReactToastify.css";
