@@ -23,10 +23,22 @@ import ResetPassword from "./pages/ResetPassword";
 import NotFoundPage from "./pages/NotFoundPage";
 import VerifyAccounty from "./pages/VerifyAccounty";
 
+/* Blog Pages */
+import BlogList from "./pages/BlogList";         // public blog listing page
+import BlogDetail from "./pages/BlogDetail";     // public blog detail page
+
 /* Components */
 import Announcement from "./components/Announcement";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import AboutUs from "./components/AboutUs";
+import Contact from "./components/Contact";
+import Shop from "./components/Shop";
+import AboutUsReadme from "./components/AboutUsReadme";
+// import SkinClinic from "./pages/Clinic";
+// import BundleDetail from "./pages/PackageDetailed";
+// import Timetable from "./pages/Timetable";
+// import Packages from "./pages/Package";
 
 /* ================= LAYOUT ================= */
 
@@ -69,7 +81,6 @@ function App() {
   const router = createBrowserRouter([
     {
       element: <Layout />,
-
       children: [
         { path: "/", element: <Home /> },
         { path: "/cart", element: <Cart /> },
@@ -83,7 +94,6 @@ function App() {
             </AuthRedirect>
           ),
         },
-
         {
           path: "/create-account",
           element: (
@@ -92,7 +102,6 @@ function App() {
             </AuthRedirect>
           ),
         },
-
         {
           path: "/verify-account",
           element: (
@@ -101,7 +110,6 @@ function App() {
             </AuthRedirect>
           ),
         },
-
         {
           path: "/forgot-password",
           element: (
@@ -110,7 +118,6 @@ function App() {
             </AuthRedirect>
           ),
         },
-
         {
           path: "/reset-password/:token",
           element: (
@@ -129,7 +136,6 @@ function App() {
             </ProtectedRoute>
           ),
         },
-
         {
           path: "/payment",
           element: (
@@ -138,8 +144,6 @@ function App() {
             </ProtectedRoute>
           ),
         },
-
-        /* ⭐ Stripe Success Verification Page */
         {
           path: "/payment-success",
           element: (
@@ -158,7 +162,6 @@ function App() {
             </ProtectedRoute>
           ),
         },
-
         {
           path: "/customer-dashboard/myorders",
           element: (
@@ -172,11 +175,27 @@ function App() {
         { path: "/product/:productId", element: <ProductDetails /> },
         { path: "/products/:searchterm", element: <ProductList /> },
 
+        /* BLOGS (PUBLIC FRONTEND) */
+        { path: "/blogs", element: <BlogList /> },                // All blogs page
+        { path: "/blog-detail/:id", element: <BlogDetail /> },   // Single blog page
+
+        {path: "/about-us", element: <AboutUs/>},
+        {path: "/about-us-readme", element: <AboutUsReadme/>},
+        {path: "/contact-us", element: <Contact/>},
+        {path: "/shop", element: <Shop/>},
+
+         
+        //  { path: "/skin-clinic", element: <SkinClinic />},
+        //  {  path: "/package/:packageId", element: <BundleDetail />},
+        //  {  path: "/skincare-timetable",element: <Timetable />,},
+        //  {path: "/packages", element: <Packages />,},
+          
+         
+        
+        
+
         /* 404 */
-        {
-          path: "*",
-          element: <NotFoundPage />,
-        },
+        { path: "*", element: <NotFoundPage /> },
       ],
     },
   ]);
