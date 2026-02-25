@@ -15,7 +15,6 @@ const Navbar = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // ✅ Select only what you need from Redux
   const cart = useSelector((state) => state.cart);
   const user = useSelector((state) => state.user.currentUser);
 
@@ -117,6 +116,16 @@ const Navbar = () => {
                   >
                     Orders
                   </Link>
+
+                  {/* Support Ticket Link */}
+                  <Link
+                    to="/support-tickets"
+                    className="block px-4 py-2 hover:bg-gray-100"
+                    onClick={() => setOpenDropdown(false)}
+                  >
+                    Support Tickets
+                  </Link>
+
                   <button
                     onClick={handleLogout}
                     className="w-full text-left px-4 py-2 hover:bg-gray-100"
