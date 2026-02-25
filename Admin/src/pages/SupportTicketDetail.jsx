@@ -16,10 +16,10 @@ const SupportTicketDetail = () => {
   const fetchTicket = async () => {
     try {
       setLoading(true);
-      const res = await userRequest.get(`/tickets/detail/${id}`);
+      const res = await userRequest.get(`/tickets/admin/detail/${id}`); // match backend route
       setTicket(res.data.ticket);
       setStatus(res.data.ticket.status);
-      setPriority(res.data.ticket.priority);
+      setPriority(res.data.ticket.priority || "low");
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to load ticket");
     } finally {
@@ -31,6 +31,7 @@ const SupportTicketDetail = () => {
     fetchTicket();
   }, [id]);
 
+  // SEND REPLY
   const sendReply = async () => {
     if (!reply.trim()) {
       toast.error("Reply cannot be empty");
@@ -60,6 +61,7 @@ const SupportTicketDetail = () => {
     }
   };
 
+  // UPDATE STATUS & PRIORITY
   const updateStatusPriority = async () => {
     try {
       await userRequest.put(`/tickets/admin/${id}`, { status, priority });
@@ -70,11 +72,8 @@ const SupportTicketDetail = () => {
     }
   };
 
-  if (loading)
-    return <div className="p-6 text-gray-500 animate-pulse">Loading ticket...</div>;
-
-  if (!ticket)
-    return <div className="p-6 text-gray-500">Ticket not found</div>;
+  if (loading) return <div className="p-6 text-gray-500 animate-pulse">Loading ticket...</div>;
+  if (!ticket) return <div className="p-6 text-gray-500">Ticket not found</div>;
 
   return (
     <div className="min-h-screen bg-gray-100 p-6 flex justify-center">
@@ -82,6 +81,7 @@ const SupportTicketDetail = () => {
       <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl p-6">
         <h2 className="text-2xl font-bold mb-6 text-gray-800">{ticket.subject}</h2>
 
+        {/* Status & Priority */}
         <div className="mb-4 flex gap-4 flex-wrap">
           <select
             value={status}

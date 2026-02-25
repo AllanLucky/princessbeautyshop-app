@@ -9,10 +9,11 @@ const SupportTicketList = () => {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // FETCH ALL TICKETS
   const fetchTickets = async () => {
     try {
       setLoading(true);
-      const res = await userRequest.get("/tickets/admin/all");
+      const res = await userRequest.get("/tickets/admin/all"); // match backend admin route
       setTickets(res.data.tickets || []);
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to load tickets");
@@ -21,6 +22,7 @@ const SupportTicketList = () => {
     }
   };
 
+  // DELETE TICKET
   const deleteTicket = async (id) => {
     if (!window.confirm("Are you sure you want to delete this ticket?")) return;
     try {
@@ -60,12 +62,12 @@ const SupportTicketList = () => {
                   {ticket.status}
                 </span>
                 <span className="inline-block mt-2 ml-2 text-xs bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full capitalize">
-                  {ticket.priority}
+                  {ticket.priority || "low"}
                 </span>
               </div>
 
               <div className="flex gap-5 items-center">
-                <Link to={`/admin/ticket/${ticket._id}`}>
+                <Link to={`/tickets/${ticket._id}`}>
                   <FaEye className="text-purple-600 text-xl hover:scale-110 transition" />
                 </Link>
                 <button onClick={() => deleteTicket(ticket._id)}>
