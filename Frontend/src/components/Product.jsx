@@ -1,9 +1,18 @@
 import React from "react";
 import { FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
 
-// ⭐ Star Rating Component
-const StarRating = ({ rating, maxRating = 5 }) => {
+// 🛍 Product Card Component
+const Product = ({ id, name, price, image, rating = 0, description }) => {
+  
+  // ✅ Format price safely
+  const formattedPrice =
+    price !== undefined && price !== null
+      ? Number(price).toLocaleString("en-KE")
+      : "N/A";
+
+  // ✅ Generate Stars Directly Here
   const stars = [];
+  const maxRating = 5;
 
   for (let i = 1; i <= maxRating; i++) {
     if (i <= Math.floor(rating)) {
@@ -14,17 +23,6 @@ const StarRating = ({ rating, maxRating = 5 }) => {
       stars.push(<FaRegStar key={i} className="text-yellow-400" />);
     }
   }
-
-  return <div className="flex space-x-1 justify-center mt-1">{stars}</div>;
-};
-
-// 🛍 Product Card Component
-const Product = ({ id, name, price, image, rating, description }) => {
-  // Format price safely
-  const formattedPrice =
-    price !== undefined && price !== null
-      ? Number(price).toLocaleString("en-KE") // adds commas for thousands
-      : "N/A";
 
   return (
     <div
@@ -44,10 +42,14 @@ const Product = ({ id, name, price, image, rating, description }) => {
       </h2>
 
       {/* Description */}
-      <p className="mt-1 text-center text-gray-600 text-sm">{description}</p>
+      <p className="mt-1 text-center text-gray-600 text-sm">
+        {description}
+      </p>
 
-      {/* Rating */}
-      <StarRating rating={rating} />
+      {/* ⭐ Rating */}
+      <div className="flex space-x-1 justify-center mt-2">
+        {stars}
+      </div>
 
       {/* Price */}
       <span className="mt-2 text-lg font-bold text-pink-600">
@@ -63,4 +65,3 @@ const Product = ({ id, name, price, image, rating, description }) => {
 };
 
 export default Product;
-

@@ -4,98 +4,94 @@ import { useState } from "react";
 
 const ProductList = () => {
   const location = useLocation();
-  const query = location.pathname.split("/")[2]; // category from URL
+  const query = location.pathname.split("/")[2];
 
   const [filters, setFilters] = useState({});
   const [sort, setSort] = useState("newest");
 
-  // ================= HANDLE FILTER =================
+  // Handle filter change
   const handleFilters = (e) => {
     const { name, value } = e.target;
 
-    if (value === "all") {
-      const newFilters = { ...filters };
-      delete newFilters[name];
-      setFilters(newFilters);
-    } else {
-      setFilters({
-        ...filters,
-        [name]: value,
-      });
-    }
-  };
-
-  // ================= RESET FILTER =================
-  const resetFilters = () => {
-    setFilters({});
-    setSort("newest");
+    setFilters((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 md:px-8 pt-24 pb-10">
-      {/* HEADER */}
-      <h1 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800">
-        {query ? query.toUpperCase() : "All Products"}
-      </h1>
+    <div className="min-h-screen bg-gray-50 px-6 py-8">
 
-      {/* FILTER & SORT */}
-      <div className="bg-white p-4 rounded-xl shadow mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      {/* FILTER & SORT SECTION */}
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
 
-        {/* LEFT FILTER */}
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="font-semibold text-gray-700">Filter:</span>
+        {/* LEFT SIDE - FILTER */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <h2 className="text-xl font-semibold text-gray-800">
+            Filter Products
+          </h2>
 
-          {/* SKIN TYPE */}
+          {/* Concern Filter */}
           <select
             name="concern"
             onChange={handleFilters}
-            className="p-2 border rounded-md"
+            className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="all">Skin Type</option>
-            <option>Dry Skin</option>
-            <option>Oily Skin</option>
-            <option>Combination Skin</option>
-            <option>Normal Skin</option>
-            <option>Sensitive Skin</option>
-            <option>Acne Prone</option>
-            <option>Mature Skin</option>
-            <option>Hyperpigmentation</option>
+            <option value="">All Concerns</option>
+            <option value="Dry Skin">Dry Skin</option>
+            <option value="Pigmentation">Pigmentation</option>
+            <option value="Oil Control">Oil Control</option>
+            <option value="Anti Acne">Anti Acne</option>
+            <option value="Sunburn">Sunburn</option>
+            <option value="Skin Brightening">Skin Brightening</option>
+            <option value="Tan Removal">Tan Removal</option>
+            <option value="Night Routine">Night Routine</option>
+            <option value="UV Protection">UV Protection</option>
+            <option value="Damaged Hair">Damaged Hair</option>
+            <option value="Frizzy Hair">Frizzy Hair</option>
+            <option value="Stretch Marks">Stretch Marks</option>
+            <option value="Color Protection">Color Protection</option>
+            <option value="Dry Hair">Dry Hair</option>
+            <option value="Soothing">Soothing</option>
+            <option value="Dandruff">Dandruff</option>
+            <option value="Greying">Greying</option>
+            <option value="Hairfall">Hairfall</option>
+            <option value="Hair Color">Hair Color</option>
+            <option value="Well Being">Well Being</option>
+            <option value="Acne">Acne</option>
+            <option value="Hair Growth">Hair Growth</option>
           </select>
 
-          {/* BRAND */}
+          {/* Brand Filter */}
           <select
             name="brand"
             onChange={handleFilters}
-            className="p-2 border rounded-md"
+            className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="all">Brand</option>
-            <option>Neutrogena</option>
-            <option>Olay</option>
-            <option>L'Oréal</option>
-            <option>Garnier</option>
-            <option>Clinique</option>
-            <option>Nivea</option>
-            <option>Cetaphil</option>
-            <option>La Roche-Posay</option>
-            <option>Fenty Beauty</option>
+            <option value="">All Brands</option>
+            <option value="Garnier">Garnier</option>
+            <option value="Kylie">Kylie</option>
+            <option value="Kiss Beauty">Kiss Beauty</option>
+            <option value="Dr Rashel">Dr Rashel</option>
+            <option value="Luron">Luron</option>
+            <option value="Nivea">Nivea</option>
+            <option value="Heaven Dove">Heaven Dove</option>
+            <option value="Disaar">Disaar</option>
+            <option value="Johnsons Baby">Johnsons Baby</option>
+            <option value="Rexona">Rexona</option>
           </select>
-
-          {/* RESET */}
-          <button
-            onClick={resetFilters}
-            className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-md text-sm"
-          >
-            Reset
-          </button>
         </div>
 
-        {/* SORT */}
-        <div className="flex items-center gap-3">
-          <span className="font-semibold text-gray-700">Sort:</span>
+        {/* RIGHT SIDE - SORT */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <h2 className="text-xl font-semibold text-gray-800">
+            Sort Products
+          </h2>
+
           <select
-            onChange={(e) => setSort(e.target.value)}
-            className="p-2 border rounded-md"
             value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="newest">Newest</option>
             <option value="asc">Price (Low → High)</option>
@@ -104,7 +100,7 @@ const ProductList = () => {
         </div>
       </div>
 
-      {/* PRODUCTS */}
+      {/* PRODUCTS COMPONENT */}
       <Products query={query} filters={filters} sort={sort} />
     </div>
   );
