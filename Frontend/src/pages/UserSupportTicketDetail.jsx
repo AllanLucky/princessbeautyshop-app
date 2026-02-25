@@ -12,10 +12,12 @@ const UserSupportTicketDetail = () => {
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
 
+  // ================= FETCH SINGLE TICKET =================
   const fetchTicket = async () => {
     try {
       setLoading(true);
-      const res = await userRequest.get(`/tickets/detail/${id}`);
+      // Correct route for GET single ticket
+      const res = await userRequest.get(`/tickets/user/detail/${id}`);
       setTicket(res.data.ticket);
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to load ticket");
@@ -28,6 +30,7 @@ const UserSupportTicketDetail = () => {
     fetchTicket();
   }, [id]);
 
+  // ================= SEND REPLY =================
   const sendReply = async () => {
     if (!reply.trim()) {
       toast.error("Reply cannot be empty");
@@ -36,7 +39,8 @@ const UserSupportTicketDetail = () => {
 
     try {
       setSending(true);
-      await userRequest.put(`/tickets/${id}`, {
+      // Correct route for PUT/update ticket
+      await userRequest.put(`/tickets/user/${id}`, {
         responses: [
           ...(ticket?.responses || []),
           {
@@ -57,6 +61,7 @@ const UserSupportTicketDetail = () => {
     }
   };
 
+  // ================= LOADING / EMPTY STATES =================
   if (loading)
     return <div className="p-6 text-gray-500 animate-pulse">Loading ticket...</div>;
 
@@ -66,9 +71,12 @@ const UserSupportTicketDetail = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-6 flex justify-center">
       <ToastContainer position="top-right" autoClose={2500} />
+
       <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl p-6">
+        {/* Ticket Subject */}
         <h2 className="text-2xl font-bold mb-6 text-gray-800">{ticket.subject}</h2>
 
+        {/* Ticket Status */}
         <div className="mb-4">
           <span className="inline-block text-sm font-semibold px-3 py-1 rounded-full 
             bg-yellow-100 text-yellow-700 capitalize">
@@ -76,7 +84,7 @@ const UserSupportTicketDetail = () => {
           </span>
         </div>
 
-        {/* Conversation */}
+        {/* Conversation Thread */}
         <div className="space-y-4 mb-6 max-h-[450px] overflow-y-auto">
           {ticket.responses?.map((r, i) => (
             <div
@@ -93,9 +101,12 @@ const UserSupportTicketDetail = () => {
               </p>
             </div>
           ))}
+          {!ticket.responses?.length && (
+            <p className="text-gray-400 text-sm">No responses yet.</p>
+          )}
         </div>
 
-        {/* Reply */}
+        {/* Reply Box */}
         <div className="space-y-4">
           <textarea
             value={reply}

@@ -1,18 +1,20 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { userRequest } from "../requestMethod";
 import { toast, ToastContainer } from "react-toastify";
-import { FaEye, FaTrash } from "react-icons/fa";
+import { FaEye, FaTrash, FaPlus } from "react-icons/fa";
 import "react-toastify/dist/ReactToastify.css";
 
 const UserTicketList = () => {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
+  // ================= FETCH USER TICKETS =================
   const fetchTickets = async () => {
     try {
       setLoading(true);
-      const res = await userRequest.get("/tickets/user/all");
+      const res = await userRequest.get("/tickets/user/all"); // matches backend
       setTickets(res.data.tickets || []);
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to load tickets");
@@ -21,10 +23,13 @@ const UserTicketList = () => {
     }
   };
 
+  // ================= DELETE TICKET =================
   const deleteTicket = async (id) => {
     if (!window.confirm("Are you sure you want to delete this ticket?")) return;
     try {
-      await userRequest.delete(`/tickets/${id}`);
+      // Correct route for deleting a user's own ticket
+      await userRequest.delete(`/tickets/user/${id}`);
+      // Remove deleted ticket from state
       setTickets((prev) => prev.filter((t) => t._id !== id));
       toast.success("Ticket deleted successfully");
     } catch (error) {
@@ -41,13 +46,26 @@ const UserTicketList = () => {
       <ToastContainer position="top-right" autoClose={2500} />
 
       <div className="max-w-5xl mx-auto">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800">My Support Tickets</h2>
+        {/* Header + Create Ticket Button */}
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-800">My Support Tickets</h2>
+          <button
+            onClick={() => navigate("/support-tickets/new")}
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold transition"
+          >
+            <FaPlus /> Create Ticket
+          </button>
+        </div>
 
+        {/* Loading State */}
         {loading && <p className="text-gray-500 animate-pulse">Loading tickets...</p>}
+
+        {/* Empty State */}
         {!loading && tickets.length === 0 && (
           <p className="text-gray-400">No tickets found.</p>
         )}
 
+        {/* Ticket List */}
         <div className="bg-white rounded-2xl shadow divide-y overflow-hidden">
           {tickets.map((ticket) => (
             <div
@@ -62,7 +80,7 @@ const UserTicketList = () => {
               </div>
 
               <div className="flex gap-5 items-center">
-                <Link to={`/user/ticket/${ticket._id}`}>
+                <Link to={`/support-tickets/${ticket._id}`}>
                   <FaEye className="text-purple-600 text-xl hover:scale-110 transition" />
                 </Link>
                 <button onClick={() => deleteTicket(ticket._id)}>
