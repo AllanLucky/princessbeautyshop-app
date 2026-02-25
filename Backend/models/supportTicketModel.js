@@ -8,6 +8,12 @@ const supportTicketSchema = new mongoose.Schema(
       required: true,
     },
 
+    product: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product", // Make sure you have a Product model
+      default: null,
+    },
+
     subject: {
       type: String,
       required: true,
@@ -78,7 +84,6 @@ const supportTicketSchema = new mongoose.Schema(
 );
 
 /* ================= INDEXING FOR PERFORMANCE ================= */
-
 supportTicketSchema.index({ user: 1, status: 1 });
 supportTicketSchema.index({ priority: 1 });
 supportTicketSchema.index({ createdAt: -1 });
