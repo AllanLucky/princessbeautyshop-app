@@ -1,18 +1,19 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Product from "./Product";
 import { userRequest } from "../requestMethod";
 import { useLocation, Link } from "react-router-dom";
 
 const Products = ({ sort, query, filters = {} }) => {
   const [products, setProducts] = useState([]);
-  const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const location = useLocation();
 
-  // Get category from query string
-  const params = new URLSearchParams(location.search);
-  const category = params.get("category");
+  // ================= GET CATEGORY =================
+  const category = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get("category");
+  }, [location.search]);
 
   // ================= FETCH PRODUCTS =================
   useEffect(() => {
@@ -39,10 +40,11 @@ const Products = ({ sort, query, filters = {} }) => {
     getProducts();
   }, [category, query]);
 
-  // ================= APPLY FILTERS =================
-  useEffect(() => {
+  // ================= FILTER + SORT (COMBINED) =================
+  const filteredProducts = useMemo(() => {
     let temp = [...products];
 
+    // Apply filters
     if (Object.keys(filters).length > 0) {
       temp = temp.filter((item) =>
         Object.entries(filters).every(([key, value]) =>
@@ -51,13 +53,7 @@ const Products = ({ sort, query, filters = {} }) => {
       );
     }
 
-    setFilteredProducts(temp);
-  }, [products, filters]);
-
-  // ================= APPLY SORTING =================
-  useEffect(() => {
-    let temp = [...filteredProducts];
-
+    // Apply sorting
     if (sort === "newest") {
       temp.sort(
         (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
@@ -80,8 +76,8 @@ const Products = ({ sort, query, filters = {} }) => {
       );
     }
 
-    setFilteredProducts(temp);
-  }, [sort]);
+    return temp;
+  }, [products, filters, sort]);
 
   // ================= LOADING =================
   if (loading) {
@@ -92,7 +88,7 @@ const Products = ({ sort, query, filters = {} }) => {
     );
   }
 
-  // ================= EMPTY STATE =================
+  // ================= EMPTY =================
   if (!filteredProducts.length) {
     return (
       <div className="text-center mt-10 text-gray-500">
@@ -111,7 +107,11 @@ const Products = ({ sort, query, filters = {} }) => {
           0;
 
         return (
-          <Link key={product._id} to={`/product/${product._id}`}>
+          <Link
+            key={product._id}
+            to={`/product/${product._id}`}
+            className="block hover:scale-105 transition duration-300"
+          >
             <Product
               id={product._id}
               name={product.title}

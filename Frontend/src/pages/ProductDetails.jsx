@@ -13,6 +13,7 @@ import {
   FaRegHeart,
 } from "react-icons/fa";
 
+/* ================= STAR COMPONENT ================= */
 const StarDisplay = ({ rating = 0, maxRating = 5 }) => (
   <div className="flex gap-1">
     {[...Array(maxRating)].map((_, i) => (
@@ -24,6 +25,7 @@ const StarDisplay = ({ rating = 0, maxRating = 5 }) => (
   </div>
 );
 
+/* ================= PRODUCT DETAILS ================= */
 const ProductDetails = () => {
   const location = useLocation();
   const id = location.pathname.split("/")[2];
@@ -33,13 +35,13 @@ const ProductDetails = () => {
   const [quantity, setQuantity] = useState(1);
   const [reviews, setReviews] = useState([]);
   const [avgRating, setAvgRating] = useState(0);
-  const [tab, setTab] = useState("description");
   const [coupon, setCoupon] = useState("");
   const [discount, setDiscount] = useState({ type: null, value: 0 });
   const [wishlist, setWishlist] = useState([]);
   const [loadingWishlist, setLoadingWishlist] = useState(false);
+  const [notifyLoading, setNotifyLoading] = useState(false);
 
-  // ================= FETCH PRODUCT & WISHLIST =================
+  // ================= FETCH PRODUCT =================
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -57,44 +59,62 @@ const ProductDetails = () => {
         const wishRes = await userRequest.get("/products/my-wishlist");
         setWishlist(wishRes.data.wishlist || []);
       } catch (err) {
-        console.error(err);
-        toast.error("Failed to fetch product details");
+        toast.error(err,"Failed to fetch product details");
       }
     };
+
     fetchData();
   }, [id]);
 
   if (!product)
-    return <p className="p-10 text-center text-lg font-medium">Loading...</p>;
+    return (
+      <p className="p-10 text-center text-lg font-medium">Loading...</p>
+    );
 
   const stock = product.stock || 0;
+  const isOutOfStock = stock <= 0;
+
   const unitPrice = product.discountedPrice || product.originalPrice;
   const subtotal = unitPrice * quantity;
 
-  // Calculate total price with coupon
-  const totalPrice =
-    discount.type === "percentage"
-      ? subtotal - (subtotal * discount.value) / 100
-      : discount.type === "fixed"
-      ? subtotal - discount.value
-      : subtotal;
+  // ================= PRICE ENGINE =================
+  let totalPrice = subtotal;
 
+  if (discount.type === "percentage") {
+    totalPrice = subtotal - (subtotal * discount.value) / 100;
+  } else if (discount.type === "fixed") {
+    totalPrice = subtotal - discount.value;
+  }
+
+  // Prevent negative price
+  totalPrice = Math.max(totalPrice, 0);
+
+  // ================= QUANTITY =================
   const handleQuantity = (type) => {
+    if (isOutOfStock) return;
+
     if (type === "dec") setQuantity((p) => (p > 1 ? p - 1 : 1));
-    if (type === "inc" && quantity < stock) setQuantity((p) => p + 1);
+    if (type === "inc" && quantity < stock)
+      setQuantity((p) => p + 1);
   };
 
+  // ================= ADD TO CART =================
   const handleAddToCart = () => {
+    if (isOutOfStock) return;
+
     dispatch(addProduct({ ...product, quantity, price: totalPrice }));
     toast.success("Added to cart");
   };
 
-  // ================= APPLY COUPON =================
+  // ================= COUPON =================
   const applyCoupon = async () => {
+    if (isOutOfStock) return;
+
     if (!coupon) {
-      toast.error("Please enter a coupon code");
+      toast.error("Please enter coupon code");
       return;
     }
+
     try {
       const res = await userRequest.post("/coupons/validate", {
         code: coupon,
@@ -102,22 +122,18 @@ const ProductDetails = () => {
       });
 
       if (res.data.valid) {
-        setDiscount({ type: res.data.discountType, value: res.data.discountValue });
-        toast.success(
-          `Coupon applied! ${
-            res.data.discountType === "percentage"
-              ? res.data.discountValue + "%"
-              : "KES " + res.data.discountValue
-          } off`
-        );
+        setDiscount({
+          type: res.data.discountType,
+          value: res.data.discountValue,
+        });
+
+        toast.success("Coupon applied");
       } else {
         setDiscount({ type: null, value: 0 });
-        toast.error(res.data.message || "Invalid coupon code");
+        toast.error(res.data.message || "Invalid coupon");
       }
-    } catch (err) {
-      console.error(err);
-      setDiscount({ type: null, value: 0 });
-      toast.error(err.response?.data?.message || "Failed to validate coupon");
+    } catch {
+      toast.error("Coupon validation failed");
     }
   };
 
@@ -127,52 +143,84 @@ const ProductDetails = () => {
   const toggleWishlist = async () => {
     try {
       setLoadingWishlist(true);
+
       await userRequest.post(`/products/wishlist/${product._id}`);
+
       if (inWishlist) {
-        setWishlist((prev) => prev.filter((i) => i._id !== product._id));
+        setWishlist((prev) =>
+          prev.filter((i) => i._id !== product._id)
+        );
         toast.info("Removed from wishlist");
       } else {
         setWishlist((prev) => [...prev, product]);
         toast.success("Added to wishlist");
       }
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to update wishlist");
+    } catch {
+      toast.error("Wishlist update failed");
     } finally {
       setLoadingWishlist(false);
     }
   };
 
+  // ================= BACK IN STOCK NOTIFICATION =================
+  const notifyBackInStock = async () => {
+    try {
+      setNotifyLoading(true);
+
+      await userRequest.post(`/products/notify-stock/${product._id}`);
+
+      toast.success("You will be notified when product is back");
+    } catch {
+      toast.error("Notification request failed");
+    } finally {
+      setNotifyLoading(false);
+    }
+  };
+
+  // ================= UI =================
   return (
     <div className="max-w-7xl mx-auto p-6">
       <ToastContainer position="top-right" autoClose={2000} />
 
-      <div className="grid md:grid-cols-2 gap-10">
-        {/* IMAGE */}
-        <img
-          src={product.img?.[0]}
-          alt={product.title}
-          className="w-full max-h-[500px] object-contain rounded-xl shadow"
-        />
+      {/* ===== PRODUCT GRID ===== */}
+      <div className="grid md:grid-cols-2 gap-10 relative">
+        {/* IMAGE + SOLD OUT BADGE */}
+        <div className="relative">
+          <img
+            src={product.img?.[0]}
+            alt={product.title}
+            className="w-full max-h-[500px] object-contain rounded-xl shadow"
+          />
 
-        {/* INFO */}
+          {isOutOfStock && (
+            <div className="absolute top-4 left-4 bg-red-600 text-white px-4 py-1 rounded-lg text-sm font-semibold">
+              Sold Out
+            </div>
+          )}
+        </div>
+
+        {/* PRODUCT INFO */}
         <div className="flex flex-col">
           <h1 className="text-3xl font-bold">{product.title}</h1>
+
           <p className="text-gray-600 mt-2">{product.desc}</p>
 
           <div className="flex items-center gap-3 mt-3">
             <StarDisplay rating={Math.round(avgRating)} />
+
             <span className="text-sm text-gray-600">
-              {avgRating} ({reviews.length} reviews)
+              {avgRating} ({reviews.length})
             </span>
           </div>
 
           <p
             className={`mt-2 font-semibold ${
-              stock ? "text-green-600" : "text-red-600"
+              isOutOfStock ? "text-red-600" : "text-green-600"
             }`}
           >
-            {stock ? `${stock} In Stock` : "Out of Stock"}
+            {isOutOfStock
+              ? "Out of Stock"
+              : `${stock} In Stock`}
           </p>
 
           <h2 className="text-3xl text-pink-600 font-bold mt-4">
@@ -182,126 +230,74 @@ const ProductDetails = () => {
           {/* COUPON */}
           <div className="flex gap-3 mt-4">
             <input
-              type="text"
               value={coupon}
               onChange={(e) => setCoupon(e.target.value)}
               placeholder="Enter coupon code"
-              className="flex-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
+              disabled={isOutOfStock}
+              className="flex-1 border rounded-lg px-3 py-2"
             />
+
             <button
               onClick={applyCoupon}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
+              disabled={isOutOfStock}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
             >
               Apply
             </button>
           </div>
 
           {/* QUANTITY */}
-          <div className="flex items-center gap-4 mt-6">
-            <button
-              onClick={() => handleQuantity("dec")}
-              className="p-2 bg-gray-200 rounded-full hover:bg-gray-300 transition"
-            >
-              <FaMinus />
-            </button>
+          {!isOutOfStock && (
+            <div className="flex items-center gap-4 mt-6">
+              <button
+                onClick={() => handleQuantity("dec")}
+                className="p-2 bg-gray-200 rounded-full"
+              >
+                <FaMinus />
+              </button>
 
-            <span className="font-bold">{quantity}</span>
+              <span className="font-bold">{quantity}</span>
 
-            <button
-              onClick={() => handleQuantity("inc")}
-              disabled={quantity >= stock}
-              className="p-2 bg-gray-200 rounded-full hover:bg-gray-300 transition disabled:opacity-50"
-            >
-              <FaPlus />
-            </button>
-          </div>
+              <button
+                onClick={() => handleQuantity("inc")}
+                disabled={quantity >= stock}
+                className="p-2 bg-gray-200 rounded-full disabled:opacity-50"
+              >
+                <FaPlus />
+              </button>
+            </div>
+          )}
 
           {/* ACTION BUTTONS */}
           <div className="flex gap-4 mt-6">
-            <button
-              onClick={handleAddToCart}
-              className="flex-1 bg-pink-600 text-white py-3 rounded-lg font-semibold hover:bg-pink-700 transition"
-            >
-              Add to Cart
-            </button>
+            {!isOutOfStock && (
+              <button
+                onClick={handleAddToCart}
+                className="flex-1 bg-pink-600 text-white py-3 rounded-lg hover:bg-pink-700 transition"
+              >
+                Add to Cart
+              </button>
+            )}
+
+            {isOutOfStock && (
+              <button
+                onClick={notifyBackInStock}
+                disabled={notifyLoading}
+                className="flex-1 bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700"
+              >
+                Notify Me When Available
+              </button>
+            )}
 
             <button
               onClick={toggleWishlist}
               disabled={loadingWishlist}
-              className={`flex-1 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition ${
-                inWishlist
-                  ? "bg-gray-300 text-gray-700 cursor-default"
-                  : "bg-red-600 text-white hover:bg-red-700"
-              }`}
+              className="flex-1 bg-red-600 text-white py-3 rounded-lg hover:bg-red-700"
             >
-              {inWishlist ? <FaHeart /> : <FaRegHeart />}
-              {inWishlist ? "In Wishlist" : "Add to Wishlist"}
+              {inWishlist ? "Remove Wishlist" : "Add Wishlist"}
             </button>
           </div>
         </div>
-      </div>
-
-      {/* TABS */}
-      <div className="flex gap-6 mt-12 border-b">
-        {["description", "features", "specs", "reviews"].map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`pb-2 capitalize ${
-              tab === t
-                ? "border-b-2 border-pink-600 font-semibold"
-                : "text-gray-600 hover:text-pink-600 transition"
-            }`}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
-
-      {/* TAB CONTENT */}
-      <div className="mt-8 bg-white rounded-xl shadow p-6">
-        {tab === "description" && (
-          <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-            {product.desc}
-          </p>
-        )}
-
-        {tab === "features" && (
-          <ul className="grid md:grid-cols-2 gap-3 list-disc pl-5 text-gray-700">
-            {product.features?.map((f, i) => (
-              <li key={i}>{f}</li>
-            ))}
-          </ul>
-        )}
-
-        {tab === "specs" && (
-          <div className="border rounded-lg divide-y">
-            {product.specifications?.map((s, i) => (
-              <div
-                key={i}
-                className={`grid grid-cols-2 px-4 py-3 ${
-                  i % 2 ? "bg-white" : "bg-gray-50"
-                }`}
-              >
-                <span className="font-medium">{s.key}</span>
-                <span className="text-gray-600">{s.value}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {tab === "reviews" &&
-          (reviews.length === 0 ? (
-            <p>No reviews yet.</p>
-          ) : (
-            reviews.map((r, i) => (
-              <div key={i} className="border-b py-4">
-                <StarDisplay rating={r.star} />
-                <p className="font-semibold mt-1">{r.name}</p>
-                <p className="text-gray-600 mt-1">{r.comment}</p>
-              </div>
-            ))
-          ))}
       </div>
     </div>
   );
