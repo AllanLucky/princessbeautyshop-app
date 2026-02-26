@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { removeProduct, updateQuantity, clearCart } from "../redux/cartRedux";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useNavigate, Navigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const Cart = () => {
   const cart = useSelector((state) => state.cart || {});
@@ -14,7 +14,7 @@ const Cart = () => {
 
   const products = Array.isArray(cart?.products) ? cart.products : [];
 
-  // ================= REMOVE =================
+  // ================= REMOVE PRODUCT =================
   const handleRemoveProduct = (product) => {
     if (!product) return;
 
@@ -62,7 +62,7 @@ const Cart = () => {
     toast.error("Cart cleared");
   };
 
-  // ================= TOTAL CALCULATION =================
+  // ================= PRICE CALCULATION =================
   const subtotal = products.reduce(
     (acc, item) =>
       acc + Number(item.price || 0) * Number(item.quantity || 0),
@@ -75,7 +75,7 @@ const Cart = () => {
   const formatCurrency = (num) =>
     `KES ${Number(num || 0).toLocaleString()}`;
 
-  // ================= CHECKOUT =================
+  // ================= CHECKOUT NAVIGATION =================
   const handleProceedCheckout = () => {
     if (!user) {
       toast.error("Please login first");
@@ -110,7 +110,7 @@ const Cart = () => {
       </h2>
 
       <div className="flex flex-col lg:flex-row gap-10">
-        {/* LEFT */}
+        {/* LEFT SECTION */}
         <div className="flex-1 bg-white shadow-md rounded-xl p-6">
           <h3 className="font-semibold text-lg mb-6 border-b pb-3">
             Your Items ({products.length})
@@ -202,7 +202,7 @@ const Cart = () => {
           )}
         </div>
 
-        {/* RIGHT */}
+        {/* RIGHT SUMMARY */}
         <div className="w-full lg:w-[360px] bg-white shadow-md rounded-xl p-6 h-fit">
           <h3 className="font-semibold text-lg mb-6 border-b pb-3">
             Order Summary
