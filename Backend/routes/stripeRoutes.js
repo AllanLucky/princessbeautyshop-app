@@ -14,7 +14,6 @@ HELPER
 =====================================================
 */
 
-// Normalize image safely
 const normalizeImages = (img) => {
   if (!img) return [];
 
@@ -29,7 +28,7 @@ const normalizeImages = (img) => {
 
 /*
 =====================================================
-CHECKOUT SESSION
+CREATE CHECKOUT SESSION
 =====================================================
 */
 
@@ -45,16 +44,7 @@ router.post("/create-checkout-session", async (req, res) => {
     }
 
     /*
-    Remove old pending order if exists
-    */
-
-    await Order.deleteMany({
-      userId,
-      paymentStatus: "pending",
-    });
-
-    /*
-    CREATE CUSTOMER
+    Create Stripe customer
     */
 
     const customer = await stripe.customers.create({
@@ -68,7 +58,7 @@ router.post("/create-checkout-session", async (req, res) => {
     });
 
     /*
-    LINE ITEMS
+    Line items
     */
 
     const line_items = cart.products.map((product) => ({
@@ -78,7 +68,6 @@ router.post("/create-checkout-session", async (req, res) => {
         product_data: {
           name: product.title || "Product",
           images: normalizeImages(product.img),
-
           description: product.desc || "",
         },
 
@@ -91,7 +80,7 @@ router.post("/create-checkout-session", async (req, res) => {
     }));
 
     /*
-    CREATE SESSION ⭐ UPDATED URL HERE
+    Session URL
     */
 
     const frontendUrl = process.env.CLIENT_BASE_URL;
@@ -102,25 +91,28 @@ router.post("/create-checkout-session", async (req, res) => {
       payment_method_types: ["card"],
 
       line_items,
-
       mode: "payment",
-
-      success_url: `${frontendUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-
-      cancel_url: `${frontendUrl}/cart`,
 
       metadata: {
         userId: String(userId || ""),
         email: email || "",
         name: name || "",
+        phone: phone || "",
+        address: address || "",
+        total: String(total || 0),
       },
+
+      success_url:
+        `${frontendUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+
+      cancel_url: `${frontendUrl}/cart`,
     });
 
     /*
-    SAVE PENDING ORDER
+    Create pending order (important for verification lookup)
     */
 
-    const newOrder = await Order.create({
+    await Order.create({
       userId,
       name,
       email,
@@ -137,18 +129,20 @@ router.post("/create-checkout-session", async (req, res) => {
       })),
 
       total: Number(total || 0),
+
       stripeSessionId: session.id,
+
       paymentStatus: "pending",
       orderStatus: "processing",
     });
 
     return res.status(200).json({
       url: session.url,
-      orderId: newOrder._id,
+      sessionId: session.id,
     });
 
   } catch (error) {
-    console.error("Stripe error:", error.message);
+    console.error("Stripe session error:", error.message);
 
     return res.status(500).json({
       error: "Payment session creation failed",
@@ -158,7 +152,38 @@ router.post("/create-checkout-session", async (req, res) => {
 
 /*
 =====================================================
-WEBHOOK ⭐ SOURCE OF TRUTH
+ORDER VERIFICATION ENDPOINT ⭐ (PaymentSuccess Page)
+=====================================================
+*/
+
+router.get("/verify/:sessionId", async (req, res) => {
+  try {
+    const sessionId = req.params.sessionId;
+
+    const order = await Order.findOne({
+      stripeSessionId: sessionId,
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        message: "Order not found",
+      });
+    }
+
+    res.status(200).json(order);
+
+  } catch (error) {
+    console.error("Verification error:", error.message);
+
+    res.status(500).json({
+      message: "Server verification failed",
+    });
+  }
+});
+
+/*
+=====================================================
+WEBHOOK SOURCE OF TRUTH ⭐⭐⭐
 =====================================================
 */
 
@@ -188,18 +213,22 @@ router.post(
       const session = event.data.object;
 
       try {
-        await Order.updateOne(
-          { stripeSessionId: session.id },
+        await Order.findOneAndUpdate(
+          {
+            stripeSessionId: session.id,
+            paymentStatus: "pending",
+          },
           {
             paymentStatus: "paid",
             paidAt: new Date(),
-          }
+          },
+          { new: true }
         );
 
         console.log("✅ Payment confirmed:", session.id);
 
       } catch (err) {
-        console.error("Order update error:", err.message);
+        console.error("Webhook update error:", err.message);
       }
     }
 
