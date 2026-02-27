@@ -52,12 +52,12 @@ const Product = ({ id, name, price, image, rating = 0, description }) => {
       </div>
 
       {/* Price */}
-      <span className="mt-2 text-lg font-bold text-pink-600">
+      <span className="mt-2 text-lg font-bold text-rose-600">
         Price: KES <span>{formattedPrice}</span>
       </span>
 
       {/* Buy Button */}
-      <button className="mt-4 px-6 py-2 bg-pink-600 text-white font-semibold rounded-lg hover:bg-pink-700 transition duration-300 mb-3">
+      <button className="mt-4 px-6 py-2 bg-rose-600 text-white font-semibold rounded-lg hover:bg-rose-700 transition duration-300 mb-3">
         Buy Now
       </button>
     </div>
