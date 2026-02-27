@@ -70,6 +70,7 @@ import ClinicAssessments from "./pages/ClinicAssessments";
 import Bundles from "./pages/Bundles";
 import NewBundle from "./pages/NewBundle";
 import Analytics from "./pages/Analytics";
+import EditBundle from "./pages/EditBundle";
 
 
 
@@ -160,6 +161,8 @@ const router = createBrowserRouter([
       { path: "clinic-assessments", element: <ClinicAssessments /> },
       { path: "bundles", element: <Bundles /> },
       { path: "bundles/create", element: <NewBundle /> },
+      { path: "/edit/:id",element: <EditBundle />},
+
       { path: "all-logs", element: <AlllogsPage /> },
 
       // SETTINGS
