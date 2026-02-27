@@ -223,7 +223,7 @@ const ProductDetails = () => {
               : `${stock} In Stock`}
           </p>
 
-          <h2 className="text-3xl text-pink-600 font-bold mt-4">
+          <h2 className="text-3xl text-rose-600 font-bold mt-4">
             KES {totalPrice.toLocaleString()}
           </h2>
 
@@ -273,7 +273,7 @@ const ProductDetails = () => {
             {!isOutOfStock && (
               <button
                 onClick={handleAddToCart}
-                className="flex-1 bg-pink-600 text-white py-3 rounded-lg hover:bg-pink-700 transition"
+                className="flex-1 bg-rose-600 text-white py-3 rounded-lg hover:bg-pink-700 transition"
               >
                 Add to Cart
               </button>
