@@ -24,13 +24,16 @@ import NotFoundPage from "./pages/NotFoundPage";
 import VerifyAccounty from "./pages/VerifyAccounty";
 
 /* Blog Pages */
-import BlogList from "./pages/BlogList";         
-import BlogDetail from "./pages/BlogDetail";     
+import BlogList from "./pages/BlogList";
+import BlogDetail from "./pages/BlogDetail";
 
 /* Support Ticket Pages */
 import RaiseTicket from "./pages/RaiseTicket";
 import UserTicketList from "./pages/UserTicketList";
 import UserSupportTicketDetail from "./pages/UserSupportTicketDetail";
+
+/* ✅ Packages (Bundles) */
+import PackageDetailed from "./pages/PackageDetailed";
 
 /* Components */
 import Announcement from "./components/Announcement";
@@ -82,7 +85,7 @@ function App() {
         { path: "/", element: <Home /> },
         { path: "/cart", element: <Cart /> },
 
-        /* AUTH */
+        /* ================= AUTH ================= */
         {
           path: "/login",
           element: (
@@ -124,7 +127,7 @@ function App() {
           ),
         },
 
-        /* CHECKOUT FLOW */
+        /* ================= CHECKOUT FLOW ================= */
         {
           path: "/checkout",
           element: (
@@ -150,7 +153,7 @@ function App() {
           ),
         },
 
-        /* DASHBOARD */
+        /* ================= DASHBOARD ================= */
         {
           path: "/customer-dashboard/profile",
           element: (
@@ -168,20 +171,24 @@ function App() {
           ),
         },
 
-        /* PRODUCTS */
+        /* ================= PRODUCTS ================= */
         { path: "/product/:productId", element: <ProductDetails /> },
         { path: "/products/:searchterm", element: <ProductList /> },
 
-        /* BLOGS (PUBLIC FRONTEND) */
-        { path: "/blogs", element: <BlogList /> },                
-        { path: "/blog-detail/:id", element: <BlogDetail /> },   
+        /* ================= PACKAGES (NEW) ================= */
+        { path: "/packages/:id", element: <PackageDetailed /> },
 
+        /* ================= BLOGS ================= */
+        { path: "/blogs", element: <BlogList /> },
+        { path: "/blog-detail/:id", element: <BlogDetail /> },
+
+        /* ================= STATIC PAGES ================= */
         { path: "/about-us", element: <AboutUs /> },
         { path: "/about-us-readme", element: <AboutUsReadme /> },
         { path: "/contact-us", element: <Contact /> },
         { path: "/shop", element: <Shop /> },
 
-        /* SUPPORT TICKETS (USER) */
+        /* ================= SUPPORT TICKETS ================= */
         {
           path: "/support-tickets",
           element: (
@@ -207,7 +214,7 @@ function App() {
           ),
         },
 
-        /* 404 */
+        /* ================= 404 ================= */
         { path: "*", element: <NotFoundPage /> },
       ],
     },
