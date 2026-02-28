@@ -6,8 +6,9 @@ const inventorySchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Product",
       required: true,
-      unique: true, 
+      unique: true,
     },
+
     quantity: {
       type: Number,
       required: true,
@@ -15,7 +16,14 @@ const inventorySchema = new mongoose.Schema(
       min: 0,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    versionKey: false,
+  }
 );
 
-export default mongoose.model("Inventory", inventorySchema);
+const Inventory =
+  mongoose.models.Inventory ||
+  mongoose.model("Inventory", inventorySchema);
+
+export default Inventory;

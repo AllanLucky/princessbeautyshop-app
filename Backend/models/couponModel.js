@@ -8,7 +8,6 @@ const couponSchema = new mongoose.Schema(
       unique: true,
       uppercase: true,
       trim: true,
-      index: true,
     },
 
     discountType: {
@@ -29,7 +28,7 @@ const couponSchema = new mongoose.Schema(
 
     usageLimit: {
       type: Number,
-      default: 0, // 0 = unlimited
+      default: 0,
     },
 
     usedCount: {
@@ -47,20 +46,29 @@ const couponSchema = new mongoose.Schema(
       default: true,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    versionKey: false,
+  }
 );
 
-// ======================================
-// VIRTUAL: CHECK IF COUPON IS EXPIRED
-// ======================================
+/*
+======================================
+VIRTUAL: CHECK IF COUPON IS EXPIRED
+======================================
+*/
+
 couponSchema.virtual("isExpired").get(function () {
   if (!this.expiresAt) return false;
   return new Date() > this.expiresAt;
 });
 
-// ======================================
-// METHOD: CHECK IF COUPON IS VALID
-// ======================================
+/*
+======================================
+METHOD: CHECK IF COUPON IS VALID
+======================================
+*/
+
 couponSchema.methods.isValidCoupon = function (orderTotal = 0) {
   if (!this.isActive) return false;
 
@@ -73,4 +81,7 @@ couponSchema.methods.isValidCoupon = function (orderTotal = 0) {
   return true;
 };
 
-export default mongoose.model("Coupon", couponSchema);
+const Coupon =
+  mongoose.models.Coupon || mongoose.model("Coupon", couponSchema);
+
+export default Coupon;

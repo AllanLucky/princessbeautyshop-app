@@ -6,21 +6,18 @@ const returnSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Order",
       required: true,
-      index: true,
     },
 
     productId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Product",
       required: true,
-      index: true,
     },
 
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
 
     reason: {
@@ -41,7 +38,6 @@ const returnSchema = new mongoose.Schema(
         "completed",
       ],
       default: "pending",
-      index: true,
     },
 
     refundAmount: {
@@ -70,7 +66,7 @@ const returnSchema = new mongoose.Schema(
 
     attachments: [
       {
-        type: String, // image URLs
+        type: String,
       },
     ],
 
@@ -84,22 +80,25 @@ const returnSchema = new mongoose.Schema(
       default: false,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    versionKey: false,
+  }
 );
 
 /*
 ====================================================
- PERFORMANCE INDEXES
+ PERFORMANCE INDEXES (NO DUPLICATION)
 ====================================================
 */
 
-// User dashboard filtering
+// Dashboard filtering
 returnSchema.index({ userId: 1, status: 1 });
 
-// Order-level filtering
+// Order filtering
 returnSchema.index({ orderId: 1, status: 1 });
 
-// Prevent duplicate return for same product in same order by same user
+// Prevent duplicate return request
 returnSchema.index(
   { orderId: 1, productId: 1, userId: 1 },
   { unique: true }

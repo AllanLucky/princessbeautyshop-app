@@ -6,21 +6,18 @@ const ClinicSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: false,
-      index: true,
     },
 
     name: {
       type: String,
       required: true,
       trim: true,
-      index: true,
     },
 
     email: {
       type: String,
       required: true,
       trim: true,
-      index: true,
     },
 
     phone: {
@@ -37,7 +34,6 @@ const ClinicSchema = new mongoose.Schema(
     skinType: {
       type: String,
       trim: true,
-      index: true,
     },
 
     concerns: {
@@ -67,7 +63,6 @@ const ClinicSchema = new mongoose.Schema(
       type: String,
       enum: ["pending", "under_review", "completed", "cancelled"],
       default: "pending",
-      index: true,
     },
 
     expertNotes: String,
@@ -94,20 +89,25 @@ const ClinicSchema = new mongoose.Schema(
       skinType: String,
       skinToneAnalysis: String,
       melaninProtection: String,
+
       identifiedIssues: {
         type: [String],
         default: [],
       },
+
       improvements: {
         type: [String],
         default: [],
       },
+
       culturalConsiderations: {
         type: [String],
         default: [],
       },
+
       severity: String,
       timeline: String,
+
       specialTips: {
         type: [String],
         default: [],
@@ -121,6 +121,7 @@ const ClinicSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    versionKey: false,
   }
 );
 
@@ -130,10 +131,16 @@ INDEX OPTIMIZATION ⭐
 ==============================
 */
 
+// Dashboard filtering
 ClinicSchema.index({ createdAt: -1 });
+
+// Status filtering
 ClinicSchema.index({ status: 1 });
+
+// Email lookup
 ClinicSchema.index({ email: 1 });
 
-const Clinic = mongoose.model("Clinic", ClinicSchema);
+const Clinic =
+  mongoose.models.Clinic || mongoose.model("Clinic", ClinicSchema);
 
 export default Clinic;

@@ -10,7 +10,7 @@ const supportTicketSchema = new mongoose.Schema(
 
     product: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Product", // Make sure you have a Product model
+      ref: "Product",
       default: null,
     },
 
@@ -18,7 +18,6 @@ const supportTicketSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      index: true,
     },
 
     message: {
@@ -31,7 +30,6 @@ const supportTicketSchema = new mongoose.Schema(
       type: String,
       enum: ["open", "in progress", "resolved", "closed"],
       default: "open",
-      index: true,
     },
 
     priority: {
@@ -42,7 +40,7 @@ const supportTicketSchema = new mongoose.Schema(
 
     assignedTo: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // admin or support agent
+      ref: "User",
     },
 
     attachments: [
@@ -80,12 +78,21 @@ const supportTicketSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    versionKey: false,
   }
 );
 
-/* ================= INDEXING FOR PERFORMANCE ================= */
+/* =====================================================
+ PERFORMANCE INDEXES (NO DUPLICATE INDEXES)
+===================================================== */
+
+// Ticket filtering performance
 supportTicketSchema.index({ user: 1, status: 1 });
+
+// Priority sorting/filtering
 supportTicketSchema.index({ priority: 1 });
+
+// Latest ticket listing
 supportTicketSchema.index({ createdAt: -1 });
 
 const SupportTicket =
