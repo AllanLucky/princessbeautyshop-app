@@ -55,7 +55,7 @@ const LatestBlogs = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-12">
+    <div className="flex-1 bg-gray-50 min-h-screen px-4 py-8">
 
       {/* ================= HEADER ================= */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
@@ -63,7 +63,7 @@ const LatestBlogs = () => {
 
         <Link
           to={location.pathname.startsWith("/admin") ? "/admin/blogs" : "/blogs"}>
-          <button className="mt-4 px-6 py-2 bg-pink-600 text-white font-semibold rounded-lg hover:bg-pink-700 transition duration-300 mb-3">
+          <button className="mt-4 px-6 py-2 bg-rose-600 text-white font-semibold rounded-lg hover:bg-rose-700 transition duration-300 mb-3">
            View All
       </button>
         </Link>

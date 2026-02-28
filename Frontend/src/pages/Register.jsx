@@ -15,13 +15,12 @@ const Register = () => {
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    if (loading) return; // prevent double click
 
-    // trim values
+    if (loading) return;
+
     const trimmedName = name.trim();
     const trimmedEmail = email.trim();
 
-    // validation
     if (!trimmedName || !trimmedEmail || !password || !confirmPassword) {
       return toast.error("All fields are required");
     }
@@ -35,7 +34,6 @@ const Register = () => {
       return toast.error("Password must be at least 6 characters");
     }
 
-    // strong password rules
     if (!/[A-Z]/.test(password)) {
       return toast.error("Password must contain at least one capital letter");
     }
@@ -51,32 +49,37 @@ const Register = () => {
     setLoading(true);
 
     try {
-      await userRequest.post("/auth/register", {
+      const res = await userRequest.post("/auth/register", {
         name: trimmedName,
         email: trimmedEmail,
         password,
       });
 
-      toast.success(
-        "Account created successfully 🎉 Check your email to verify account"
-      );
+      if (res?.data?.success) {
+        toast.success(
+          res.data.message ||
+            "Account created successfully 🎉 Check your email to verify account"
+        );
 
-      // clear form
-      setName("");
-      setEmail("");
-      setPassword("");
-      setConfirmPassword("");
+        setName("");
+        setEmail("");
+        setPassword("");
+        setConfirmPassword("");
 
-      // go verify page
-      setTimeout(() => {
-        navigate("/verify-account", { state: { email: trimmedEmail } });
-      }, 1500);
-    } catch (error) {
-      if (error.response?.data?.message) {
-        toast.error(error.response.data.message);
+        setTimeout(() => {
+          navigate("/verify-account", {
+            state: { email: trimmedEmail },
+          });
+        }, 1500);
       } else {
-        toast.error("Something went wrong, try again");
+        toast.error("Registration failed");
       }
+    } catch (error) {
+      const msg =
+        error?.response?.data?.message ||
+        "Something went wrong, try again";
+
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -87,7 +90,7 @@ const Register = () => {
       <ToastContainer position="top-right" autoClose={3000} />
 
       <div className="flex flex-col md:flex-row bg-white shadow-xl rounded-xl overflow-hidden w-full max-w-[900px]">
-        
+
         {/* LEFT IMAGE */}
         <div className="hidden md:flex md:w-1/2 items-center justify-center bg-gray-50">
           <img
@@ -104,8 +107,7 @@ const Register = () => {
           </h2>
 
           <form className="space-y-5 md:space-y-6" onSubmit={handleRegister}>
-            
-            {/* NAME */}
+
             <div>
               <label className="block text-gray-600 mb-1 text-sm">
                 Full Name
@@ -119,9 +121,10 @@ const Register = () => {
               />
             </div>
 
-            {/* EMAIL */}
             <div>
-              <label className="block text-gray-600 mb-1 text-sm">Email</label>
+              <label className="block text-gray-600 mb-1 text-sm">
+                Email
+              </label>
               <input
                 type="email"
                 placeholder="example@gmail.com"
@@ -131,7 +134,6 @@ const Register = () => {
               />
             </div>
 
-            {/* PASSWORD */}
             <div>
               <label className="block text-gray-600 mb-1 text-sm">
                 Password
@@ -145,7 +147,6 @@ const Register = () => {
               />
             </div>
 
-            {/* CONFIRM PASSWORD */}
             <div>
               <label className="block text-gray-600 mb-1 text-sm">
                 Confirm Password
@@ -159,7 +160,6 @@ const Register = () => {
               />
             </div>
 
-            {/* BUTTON */}
             <button
               type="submit"
               disabled={loading}
@@ -172,7 +172,6 @@ const Register = () => {
               {loading ? "Creating account..." : "Register"}
             </button>
 
-            {/* LOGIN */}
             <div className="text-sm text-gray-600 text-center">
               Already have an account?
               <Link
@@ -182,6 +181,7 @@ const Register = () => {
                 Login
               </Link>
             </div>
+
           </form>
         </div>
       </div>
