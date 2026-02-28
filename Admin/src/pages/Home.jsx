@@ -6,6 +6,7 @@ import {
   IoPeopleOutline,
   IoClipboardOutline,
 } from "react-icons/io5";
+
 import {
   BarChart,
   Bar,
@@ -23,35 +24,46 @@ import {
 const COLORS = ["#4f46e5", "#ef4444", "#facc15"];
 const RADIAN = Math.PI / 180;
 
-const FakeBuyerData = [
-  { name: "Male", value: 35 },
-  { name: "Female", value: 50 },
-  { name: "Other", value: 15 },
-];
+/*
+=====================================================
+DASHBOARD HOME
+=====================================================
+*/
 
 const Home = () => {
   const [orders, setOrders] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const formatKES = (amount) =>
+  /*
+  =====================================================
+  FORMAT MONEY
+  =====================================================
+  */
+
+  const formatKES = (amount = 0) =>
     Number(amount || 0).toLocaleString("en-KE", {
       style: "currency",
       currency: "KES",
     });
 
+  /*
+  =====================================================
+  ORDER TOTAL CALCULATION
+  =====================================================
+  */
+
   const calculateOrderTotal = (order) => {
-    if (!order.products) return 0;
+    if (!order?.products) return 0;
 
     return order.products.reduce((sum, p) => {
-      const price = p.price || 0;
-      return sum + price * (p.quantity || 1);
+      return sum + (p.price || 0) * (p.quantity || 1);
     }, 0);
   };
 
   /*
   =====================================================
-  FETCH DASHBOARD DATA
+  FETCH DASHBOARD DATA ⭐ BACKEND SAFE
   =====================================================
   */
 
@@ -61,23 +73,17 @@ const Home = () => {
         setLoading(true);
 
         const [ordersRes, usersRes] = await Promise.all([
-          userRequest.get("/orders?sort=-createdAt&limit=20"),
+          userRequest.get("/orders?limit=20&sort=-createdAt"),
           userRequest.get("/users"),
         ]);
 
-        setOrders(
-          Array.isArray(ordersRes?.data?.orders)
-            ? ordersRes.data.orders
-            : []
-        );
+        const ordersData = ordersRes?.data?.orders || ordersRes?.data || [];
+        const usersData = usersRes?.data?.users || usersRes?.data || [];
 
-        setUsers(
-          Array.isArray(usersRes?.data?.users)
-            ? usersRes.data.users
-            : []
-        );
+        setOrders(Array.isArray(ordersData) ? ordersData : []);
+        setUsers(Array.isArray(usersData) ? usersData : []);
       } catch (err) {
-        console.error("Failed to fetch dashboard data:", err);
+        console.error("Dashboard fetch error:", err);
       } finally {
         setLoading(false);
       }
@@ -92,9 +98,10 @@ const Home = () => {
   =====================================================
   */
 
-  const totalRevenue = Array.isArray(orders)
-    ? orders.reduce((acc, order) => acc + calculateOrderTotal(order), 0)
-    : 0;
+  const totalRevenue = orders.reduce(
+    (acc, order) => acc + calculateOrderTotal(order),
+    0
+  );
 
   const barData = orders
     .slice()
@@ -175,30 +182,29 @@ const Home = () => {
         <StatBox
           icon={<IoCashOutline className="text-2xl text-white" />}
           iconBg="bg-red-500"
-          title="Total Expenses"
+          title="Expenses"
           value={formatKES(totalRevenue * 0.3)}
         />
 
         <StatBox
           icon={<IoPeopleOutline className="text-2xl text-white" />}
           iconBg="bg-yellow-500"
-          title="Total Customers"
+          title="Customers"
           value={users.length}
         />
 
         <StatBox
           icon={<IoClipboardOutline className="text-2xl text-white" />}
           iconBg="bg-green-500"
-          title="Total Orders"
+          title="Orders"
           value={orders.length}
         />
 
       </div>
 
-      {/* Charts Section */}
+      {/* Charts */}
       <div className="flex flex-wrap gap-6 mb-6">
 
-        {/* Revenue Chart */}
         <div className="flex-1 md:flex-[3] bg-white rounded shadow-lg p-6 min-w-[250px] h-[22rem] flex flex-col">
           <h3 className="text-2xl font-bold mb-4 text-gray-700">
             Revenue Overview
@@ -215,7 +221,6 @@ const Home = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* Buyer Profile Pie Chart */}
         <div className="flex-1 md:flex-[1] bg-white rounded shadow-lg p-6 min-w-[200px] h-[22rem] flex flex-col items-center">
           <h3 className="text-2xl font-bold mb-4 text-gray-700">
             Buyer Profile
@@ -224,7 +229,9 @@ const Home = () => {
           <ResponsiveContainer width="100%" height="85%">
             <PieChart>
               <Pie
-                data={FakeBuyerData}
+                data={[
+                  { name: "Customers", value: users.length || 1 },
+                ]}
                 cx="50%"
                 cy="50%"
                 labelLine={false}
@@ -232,17 +239,13 @@ const Home = () => {
                 outerRadius={90}
                 dataKey="value"
               >
-                {FakeBuyerData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={COLORS[index % COLORS.length]}
-                  />
+                {COLORS.map((color, index) => (
+                  <Cell key={index} fill={color} />
                 ))}
               </Pie>
 
               <Legend verticalAlign="bottom" height={36} />
               <Tooltip />
-
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -256,9 +259,7 @@ const Home = () => {
           Latest Transactions
         </h3>
 
-        {loading ? (
-          <p className="text-gray-500">Loading orders...</p>
-        ) : orders.length === 0 ? (
+        {orders.length === 0 ? (
           <p className="text-gray-500">No orders yet.</p>
         ) : (
           <div className="overflow-x-auto">
@@ -304,20 +305,8 @@ const Home = () => {
                         {formatKES(calculateOrderTotal(order))}
                       </td>
 
-                      <td
-                        className={`py-3 px-4 font-medium ${
-                          order.status === 2
-                            ? "text-green-600"
-                            : order.status === 1
-                            ? "text-blue-600"
-                            : "text-yellow-500"
-                        }`}
-                      >
-                        {order.status === 2
-                          ? "Delivered"
-                          : order.status === 1
-                          ? "Processing"
-                          : "Pending"}
+                      <td className="py-3 px-4 font-medium">
+                        {order.orderStatus || "processing"}
                       </td>
 
                     </tr>
