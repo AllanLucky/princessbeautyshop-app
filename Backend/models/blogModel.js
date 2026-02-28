@@ -13,7 +13,6 @@ const blogSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      index: true,
     },
 
     slug: {
@@ -43,14 +42,12 @@ const blogSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
 
     category: {
       type: String,
       default: "uncategorized",
       trim: true,
-      index: true,
     },
 
     tags: {
@@ -110,6 +107,7 @@ const blogSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    versionKey: false,
   }
 );
 
@@ -119,7 +117,6 @@ const blogSchema = new mongoose.Schema(
 ====================================================
 */
 
-// ✅ Clean async/promise style — no `next`
 blogSchema.pre("validate", function () {
   if (this.title) {
     this.slug = slugify(this.title, {
@@ -143,12 +140,11 @@ blogSchema.index({
 
 /*
 ====================================================
- MODEL EXPORT (VERY IMPORTANT FIX ⭐)
+ MODEL EXPORT ⭐
 ====================================================
 */
 
 const Blog =
-  mongoose.models.Blog ||
-  mongoose.model("Blog", blogSchema);
+  mongoose.models.Blog || mongoose.model("Blog", blogSchema);
 
 export default Blog;

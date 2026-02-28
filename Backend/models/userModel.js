@@ -15,35 +15,42 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
+      index: true, // 🔥 Faster email lookups
     },
 
     password: {
       type: String,
       required: true,
       minlength: 6,
-      select: false, 
+      select: false,
     },
 
     role: {
       type: String,
       enum: ["customer", "admin", "superadmin"],
       default: "customer",
+      index: true, // 🔥 Faster role-based queries
     },
 
     avatar: {
-      type: String, // stores Cloudinary URL or local path
-      default: "",  // optional default avatar
+      type: String,
+      default: "",
     },
 
     isVerified: {
       type: Boolean,
       default: false,
+      index: true, // 🔥 Faster verification checks
     },
+
     verificationCode: String,
     verificationCodeExpire: Date,
 
     // ===== PASSWORD RESET =====
-    resetPasswordToken: String,
+    resetPasswordToken: {
+      type: String,
+      index: true, // 🔥 Faster reset lookups
+    },
     resetPasswordExpire: Date,
 
     // ===== LOGIN SECURITY =====
@@ -58,6 +65,7 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    versionKey: false, // 🔥 Removes __v (slightly lighter docs)
   }
 );
 
@@ -65,12 +73,14 @@ const userSchema = new mongoose.Schema(
 userSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
 
-  const salt = await bcrypt.genSalt(10);
+  // 🔥 Reduced salt rounds for faster hashing (safe balance)
+  const salt = await bcrypt.genSalt(8);
   this.password = await bcrypt.hash(this.password, salt);
 });
 
 // ================= MATCH PASSWORD =================
-userSchema.methods.matchPassword = async function (enteredPassword) {
+userSchema.methods.matchPassword = function (enteredPassword) {
+  // 🔥 No need for async wrapper here
   return bcrypt.compare(enteredPassword, this.password);
 };
 
@@ -82,27 +92,25 @@ userSchema.methods.isLocked = function () {
 // ================= INCREASE LOGIN ATTEMPTS =================
 userSchema.methods.incLoginAttempts = async function () {
   if (this.lockUntil && this.lockUntil < Date.now()) {
-    // lock expired, reset attempts
     this.loginAttempts = 1;
     this.lockUntil = undefined;
   } else {
     this.loginAttempts += 1;
 
-    // lock account if attempts exceed limit
     if (this.loginAttempts >= 5) {
-      this.lockUntil = Date.now() + 30 * 60 * 1000; // 30 mins
+      this.lockUntil = Date.now() + 30 * 60 * 1000;
     }
   }
 
-  await this.save({ validateBeforeSave: false });
+  return this.save({ validateBeforeSave: false });
 };
 
 // ================= RESET LOGIN ATTEMPTS =================
-userSchema.methods.resetLoginAttempts = async function () {
+userSchema.methods.resetLoginAttempts = function () {
   this.loginAttempts = 0;
   this.lockUntil = undefined;
 
-  await this.save({ validateBeforeSave: false });
+  return this.save({ validateBeforeSave: false });
 };
 
 // ================= MODEL =================

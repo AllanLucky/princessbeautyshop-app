@@ -2,24 +2,16 @@ import mongoose from "mongoose";
 
 const OrderSchema = new mongoose.Schema(
   {
-    /*
-    ==========================================
-    CUSTOMER INFO
-    ==========================================
-    */
-
     name: {
       type: String,
       required: true,
       trim: true,
-      index: true,
     },
 
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
 
     email: {
@@ -27,7 +19,6 @@ const OrderSchema = new mongoose.Schema(
       required: true,
       lowercase: true,
       trim: true,
-      index: true,
     },
 
     phone: {
@@ -41,9 +32,7 @@ const OrderSchema = new mongoose.Schema(
     },
 
     /*
-    ==========================================
     PRODUCTS
-    ==========================================
     */
 
     products: [
@@ -76,9 +65,6 @@ const OrderSchema = new mongoose.Schema(
           min: 1,
         },
 
-        /*
-        ⭐ Stripe-safe string storage
-        */
         img: {
           type: String,
           default: "",
@@ -87,9 +73,7 @@ const OrderSchema = new mongoose.Schema(
     ],
 
     /*
-    ==========================================
     PAYMENT
-    ==========================================
     */
 
     total: {
@@ -107,7 +91,6 @@ const OrderSchema = new mongoose.Schema(
       type: String,
       enum: ["pending", "paid", "failed", "refunded"],
       default: "pending",
-      index: true,
     },
 
     declineReason: {
@@ -115,9 +98,6 @@ const OrderSchema = new mongoose.Schema(
       default: "",
     },
 
-    /*
-    Stripe Tracking
-    */
     stripeSessionId: {
       type: String,
       unique: true,
@@ -130,16 +110,13 @@ const OrderSchema = new mongoose.Schema(
     },
 
     /*
-    ==========================================
     ORDER LIFE CYCLE
-    ==========================================
     */
 
     orderStatus: {
       type: String,
       enum: ["processing", "confirmed", "shipped", "delivered", "cancelled"],
       default: "processing",
-      index: true,
     },
 
     isDelivered: {
@@ -155,17 +132,17 @@ const OrderSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    versionKey: false,
   }
 );
 
 /*
 ==========================================
-INDEXING (VERY IMPORTANT FOR FINTECH SCALE)
+INDEX OPTIMIZATION ⭐
 ==========================================
 */
 
 OrderSchema.index({ userId: 1, paymentStatus: 1 });
-OrderSchema.index({ stripeSessionId: 1 });
 
 const Order =
   mongoose.models.Order || mongoose.model("Order", OrderSchema);

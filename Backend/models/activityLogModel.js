@@ -7,17 +7,38 @@ const activityLogSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+
     action: {
       type: String,
       required: true,
+      trim: true,
     },
-    ip: String,       // optional, for tracking IP
-    userAgent: String, // optional, for browser/device info
+
+    ip: {
+      type: String,
+      default: "",
+    },
+
+    userAgent: {
+      type: String,
+      default: "",
+    },
   },
   {
-    timestamps: true, // createdAt & updatedAt
+    timestamps: true,
+    versionKey: false,
   }
 );
+
+/*
+==============================
+INDEX OPTIMIZATION ⭐
+==============================
+*/
+
+activityLogSchema.index({ user: 1, createdAt: -1 });
+activityLogSchema.index({ action: 1 });
+activityLogSchema.index({ createdAt: -1 });
 
 const ActivityLog =
   mongoose.models.ActivityLog ||
