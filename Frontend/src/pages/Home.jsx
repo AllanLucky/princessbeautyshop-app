@@ -9,7 +9,7 @@ const Home = () => {
   return (
     <div>
       <Banner />
-      <Category />
+      {/* <Category /> */}
       {<Packages/>}
       <Products />
       <LatestBlogs />

@@ -99,7 +99,7 @@ const Products = ({ sort, query, filters = {} }) => {
 
   // ================= RENDER =================
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 px-4 py-8">
       {filteredProducts.map((product) => {
         const price =
           product.discountedPrice ||
