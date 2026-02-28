@@ -8,16 +8,15 @@
       body {
         margin: 0;
         padding: 0;
-        height: 100vh;
-        min-width: 100%;
         font-family: Arial, sans-serif;
         font-size: 16px;
         line-height: 1.5;
         color: #222222;
+        background-color: #f4f3f3;
       }
 
       a {
-        color: #fff;
+        color: #f086d9;
         text-decoration: none;
       }
 
@@ -25,16 +24,27 @@
         font-size: 24px;
         font-weight: 700;
         line-height: 1.25;
-        margin-top: 0;
-        margin-bottom: 15px;
+        margin: 0 0 15px 0;
         text-align: center;
+      }
+
+      h2 {
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 10px;
+      }
+
+      p {
+        margin: 0 0 16px 0;
       }
 
       .email-wrapper {
         max-width: 700px;
-        margin: 0 auto;
-        background-color: #fff;
-        padding: 20px;
+        margin: 20px auto;
+        background-color: #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       }
 
       .email-header {
@@ -45,9 +55,7 @@
       }
 
       .email-body {
-        padding: 14px;
-        background-color: #f4f3f3;
-        height: auto;
+        padding: 20px;
       }
 
       .email-footer {
@@ -55,13 +63,7 @@
         padding: 14px;
         color: #d55fbb;
         text-align: center;
-      }
-
-      img {
-        max-width: 100%;
-        height: auto;
-        display: block;
-        margin: 0 auto;
+        font-size: 14px;
       }
 
       .product-list {
@@ -71,7 +73,9 @@
       .product-item {
         display: flex;
         align-items: center;
-        margin-bottom: 10px;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 10px;
       }
 
       .product-img {
@@ -79,6 +83,7 @@
         width: 100px;
         height: 100px;
         object-fit: cover;
+        border-radius: 4px;
       }
 
       .product-details {
@@ -88,24 +93,38 @@
       .product-title {
         font-size: 18px;
         font-weight: bold;
-        margin: 0;
+        margin: 0 0 4px 0;
       }
 
       .product-price {
         font-size: 16px;
         color: #555;
+        margin: 0;
+      }
+
+      @media only screen and (max-width: 600px) {
+        .product-item {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .product-img {
+          margin-bottom: 10px;
+        }
       }
     </style>
   </head>
   <body>
     <div class="email-wrapper">
       <div class="email-header">
-        <img src="https://res.cloudinary.com/dap91fhxh/image/upload/v1723705045/blisslogo1_hefbyn.png" height="200px" width="200px" alt="Beauty Bliss Logo">
+        <img src="https://res.cloudinary.com/dap91fhxh/image/upload/v1723705045/blisslogo1_hefbyn.png"
+             alt="Beauty Bliss Logo"
+             height="150"
+             width="150"/>
       </div>
       <div class="email-body">
         <h1>Pending Order Notification</h1>
         <p>Hello <%= name %>,</p>
-        <p>Thank You for placing an order. Your is being processed and will be shipped very soon. Please find the details below:</p>
+        <p>Thank you for placing an order. Your order is being processed and will be shipped very soon. Please find the details below:</p>
 
         <div class="product-list">
           <% products.forEach(product => { %>
@@ -118,11 +137,12 @@
             </div>
           <% }) %>
         </div>
-        <p>If you have any questions or need assistance, feel free to <a href="">contact us</a>.</p>
+
+        <p>If you have any questions or need assistance, feel free to <a href="<%= supportLink %>">contact us</a>.</p>
         <p>Thank you for shopping with Beauty Bliss!</p>
       </div>
       <div class="email-footer">
-        <p>&copy;2024 Beauty Bliss. All rights reserved.</p>
+        <p>&copy; <%= new Date().getFullYear() %> Beauty Bliss. All rights reserved.</p>
       </div>
     </div>
   </body>

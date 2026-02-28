@@ -1,12 +1,13 @@
-// src/index.js — Main Cron Service File
+// src/index.js — Main Cron Service File (Testing Every 5 Minutes)
 
 import express from "express";
 import dotenv from "dotenv";
 import dbConnection from "./config/dbConfig.js";
 import cron from "node-cron";
+
 import sendWelcomeEmail from "./EmailServices/sendWelcomeEmail.js";
 import sendPendingOrderEmail from "./EmailServices/sendPendingOrderEmail.js";
-import sendDeliveredOrderEmail from "./EmailServices/sendDeliveredOrderEmail.js"; // rate-limited version
+import sendDeliveredOrderEmail from "./EmailServices/sendDeliveredOrderEmail.js";
 import sendPromotionEmail from "./EmailServices/sendPromotionEmail.js";
 import sendTimetableEmail from "./EmailServices/sendTimetabeEmail.js"; 
 import { scheduleAnalyticsCleanup } from "./EmailServices/clearAnalytics.js";
@@ -17,13 +18,12 @@ const app = express();
 const PORT = process.env.PORT || 8001;
 
 /**
- * Run scheduled email services
+ * Schedule recurring email services every 5 minutes for testing
  */
 const scheduleEmailServices = () => {
-  console.log("🕒 Scheduling email services...");
+  console.log("🕒 Scheduling recurring email services (every 5 minutes for testing)...");
 
-  // Check for new welcome, pending, delivered, and timetable emails every 1 minute
-  cron.schedule("*/1 * * * *", async () => {
+  cron.schedule("*/5 * * * *", async () => {
     console.log(`🕒 Running email batch at ${new Date().toISOString()}`);
 
     try {
@@ -38,10 +38,10 @@ const scheduleEmailServices = () => {
 };
 
 /**
- * Schedule weekly promotions
+ * Schedule weekly promotion emails (unchanged)
  */
 const schedulePromotionEmails = () => {
-  // Every Friday at 5:30 AM
+  // Every Friday at 5:30 AM (unchanged)
   cron.schedule("30 5 * * 5", async () => {
     console.log(`🕒 Running promotion email batch at ${new Date().toISOString()}`);
 
@@ -54,19 +54,32 @@ const schedulePromotionEmails = () => {
 };
 
 /**
- * Start background services
+ * Start database and all background services
  */
 const startBackgroundServices = () => {
-  dbConnection();
-  console.log(`✅ Database connected successfully`);
+  dbConnection()
+    .then(() => console.log("✅ Database connected successfully"))
+    .catch((err) => console.error("❌ Database connection failed:", err.message));
 
   scheduleEmailServices();
   schedulePromotionEmails();
   scheduleAnalyticsCleanup();
 
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`🚀 Background services running on port ${PORT}`);
   });
+
+  // Graceful shutdown
+  const shutdown = () => {
+    console.log("🛑 Shutting down background services...");
+    server.close(() => {
+      console.log("✅ Server closed");
+      process.exit(0);
+    });
+  };
+
+  process.on("SIGINT", shutdown);
+  process.on("SIGTERM", shutdown);
 };
 
 // Launch all services

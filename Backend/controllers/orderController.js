@@ -1,3 +1,5 @@
+// src/controllers/orderController.js
+
 import Order from "../models/orderModel.js";
 import Product from "../models/productModel.js";
 import asyncHandler from "express-async-handler";
@@ -21,9 +23,7 @@ const deductStock = async (productId, quantity) => {
 
   product.stock -= quantity;
 
-  await product.save({
-    validateBeforeSave: false,
-  });
+  await product.save({ validateBeforeSave: false });
 };
 
 const addStock = async (productId, quantity) => {
@@ -35,9 +35,7 @@ const addStock = async (productId, quantity) => {
 
   product.stock += quantity;
 
-  await product.save({
-    validateBeforeSave: false,
-  });
+  await product.save({ validateBeforeSave: false });
 };
 
 /*
@@ -77,6 +75,8 @@ const createOrder = asyncHandler(async (req, res) => {
 
     orderStatus: "processing",
     paymentStatus: "pending",
+    isDelivered: false,           // Initialize delivered flag
+    deliveredEmailSent: false,    // Initialize delivered email flag
   });
 
   res.status(201).json({
@@ -114,6 +114,7 @@ const updateOrder = asyncHandler(async (req, res) => {
     updateData.paymentStatus = "paid";
     updateData.isDelivered = true;
     updateData.deliveredAt = new Date();
+    updateData.deliveredEmailSent = false; // ensure cron picks it up
   }
 
   if (orderStatus === "cancelled") {
