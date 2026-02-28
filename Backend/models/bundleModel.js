@@ -1,4 +1,3 @@
-
 import mongoose from "mongoose";
 
 const BundleSchema = new mongoose.Schema(
@@ -7,7 +6,6 @@ const BundleSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      index: true,
     },
 
     description: {
@@ -25,7 +23,6 @@ const BundleSchema = new mongoose.Schema(
       type: String,
       enum: ["BEST VALUE", "POPULAR", "PREMIUM", "NEW"],
       default: null,
-      index: true,
     },
 
     originalPrice: {
@@ -46,7 +43,6 @@ const BundleSchema = new mongoose.Schema(
           type: mongoose.Schema.Types.ObjectId,
           ref: "Product",
           required: true,
-          index: true,
         },
 
         title: String,
@@ -78,7 +74,6 @@ const BundleSchema = new mongoose.Schema(
     categories: {
       type: [String],
       default: [],
-      index: true,
     },
 
     concern: {
@@ -94,13 +89,11 @@ const BundleSchema = new mongoose.Schema(
     inStock: {
       type: Boolean,
       default: true,
-      index: true,
     },
 
     isPrebuilt: {
       type: Boolean,
       default: true,
-      index: true,
     },
 
     customBundleProducts: [
@@ -113,11 +106,11 @@ const BundleSchema = new mongoose.Schema(
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      index: true,
     },
   },
   {
     timestamps: true,
+    versionKey: false,
   }
 );
 
@@ -127,10 +120,15 @@ INDEX OPTIMIZATION ⭐
 ==============================
 */
 
+// Compound indexes only (no duplicate field indexes)
+
 BundleSchema.index({ name: 1 });
 BundleSchema.index({ createdAt: -1 });
 BundleSchema.index({ originalPrice: 1, discountedPrice: 1 });
+BundleSchema.index({ inStock: 1 });
+BundleSchema.index({ isPrebuilt: 1 });
 
-const Bundle = mongoose.model("Bundle", BundleSchema);
+const Bundle =
+  mongoose.models.Bundle || mongoose.model("Bundle", BundleSchema);
 
 export default Bundle;

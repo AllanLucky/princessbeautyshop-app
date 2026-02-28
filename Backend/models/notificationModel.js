@@ -5,14 +5,13 @@ const notificationSchema = new mongoose.Schema(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      default: null, // allow system-wide notifications
+      default: null,
     },
 
     title: {
       type: String,
       required: true,
       trim: true,
-      index: true,
     },
 
     message: {
@@ -24,7 +23,6 @@ const notificationSchema = new mongoose.Schema(
     read: {
       type: Boolean,
       default: false,
-      index: true,
     },
 
     type: {
@@ -51,12 +49,16 @@ const notificationSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    versionKey: false,
   }
 );
 
-/* ================= INDEXING FOR PERFORMANCE ================= */
+/* ================= INDEX OPTIMIZATION ================= */
 
+// User notification dashboard query
 notificationSchema.index({ user: 1, createdAt: -1 });
+
+// Unread notification query optimization
 notificationSchema.index({ read: 1 });
 
 const Notification =
