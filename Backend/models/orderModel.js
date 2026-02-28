@@ -1,3 +1,5 @@
+// src/models/orderModel.js
+
 import mongoose from "mongoose";
 
 const OrderSchema = new mongoose.Schema(
@@ -120,6 +122,13 @@ const OrderSchema = new mongoose.Schema(
 
     deliveredAt: Date,
 
+    // ⚡ NEW: track if delivered email has already been sent
+    deliveredEmailSent: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+
     paidAt: Date,
 
     refundedAt: Date,
@@ -140,7 +149,6 @@ const OrderSchema = new mongoose.Schema(
 OrderSchema.index({ userId: 1, paymentStatus: 1 });
 OrderSchema.index({ createdAt: -1 });
 
-const Order =
-  mongoose.models.Order || mongoose.model("Order", OrderSchema);
+const Order = mongoose.models.Order || mongoose.model("Order", OrderSchema);
 
 export default Order;

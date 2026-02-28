@@ -1,26 +1,25 @@
-// EmailServices/sendDeliveredOrderEmailSafe.js
+// src/EmailServices/sendDeliveredOrderEmail.js
+
 import ejs from "ejs";
 import path from "path";
 import dotenv from "dotenv";
 import sendMail from "../helpers/sendMailer.js";
 import Order from "../models/orderModel.js";
+import { fileURLToPath } from "url";
 
 dotenv.config();
 
-/**
- * Send emails in batches with rate-limiting
- * @param {Array} emails - array of mailOptions
- * @param {number} batchSize - number of emails per batch
- * @param {number} delayMs - delay between batches (ms)
- */
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Rate-limited batch email sender
 const sendEmailsWithRateLimit = async (emails, batchSize = 5, delayMs = 1000) => {
   for (let i = 0; i < emails.length; i += batchSize) {
     const batch = emails.slice(i, i + batchSize);
-
     await Promise.all(
       batch.map(async (mailOptions) => {
         try {
-          const info = await sendMail(mailOptions);
+          await sendMail(mailOptions);
           console.log(`✅ Email sent to ${mailOptions.to}`);
         } catch (error) {
           console.error(`❌ Failed to send email to ${mailOptions.to}:`, error.message);
@@ -35,20 +34,27 @@ const sendEmailsWithRateLimit = async (emails, batchSize = 5, delayMs = 1000) =>
   }
 };
 
-const sendDeliveredOrderEmailSafe = async () => {
+const sendDeliveredOrderEmail = async () => {
   try {
-    // Fetch orders with status 2 (delivered but not emailed)
-    const orders = await Order.find({ status: 2 });
-    if (!orders.length) {
-      console.log("No delivered orders to notify.");
-      return;
-    }
+    // ✅ Find orders that are delivered but not yet notified
+    const orders = await Order.find({
+      orderStatus: "delivered",
+      deliveredEmailSent: false,
+    });
+
+    if (!orders.length) return console.log("No delivered orders to notify.");
 
     const emails = [];
 
     for (const order of orders) {
-      const templatePath = path.resolve(
-        "BackgroundServices/templates/deliveredorder.ejs"
+      if (!order.email) {
+        console.warn(`⚠️ Order ${order._id} has no email. Skipping...`);
+        continue;
+      }
+
+      const templatePath = path.join(
+        __dirname,
+        "../BackgroundServices/templates/deliveredorder.ejs"
       );
 
       const html = await ejs.renderFile(templatePath, {
@@ -66,20 +72,20 @@ const sendDeliveredOrderEmailSafe = async () => {
       });
     }
 
-    // Send emails in batches (5 emails per batch, 1 second delay)
+    // Send emails in batches
     await sendEmailsWithRateLimit(emails, 5, 1000);
 
-    // Update all orders to status 3 (emailed)
+    // Mark deliveredEmailSent = true for all processed orders
     const orderIds = orders.map((o) => o._id);
     await Order.updateMany(
       { _id: { $in: orderIds } },
-      { $set: { status: 3 } }
+      { $set: { deliveredEmailSent: true } }
     );
 
     console.log("✅ All delivered orders have been processed.");
   } catch (error) {
-    console.error("❌ Error in sendDeliveredOrderEmailSafe:", error.message);
+    console.error("❌ Error in sendDeliveredOrderEmail:", error.message);
   }
 };
 
-export default sendDeliveredOrderEmailSafe;
+export default sendDeliveredOrderEmail;

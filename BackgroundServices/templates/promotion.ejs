@@ -8,16 +8,14 @@
       body {
         margin: 0;
         padding: 0;
-        height: 100vh;
-        min-width: 100%;
         font-family: Arial, sans-serif;
         font-size: 16px;
         line-height: 1.5;
         color: #222222;
+        background-color: #f4f3f3;
       }
 
       a {
-        color: #d55fbb;
         text-decoration: none;
       }
 
@@ -26,28 +24,32 @@
         font-weight: 700;
         line-height: 1.25;
         margin-top: 0;
-        margin-bottom: 15px;
+        margin-bottom: 20px;
         text-align: center;
       }
 
       .email-wrapper {
         max-width: 700px;
-        margin: 0 auto;
+        margin: 20px auto;
         background-color: #fff;
-        padding: 20px;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       }
 
       .email-header {
         background-color: #1e1e1e;
         padding: 30px;
-        color: #f086d9;
         text-align: center;
       }
 
+      .email-header img {
+        height: 150px;
+        width: 150px;
+      }
+
       .email-body {
-        padding: 14px;
-        background-color: #f4f3f3;
-        min-height: 70vh;
+        padding: 20px;
       }
 
       .email-footer {
@@ -55,51 +57,63 @@
         padding: 14px;
         color: #d55fbb;
         text-align: center;
-      }
-
-      img {
-        padding: 24px;
-        max-width: 100%;
-        height: auto;
+        font-size: 14px;
       }
 
       .product-list {
         display: flex;
         flex-wrap: wrap;
-        justify-content: space-around;
+        justify-content: space-between;
         gap: 20px;
+        margin: 20px 0;
       }
 
       .product-item {
         background-color: #fff;
         border: 1px solid #ccc;
         padding: 15px;
-        width: 45%;
+        width: 48%;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        border-radius: 6px;
         text-align: center;
+        transition: transform 0.2s;
+      }
+
+      .product-item:hover {
+        transform: translateY(-5px);
       }
 
       .product-item img {
         max-width: 100%;
         height: auto;
+        border-radius: 4px;
         margin-bottom: 10px;
       }
 
       .product-item h3 {
         font-size: 18px;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
       }
 
       .product-item p {
-        margin-bottom: 20px;
+        margin-bottom: 12px;
         color: #555;
+        font-size: 14px;
       }
 
       .product-item a {
+        display: inline-block;
         background-color: #d55fbb;
         color: #fff;
         padding: 10px 20px;
         border-radius: 5px;
+        font-weight: bold;
+      }
+
+      @media only screen and (max-width: 600px) {
+        .product-item {
+          width: 100%;
+        }
       }
     </style>
   </head>
@@ -108,12 +122,11 @@
       <div class="email-header">
         <img
           src="https://res.cloudinary.com/dap91fhxh/image/upload/v1723705045/blisslogo1_hefbyn.png"
-          height="200px"
-          width="200px"
           alt="Beauty Bliss Logo"
         />
       </div>
       <div class="email-body">
+        <h1>Featured Beauty Products</h1>
         <p>
           We are thrilled to introduce some of our featured beauty products just
           for you. These products are carefully selected to enhance your beauty
@@ -137,7 +150,7 @@
         </p>
       </div>
       <div class="email-footer">
-        <p>&copy;2024 Beauty Bliss. All rights reserved.</p>
+        <p>&copy; <%= new Date().getFullYear() %> Beauty Bliss. All rights reserved.</p>
       </div>
     </div>
   </body>
