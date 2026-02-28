@@ -15,14 +15,10 @@ const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // ================= REDIRECT AFTER LOGIN =================
+  // ================= AUTO REDIRECT IF ALREADY LOGIN =================
   useEffect(() => {
     if (currentUser) {
-      toast.success("Login successful 🎉");
-
-      setTimeout(() => {
-        navigate("/", { replace: true });
-      }, 1000);
+      navigate("/", { replace: true });
     }
   }, [currentUser, navigate]);
 
@@ -54,7 +50,7 @@ const Login = () => {
     e.preventDefault();
 
     if (!validateForm()) return;
-    if (loading || isFetching) return; // prevent double click
+    if (loading || isFetching) return;
 
     setLoading(true);
 
@@ -63,6 +59,12 @@ const Login = () => {
         email: email.trim(),
         password,
       });
+
+      toast.success("Login successful 🎉");
+
+      setTimeout(() => {
+        navigate("/", { replace: true });
+      }, 800);
     } catch (err) {
       toast.error(
         err?.response?.data?.message ||
@@ -73,7 +75,6 @@ const Login = () => {
     }
   };
 
-  // ================= UI =================
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4 py-10">
       <ToastContainer position="top-right" autoClose={3000} />
@@ -94,6 +95,7 @@ const Login = () => {
           <h2 className="text-3xl font-bold text-gray-700 mb-2">
             Welcome Back 👋
           </h2>
+
           <p className="text-gray-500 mb-8 text-sm">
             Login to continue to your account
           </p>
@@ -105,9 +107,9 @@ const Login = () => {
               <label className="block text-gray-600 mb-1 font-medium">
                 Email Address
               </label>
+
               <input
                 type="email"
-                autoComplete="email"
                 placeholder="example@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -124,7 +126,6 @@ const Login = () => {
               <div className="relative">
                 <input
                   type={showPass ? "text" : "password"}
-                  autoComplete="current-password"
                   placeholder="******"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -138,21 +139,6 @@ const Login = () => {
                   {showPass ? "Hide" : "Show"}
                 </span>
               </div>
-            </div>
-
-            {/* REMEMBER + FORGOT */}
-            <div className="flex justify-between items-center text-sm">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="accent-[#d55fbb]" />
-                Remember me
-              </label>
-
-              <Link
-                to="/forgot-password"
-                className="text-[#d55fbb] font-semibold hover:underline"
-              >
-                Forgot Password?
-              </Link>
             </div>
 
             {/* BUTTON */}

@@ -7,9 +7,14 @@ import "react-toastify/dist/ReactToastify.css";
 const VerifyAccounty = () => {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
+
   const [loading, setLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
+
   const navigate = useNavigate();
 
+  // ================= VERIFY ACCOUNT =================
   const handleVerify = async (e) => {
     e.preventDefault();
 
@@ -18,6 +23,7 @@ const VerifyAccounty = () => {
     }
 
     setLoading(true);
+
     try {
       const { data } = await userRequest.post("/auth/verify-email", {
         email,
@@ -26,9 +32,7 @@ const VerifyAccounty = () => {
 
       toast.success(data.message || "Email verified successfully 🎉");
 
-      setTimeout(() => {
-        navigate("/login");
-      }, 1500);
+      setTimeout(() => navigate("/login"), 1500);
     } catch (err) {
       toast.error(err.response?.data?.message || "Verification failed");
     } finally {
@@ -36,16 +40,64 @@ const VerifyAccounty = () => {
     }
   };
 
+  // ================= RESEND CODE =================
+  const handleResendCode = async () => {
+    if (!email) {
+      return toast.error("Enter your email first");
+    }
+
+    if (resendTimer > 0) return;
+
+    setResendLoading(true);
+
+    try {
+      await userRequest.post("/auth/resend-verification", {
+        email,
+      });
+
+      toast.success("New verification code sent 🎉");
+
+      startResendCooldown();
+    } catch (err) {
+      toast.error(
+        err.response?.data?.message ||
+          "Failed to resend verification code"
+      );
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
+  // ================= TIMER COOL DOWN =================
+  const startResendCooldown = () => {
+    setResendTimer(60);
+
+    const interval = setInterval(() => {
+      setResendTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  // ================= UI =================
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100 px-4">
       <ToastContainer position="top-right" autoClose={3000} />
+
       <form
         onSubmit={handleVerify}
         className="bg-white p-8 rounded shadow-md w-full max-w-[600px]"
       >
-        <h2 className="text-2xl font-bold mb-6 text-center">Verify Your Account</h2>
+        <h2 className="text-2xl font-bold mb-6 text-center">
+          Verify Your Account
+        </h2>
+
         <p className="text-gray-600 mb-4 text-center">
-          Enter your email and the 6‑digit code we sent.
+          Enter your email and the 6-digit code we sent.
         </p>
 
         <input
@@ -64,6 +116,7 @@ const VerifyAccounty = () => {
           className="w-full p-3 border rounded mb-4 text-center tracking-widest text-lg"
         />
 
+        {/* VERIFY BUTTON */}
         <button
           type="submit"
           disabled={loading}
@@ -74,6 +127,20 @@ const VerifyAccounty = () => {
           }`}
         >
           {loading ? "Verifying..." : "Verify Account"}
+        </button>
+
+        {/* RESEND BUTTON */}
+        <button
+          type="button"
+          onClick={handleResendCode}
+          disabled={resendLoading || resendTimer > 0}
+          className="w-full mt-4 py-2 border border-[#d55fbb] text-[#d55fbb] rounded-md hover:bg-[#d55fbb] hover:text-white transition"
+        >
+          {resendLoading
+            ? "Sending..."
+            : resendTimer > 0
+            ? `Resend Code (${resendTimer}s)`
+            : "Resend Verification Code"}
         </button>
 
         <p className="text-sm text-gray-500 mt-4 text-center">
