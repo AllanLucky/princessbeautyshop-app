@@ -32,7 +32,7 @@ router.post("/register", registerLimiter, registerUser);
 
 // ================= EMAIL VERIFICATION =================
 router.post("/verify-email", verifyLimiter, verifyEmailCode);
-router.post("/resend-code", verifyLimiter, resendVerificationCode);
+router.post("/resend-verification", verifyLimiter, resendVerificationCode);
 
 // ================= LOGIN =================
 router.post("/login", loginLimiter, loginUser);
