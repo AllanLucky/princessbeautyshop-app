@@ -12,6 +12,7 @@ const OrderSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
     },
 
     email: {
@@ -19,6 +20,7 @@ const OrderSchema = new mongoose.Schema(
       required: true,
       lowercase: true,
       trim: true,
+      index: true,
     },
 
     phone: {
@@ -30,10 +32,6 @@ const OrderSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-
-    /*
-    PRODUCTS
-    */
 
     products: [
       {
@@ -72,14 +70,11 @@ const OrderSchema = new mongoose.Schema(
       },
     ],
 
-    /*
-    PAYMENT
-    */
-
     total: {
       type: Number,
       required: true,
       min: 0,
+      index: true,
     },
 
     currency: {
@@ -91,6 +86,7 @@ const OrderSchema = new mongoose.Schema(
       type: String,
       enum: ["pending", "paid", "failed", "refunded"],
       default: "pending",
+      index: true,
     },
 
     declineReason: {
@@ -100,8 +96,9 @@ const OrderSchema = new mongoose.Schema(
 
     stripeSessionId: {
       type: String,
-      unique: true,
       sparse: true,
+      unique: true,
+      // ❗ Do NOT add index: true here (prevents duplicate warning)
     },
 
     paymentIntentId: {
@@ -109,14 +106,11 @@ const OrderSchema = new mongoose.Schema(
       default: "",
     },
 
-    /*
-    ORDER LIFE CYCLE
-    */
-
     orderStatus: {
       type: String,
       enum: ["processing", "confirmed", "shipped", "delivered", "cancelled"],
       default: "processing",
+      index: true,
     },
 
     isDelivered: {
@@ -137,12 +131,14 @@ const OrderSchema = new mongoose.Schema(
 );
 
 /*
-==========================================
-INDEX OPTIMIZATION ⭐
-==========================================
+================================================
+ INDEX OPTIMIZATION (NO DUPLICATE INDEX WARNING)
+================================================
 */
 
+// Only safe composite indexes
 OrderSchema.index({ userId: 1, paymentStatus: 1 });
+OrderSchema.index({ createdAt: -1 });
 
 const Order =
   mongoose.models.Order || mongoose.model("Order", OrderSchema);
