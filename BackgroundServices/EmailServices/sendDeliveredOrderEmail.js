@@ -54,7 +54,7 @@ const sendDeliveredOrderEmail = async () => {
 
       const templatePath = path.join(
         __dirname,
-        "../BackgroundServices/templates/deliveredorder.ejs"
+        "..templates/deliveredorder.ejs"
       );
 
       const html = await ejs.renderFile(templatePath, {
