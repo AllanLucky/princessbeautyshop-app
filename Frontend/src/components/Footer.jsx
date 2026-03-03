@@ -17,9 +17,9 @@ const Footer = () => {
         <div className="md:w-1/4 text-center md:text-left">
           <h3 className="text-xl font-semibold">Quick Links</h3>
           <ul className="mt-2 space-y-2">
-            <li><a href="/" className="hover:underline">Home</a></li>
-            <li><a href="/about-us" className="hover:underline">About Us</a></li>
-            <li><a href="/shop" className="hover:underline">Shop</a></li>
+            <li><a href="/faqs" className="hover:underline">FAQS</a></li>
+            <li><a href="/returns" className="hover:underline">Returns</a></li>
+            <li><a href="/shipping" className="hover:underline">Shipping</a></li>
             <li><a href="/contact-us" className="hover:underline">Contact Us</a></li>
           </ul>
         </div>
@@ -27,16 +27,16 @@ const Footer = () => {
         {/* CONTACT */}
         <div className="md:w-1/3 text-center md:text-left">
           <h3 className="text-xl font-semibold">Contact Us</h3>
-          <p className="mt-2">123 BeautyBliss Ave, City, Country</p>
+          <p className="mt-2">123 Kilifonia Beauty Ave, City, Country</p>
           <p className="mt-2">Phone: (+254) 788425000</p>
-          <p className="mt-2">Email: info@beautybliss.com</p>
+          <p className="mt-2">Email: info@kilifonialbeautyblis.com</p>
         </div>
 
       </div>
 
       {/* BOTTOM */}
       <div className="mt-10 border-t-4 border-[#e9acd9] pt-4 text-center">
-        <p>&copy; 2024 BeautyBliss. All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} Kilifonia Beauty. All rights reserved.</p>
 
         <div className="flex justify-center space-x-4 mt-4">
           {/* GitHub */}
