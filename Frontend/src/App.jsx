@@ -41,8 +41,11 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import AboutUs from "./components/AboutUs";
 import Contact from "./components/Contact";
-import Shop from "./components/Shop";
 import AboutUsReadme from "./components/AboutUsReadme";
+import SkinClinic from "./pages/Clinic";
+import Returns from "./pages/Return";
+import FAQ from "./pages/FAQS";
+import Shipping from "./pages/Shipping";
 
 /* ================= LAYOUT ================= */
 const Layout = () => (
@@ -186,7 +189,11 @@ function App() {
         { path: "/about-us", element: <AboutUs /> },
         { path: "/about-us-readme", element: <AboutUsReadme /> },
         { path: "/contact-us", element: <Contact /> },
-        { path: "/shop", element: <Shop /> },
+        { path: "/shipping", element: <Shipping /> },
+        { path: "/skin-clinic", element: <SkinClinic /> },
+        { path: "/returns", element: <Returns /> },
+        { path: "/faqs", element: <FAQ /> },
+
 
         /* ================= SUPPORT TICKETS ================= */
         {

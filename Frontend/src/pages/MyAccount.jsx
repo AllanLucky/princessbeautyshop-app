@@ -1,271 +1,208 @@
-import { useSelector, useDispatch } from "react-redux";
-import { useState, useEffect } from "react";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import axios from "axios";
-import { userRequest } from "../requestMethod";
-import { logout, updateUser } from "../redux/userRedux";
-import { useNavigate } from "react-router-dom";
-import { FaUpload, FaSignOutAlt, FaSave, FaEye, FaEyeSlash } from "react-icons/fa";
+import { useDispatch, useSelector } from "react-redux";
+import logOut  from '../redux/userRedux';
+import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaLock, FaSignOutAlt, FaSave } from 'react-icons/fa';
 
-const MyAccount = () => {
+const Myaccount = () => {
+  const user = useSelector((state) => state.user);
   const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const currentUser = useSelector((state) => state.user.currentUser);
-  console.log("Current User from Redux:", currentUser);
-
-  const [user, setUser] = useState(null); // user fetched from backend
-  const [loading, setLoading] = useState(false);
-  const [editMode, setEditMode] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [profilePic, setProfilePic] = useState("");
-
-  // Originals for cancel
-  const [originalName, setOriginalName] = useState("");
-  const [originalEmail, setOriginalEmail] = useState("");
-  const [originalAvatar, setOriginalAvatar] = useState("");
-
-  // ================= FETCH LOGIN USER =================
-  const fetchUser = async () => {
-    try {
-      const res = await userRequest.get("/users/me");
-      setUser(res.data.user);
-      setName(res.data.user.name || "");
-      setEmail(res.data.user.email || "");
-      setProfilePic(res.data.user.avatar || "/avatar.png");
-
-      setOriginalName(res.data.user.name || "");
-      setOriginalEmail(res.data.user.email || "");
-      setOriginalAvatar(res.data.user.avatar || "/avatar.png");
-
-      dispatch(updateUser(res.data.user));
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to fetch user data");
-    }
-  };
-
-  useEffect(() => {
-    fetchUser();
-  }, []);
-
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <p className="text-gray-600 text-lg">You are not logged in.</p>
-      </div>
-    );
-  }
-
-  // ================= UPLOAD AVATAR =================
-  const uploadAvatar = async () => {
-    if (profilePic instanceof File) {
-      const data = new FormData();
-      data.append("file", profilePic);
-      data.append("upload_preset", "uploads");
-
-      try {
-        const res = await axios.post(
-          "https://api.cloudinary.com/v1_1/dkdx7xytz/image/upload",
-          data
-        );
-        return res.data.secure_url;
-      } catch (err) {
-        toast.error("Image upload failed");
-        throw err;
-      }
-    }
-    return profilePic;
-  };
-
-  // ================= SAVE CHANGES =================
-  const handleSaveChanges = async () => {
-    if (!name || !email) return toast.error("Name & email required");
-    if ((currentPassword && !newPassword) || (!currentPassword && newPassword)) {
-      return toast.error("Both current & new password required");
-    }
-    if (newPassword && newPassword.length < 6) {
-      return toast.error("New password must be at least 6 characters");
-    }
-
-    setLoading(true);
-    try {
-      const avatarUrl = await uploadAvatar();
-
-      // update profile
-      const res = await userRequest.put("/users/update-profile", {
-        name,
-        email,
-        avatar: avatarUrl,
-      });
-      setUser(res.data.user);
-      dispatch(updateUser(res.data.user));
-
-      // update password if provided
-      if (currentPassword && newPassword) {
-        await userRequest.put("/users/change-password", {
-          currentPassword,
-          newPassword,
-        });
-        toast.success("Password changed successfully!");
-      }
-
-      toast.success("Profile updated successfully");
-      setEditMode(false);
-      setCurrentPassword("");
-      setNewPassword("");
-
-      setOriginalName(name);
-      setOriginalEmail(email);
-      setOriginalAvatar(avatarUrl);
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Update failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ================= CANCEL =================
-  const handleCancel = () => {
-    setName(originalName);
-    setEmail(originalEmail);
-    setProfilePic(originalAvatar);
-    setCurrentPassword("");
-    setNewPassword("");
-    setEditMode(false);
-  };
-
-  const handleImageChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setProfilePic(e.target.files[0]);
-    }
-  };
 
   const handleLogout = () => {
-    if (!window.confirm("Logout now?")) return;
-    dispatch(logout());
-    toast.success("Logged out");
-    setTimeout(() => navigate("/login"), 800);
+    dispatch(logOut());
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-rose-50 to-white pt-24 pb-12 px-4">
-      <ToastContainer position="top-right" autoClose={3000} />
-
-      <h1 className="text-5xl font-extrabold text-pink-600 mb-8 text-center">
-        My Account
-      </h1>
-
-      <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-2xl p-8">
-        {/* IMAGE */}
-        <div className="flex flex-col items-center gap-4 mb-8">
-          <img
-            src={
-              profilePic instanceof File
-                ? URL.createObjectURL(profilePic)
-                : profilePic || "/avatar.png"
-            }
-            alt="Profile"
-            className="h-32 w-32 rounded-full object-cover border"
-          />
-
-          <label className="cursor-pointer text-pink-600 font-semibold flex gap-2 items-center">
-            <FaUpload /> Change Photo
-            <input type="file" hidden onChange={handleImageChange} />
-          </label>
+    <div className="min-h-screen bg-gradient-to-b from-rose-50 to-white pt-24 pb-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-10">
+          <h1 className="text-3xl font-serif font-bold text-gray-800 mb-2">My Account</h1>
+          <p className="text-gray-600">Manage your personal information and account settings</p>
         </div>
 
-        {/* FORM */}
-        <div className="flex flex-col gap-4">
-          <div>
-            <label className="font-semibold">Full Name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              disabled={!editMode}
-              className={`w-full border px-4 py-2 rounded-lg ${!editMode ? "bg-gray-100" : ""}`}
-            />
-          </div>
-
-          <div>
-            <label className="font-semibold">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={!editMode}
-              className={`w-full border px-4 py-2 rounded-lg ${!editMode ? "bg-gray-100" : ""}`}
-            />
-          </div>
-
-          <div>
-            <label className="font-semibold">Current Password</label>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                disabled={!editMode}
-                className="w-full border px-4 py-2 rounded-lg"
-              />
-              <span
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-2.5 cursor-pointer text-gray-500"
-              >
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
-              </span>
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+          {/* Account Information Section */}
+          <div className="p-8 border-b border-rose-100">
+            <div className="flex items-center mb-6">
+              <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mr-4">
+                <FaUser className="text-rose-600 text-xl" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-serif font-bold text-gray-800">{user.currentUser?.name}</h2>
+                <p className="text-gray-600">{user.currentUser?.email}</p>
+              </div>
             </div>
           </div>
 
-          <div>
-            <label className="font-semibold">New Password</label>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                disabled={!editMode}
-                className="w-full border px-4 py-2 rounded-lg"
-              />
-              <span
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-2.5 cursor-pointer text-gray-500"
-              >
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
-              </span>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-8">
+            {/* Account Settings Section */}
+            <div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+                <FaUser className="text-rose-600 mr-2" />
+                Personal Information
+              </h3>
+              <form className="space-y-5">
+                <div>
+                  <label className="block text-gray-700 text-sm font-medium mb-2">Full Name</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaUser className="text-gray-400" />
+                    </div>
+                    <input 
+                      type="text" 
+                      value={user.currentUser?.name} 
+                      className="w-full pl-10 p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-300 focus:border-transparent transition-colors duration-300"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-gray-700 text-sm font-medium mb-2">Email Address</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaEnvelope className="text-gray-400" />
+                    </div>
+                    <input 
+                      type="email" 
+                      value={user.currentUser?.email} 
+                      className="w-full pl-10 p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-300 focus:border-transparent transition-colors duration-300"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 text-sm font-medium mb-2">Phone Number</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaPhone className="text-gray-400" />
+                    </div>
+                    <input 
+                      type="text" 
+                      value="+1 (555) 123-4567" 
+                      className="w-full pl-10 p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-300 focus:border-transparent transition-colors duration-300"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-gray-700 text-sm font-medium mb-2">Address</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaMapMarkerAlt className="text-gray-400" />
+                    </div>
+                    <input 
+                      type="text" 
+                      value="DownTown 123, Sydney" 
+                      className="w-full pl-10 p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-300 focus:border-transparent transition-colors duration-300"
+                    />
+                  </div>
+                </div>
+
+                <button 
+                  type="submit" 
+                  className="w-full bg-rose-600 hover:bg-rose-700 text-white py-3 rounded-lg font-medium transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center"
+                >
+                  <FaSave className="mr-2" />
+                  Save Changes
+                </button>
+              </form>
+            </div>
+
+            {/* Password Management Section */}
+            <div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+                <FaLock className="text-rose-600 mr-2" />
+                Password & Security
+              </h3>
+              <form className="space-y-5">
+                <div>
+                  <label className="block text-gray-700 text-sm font-medium mb-2">Current Password</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaLock className="text-gray-400" />
+                    </div>
+                    <input 
+                      type="password" 
+                      className="w-full pl-10 p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-300 focus:border-transparent transition-colors duration-300"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-gray-700 text-sm font-medium mb-2">New Password</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaLock className="text-gray-400" />
+                    </div>
+                    <input 
+                      type="password" 
+                      className="w-full pl-10 p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-300 focus:border-transparent transition-colors duration-300"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 text-sm font-medium mb-2">Confirm New Password</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaLock className="text-gray-400" />
+                    </div>
+                    <input 
+                      type="password" 
+                      className="w-full pl-10 p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-300 focus:border-transparent transition-colors duration-300"
+                    />
+                  </div>
+                </div>
+                
+                <button 
+                  type="submit" 
+                  className="w-full bg-rose-100 hover:bg-rose-200 text-rose-700 py-3 rounded-lg font-medium transition-colors duration-300 flex items-center justify-center"
+                >
+                  Update Password
+                </button>
+                
+                <button 
+                  type="button" 
+                  onClick={handleLogout}
+                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-lg font-medium transition-colors duration-300 flex items-center justify-center mt-4"
+                >
+                  <FaSignOutAlt className="mr-2" />
+                  Logout
+                </button>
+              </form>
             </div>
           </div>
+        </div>
 
-          {/* BUTTONS */}
-          <div className="flex flex-wrap gap-4 mt-4">
-            <button
-              onClick={editMode ? handleCancel : () => setEditMode(true)}
-              className="bg-pink-500 text-white px-6 py-3 rounded-xl"
-            >
-              {editMode ? "Cancel" : "Edit Profile"}
-            </button>
-
-            {editMode && (
-              <button
-                onClick={handleSaveChanges}
-                disabled={loading}
-                className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-3 rounded-xl flex gap-2 items-center"
-              >
-                <FaSave /> {loading ? "Saving..." : "Save Changes"}
-              </button>
-            )}
-
-            <button
-              onClick={handleLogout}
-              className="bg-gray-200 px-6 py-3 rounded-xl flex gap-2 items-center"
-            >
-              <FaSignOutAlt /> Logout
-            </button>
+        {/* Additional Account Features */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+          <div className="bg-white rounded-2xl shadow-lg p-6 text-center">
+            <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+              </svg>
+            </div>
+            <h3 className="font-semibold text-gray-800 mb-2">Order History</h3>
+            <p className="text-gray-600 text-sm">View your past orders and purchases</p>
+          </div>
+          
+          <div className="bg-white rounded-2xl shadow-lg p-6 text-center">
+            <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </div>
+            <h3 className="font-semibold text-gray-800 mb-2">Wishlist</h3>
+            <p className="text-gray-600 text-sm">See your saved favorite products</p>
+          </div>
+          
+          <div className="bg-white rounded-2xl shadow-lg p-6 text-center">
+            <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="font-semibold text-gray-800 mb-2">Preferences</h3>
+            <p className="text-gray-600 text-sm">Customize your shopping experience</p>
           </div>
         </div>
       </div>
@@ -273,4 +210,4 @@ const MyAccount = () => {
   );
 };
 
-export default MyAccount;
+export default Myaccount;
