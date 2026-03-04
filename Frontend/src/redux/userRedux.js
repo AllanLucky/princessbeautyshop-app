@@ -1,7 +1,9 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+const storedUser = localStorage.getItem("user");
+
 const initialState = {
-  currentUser: JSON.parse(localStorage.getItem("user")) || null,
+  currentUser: storedUser ? JSON.parse(storedUser) : null,
   isFetching: false,
   error: null,
 };
@@ -9,6 +11,7 @@ const initialState = {
 const userSlice = createSlice({
   name: "user",
   initialState,
+
   reducers: {
     // ================= LOGIN START =================
     loginStart: (state) => {
@@ -21,7 +24,8 @@ const userSlice = createSlice({
       state.isFetching = false;
       state.error = null;
 
-      // 👇 Store ONLY user object
+      if (!action.payload) return;
+
       state.currentUser = action.payload;
 
       localStorage.setItem("user", JSON.stringify(action.payload));
@@ -40,18 +44,22 @@ const userSlice = createSlice({
       state.error = null;
 
       localStorage.removeItem("user");
+      localStorage.removeItem("token");
     },
 
     // ================= UPDATE USER =================
     updateUser: (state, action) => {
-      if (!state.currentUser) return;
+      if (!state.currentUser || !action.payload) return;
 
       state.currentUser = {
         ...state.currentUser,
         ...action.payload,
       };
 
-      localStorage.setItem("user", JSON.stringify(state.currentUser));
+      localStorage.setItem(
+        "user",
+        JSON.stringify(state.currentUser)
+      );
     },
   },
 });

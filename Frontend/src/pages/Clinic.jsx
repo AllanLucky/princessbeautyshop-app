@@ -281,7 +281,7 @@ const SkinClinic = () => {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent mb-4">
-            Dubois Beauty Skin Clinic
+            Kilifonia Beauty Skin Clinic
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Professional Skin Analysis for Melanin-Rich Skin
