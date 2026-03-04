@@ -215,7 +215,7 @@ const Navbar = () => {
           {/* Right Icons */}
           <div className="flex items-center space-x-5 md:space-x-6">
             {/* Wishlist */}
-            <Link to="/wishlist" className="relative group hidden sm:block">
+            <Link to="/my-wishlist" className="relative group hidden sm:block">
               <div className="p-2 rounded-full group-hover:bg-rose-50 transition-colors">
                 <Badge badgeContent={wishlist?.quantity || 0} color="error" overlap="circular">
                   <FaHeart className="text-rose-400 group-hover:text-rose-600" />

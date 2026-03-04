@@ -87,40 +87,42 @@ const getScreenResolution = () => {
 
 /*
 ====================================================
-LOCATION FETCH WITH TIMEOUT (IMPORTANT ⭐)
+LOCATION SAFE FALLBACK (NO EXTERNAL API ⭐)
 ====================================================
 */
 
-const fetchWithTimeout = async (url, timeout = 5000) => {
-  const controller = new AbortController();
-
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-  try {
-    const response = await fetch(url, {
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) return null;
-
-    return await response.json();
-  } catch {
-    return null;
-  }
-};
-
 const getUserLocation = async () => {
   try {
-    const data = await fetchWithTimeout("https://ipapi.co/json/");
+    if (!navigator.geolocation) {
+      return {
+        country: "unknown",
+        city: "unknown",
+        region: "unknown",
+        timezone: "unknown",
+      };
+    }
 
-    return {
-      country: data?.country_name || "unknown",
-      city: data?.city || "unknown",
-      region: data?.region || "unknown",
-      timezone: data?.timezone || "unknown",
-    };
+    return new Promise((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        () => {
+          resolve({
+            country: "unknown",
+            city: "unknown",
+            region: "unknown",
+            timezone: "unknown",
+          });
+        },
+        () => {
+          resolve({
+            country: "unknown",
+            city: "unknown",
+            region: "unknown",
+            timezone: "unknown",
+          });
+        },
+        { timeout: 3000 }
+      );
+    });
   } catch {
     return {
       country: "unknown",
@@ -139,9 +141,25 @@ CORE ANALYTICS ENGINE (SAFE VERSION ⭐)
 
 let analyticsQueue = [];
 let isProcessingQueue = false;
+let analyticsLock = false;
+
+/*
+Throttle analytics spam
+*/
+const ANALYTICS_COOLDOWN = 3000;
+
+/*
+Send batch analytics safely
+*/
 
 const sendAnalyticsBatch = async () => {
-  if (isProcessingQueue) return;
+  if (isProcessingQueue || analyticsLock) return;
+
+  analyticsLock = true;
+
+  setTimeout(() => {
+    analyticsLock = false;
+  }, ANALYTICS_COOLDOWN);
 
   isProcessingQueue = true;
 
@@ -177,6 +195,8 @@ export const trackUserAction = async (
     const currentPage =
       window.location.pathname + window.location.search;
 
+    const location = await getUserLocation();
+
     const analyticsData = {
       userId: user?._id || null,
       userEmail: user?.email || null,
@@ -199,20 +219,15 @@ export const trackUserAction = async (
 
       timestamp: new Date().toISOString(),
 
+      country: location.country,
+      city: location.city,
+      region: location.region,
+      timezone: location.timezone,
+
       ...additionalData,
     };
 
     analyticsQueue.push(analyticsData);
-
-    getUserLocation().then((location) => {
-      analyticsData.country = location.country;
-      analyticsData.city = location.city;
-      analyticsData.region = location.region;
-      analyticsData.timezone = location.timezone;
-
-      analyticsQueue.push(analyticsData);
-      sendAnalyticsBatch();
-    });
 
     sendAnalyticsBatch();
   } catch (error) {
@@ -264,6 +279,6 @@ export const trackPurchase = (orderData) => {
 export const trackSearch = (searchQuery, resultsCount = 0) => {
   trackUserAction("search", "search", {
     searchQuery,
-    resultsCount,
+    resultsCount, 
   });
 };

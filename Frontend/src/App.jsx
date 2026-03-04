@@ -46,6 +46,7 @@ import SkinClinic from "./pages/Clinic";
 import Returns from "./pages/Return";
 import FAQ from "./pages/FAQS";
 import Shipping from "./pages/Shipping";
+import Packages from "./pages/Package";
 
 /* ================= LAYOUT ================= */
 const Layout = () => (
@@ -179,6 +180,7 @@ function App() {
         { path: "/products/:searchterm", element: <ProductList /> },
 
         /* ================= PACKAGES (NEW) ================= */
+         { path: "/packages", element: <Packages/> },
         { path: "/packages/:id", element: <PackageDetailed /> },
 
         /* ================= BLOGS ================= */

@@ -35,46 +35,43 @@ const Login = () => {
     try {
       setLoading(true);
       // Attempt to login - this will throw an error if credentials are invalid
-      await login(dispatch, { email, password });
-      
-      // If login is successful, the Redux state should update with currentUser
-      // Give it a moment to update, then check if login was truly successful
-      setTimeout(() => {
-        if (user.currentUser) {
-          // Start smooth transition only if we have a currentUser
-          setIsTransitioning(true);
-          toast.success(
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-2">
-                <FaStar className="text-rose-500 mr-2" />
-                <span className="font-serif font-bold">Welcome to Kilifonia Beauty!</span>
-              </div>
-              <p className="text-sm">Your beauty journey continues...</p>
-            </div>
-          );
-          
-          // Wait for transition animation to complete before navigating
-          setTimeout(() => {
-            navigate("/");
-          }, 800);
-        } else {
-          // If no user is set after login attempt, show invalid credentials
-          toast.error(
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-2">
-                <FaHeart className="text-rose-400 mr-2" />
-                <span className="font-medium">Oops! Let's try that again</span>
-              </div>
-              <p className="text-sm">The email or password doesn't match our DB records.</p>
-              <p className="text-xs mt-1 italic">✨ Tip: Please check your credentials and try again</p>
-            </div>,
-            {
-              autoClose: 6000,
-              closeOnClick: true,
-            }
-          );
-        }
-      }, 1000); // Wait 1 second for Redux state to update
+    await login(dispatch, { email, password });
+
+   // Wait Redux state update cycle
+    setTimeout(() => {
+  if (window.localStorage.getItem("user")) {
+    setIsTransitioning(true);
+
+    toast.success(
+      <div className="text-center">
+        <div className="flex items-center justify-center mb-2">
+          <FaStar className="text-rose-500 mr-2" />
+          <span className="font-serif font-bold">
+            Welcome to Kilifonia Beauty!
+          </span>
+        </div>
+        <p className="text-sm">Your beauty journey continues...</p>
+      </div>
+    );
+
+    setTimeout(() => navigate("/"), 800);
+  } else {
+    toast.error(
+      <div className="text-center">
+        <div className="flex items-center justify-center mb-2">
+          <FaHeart className="text-rose-400 mr-2" />
+          <span className="font-medium">Oops! Let's try that again</span>
+        </div>
+        <p className="text-sm">
+          The email or password doesn't match our DB records.
+        </p>
+        <p className="text-xs mt-1 italic">
+          ✨ Tip: Please check your credentials and try again
+        </p>
+      </div>
+    );
+  }
+     }, 500);
       
     } catch (error) {
       console.error("Login error:", error);
@@ -85,7 +82,7 @@ const Login = () => {
             <FaHeart className="text-rose-400 mr-2" />
             <span className="font-medium">Oops! Let's try that again</span>
           </div>
-          <p className="text-sm">The email or password doesn't match our DB records.</p>
+          <p className="text-sm">The email or password doesn't match our KB records.</p>
           <p className="text-xs mt-1 italic">✨ Tip: Please check your credentials and try again</p>
         </div>,
         {
@@ -109,7 +106,7 @@ const Login = () => {
           <FaGem className="text-rose-400 mr-2" />
           <span className="font-medium">{provider} Login Coming Soon!</span>
         </div>
-        <p className="text-sm mt-1">For now, please use your DB credentials to access your beauty account.</p>
+        <p className="text-sm mt-1">For now, please use your KB credentials to access your beauty account.</p>
       </div>,
       {
         autoClose: 5000,

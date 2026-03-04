@@ -14,21 +14,29 @@ export const login = async (dispatch, credentials) => {
   try {
     const res = await userRequest.post("/auth/login/", credentials);
 
-    // ✅ Backend returns { success, message, user }
-    const loggedInUser = res.data.user;
+    const loggedInUser = res.data?.user;
 
     if (!loggedInUser) {
-      throw new Error("User data not received");
+      throw new Error("User data not received from backend");
     }
 
+    // Update Redux state
     dispatch(loginSuccess(loggedInUser));
+
+    // ⭐ Return backend response to frontend
+    return res.data;
 
   } catch (error) {
     const message =
-      error.response?.data?.message || "Login failed. Please try again.";
+      error.response?.data?.message ||
+      "Login failed. Please try again.";
 
     dispatch(loginFailure(message));
+
     console.error("Login failed:", message);
+
+    // ⭐ Important: Throw error so Login.jsx catch block works
+    throw error;
   }
 };
 
@@ -36,7 +44,6 @@ export const login = async (dispatch, credentials) => {
 // ================= LOGOUT USER =================
 export const logoutUser = async (dispatch) => {
   try {
-    // Destroy cookie on backend
     await userRequest.post("/auth/logout");
   } catch (error) {
     console.error(
@@ -44,7 +51,7 @@ export const logoutUser = async (dispatch) => {
       error.response?.data?.message || error.message
     );
   } finally {
-    // Always clear Redux + localStorage
     dispatch(logout());
+    localStorage.clear();
   }
 };

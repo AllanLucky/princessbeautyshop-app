@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { userRequest } from "../requestMethod"
@@ -21,16 +22,11 @@ const Register = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // Get user's IP address and referrer
   const getUserData = async () => {
     try {
-      // Get IP address
       const ipResponse = await fetch('https://api.ipify.org?format=json');
       const ipData = await ipResponse.json();
-      
-      // Get referrer
       const referrer = document.referrer || 'Direct';
-      
       return {
         ipAddress: ipData.ip,
         referrer: referrer
@@ -53,26 +49,24 @@ const Register = () => {
   }
 
   const formatPhoneNumber = (value) => {
-    // Remove all non-digit characters
     const cleaned = value.replace(/\D/g, '');
-    
-    // Format as 254XXXXXXXXX
+
     if (cleaned.startsWith('0')) {
       return '254' + cleaned.slice(1);
     }
-    
+
     if (cleaned.startsWith('+254')) {
       return cleaned.slice(1);
     }
-    
+
     if (cleaned.startsWith('254')) {
       return cleaned;
     }
-    
+
     if (cleaned.length <= 9) {
       return '254' + cleaned;
     }
-    
+
     return cleaned;
   }
 
@@ -84,153 +78,72 @@ const Register = () => {
   const handleRegister = async (e) => {
     e.preventDefault()
 
-    // Sweet validation messages
     if (!name || !email || !password || !confirmPassword) {
-      toast.error(
-        <div className="text-center">
-          <div className="flex items-center justify-center mb-2">
-            <FaHeart className="text-rose-400 mr-2" />
-            <span className="font-medium">Almost there!</span>
-          </div>
-          <p className="text-sm">Please fill in all the required fields to continue your beauty journey.</p>
-        </div>
-      );
+      toast.error("Please fill in all required fields");
       return;
     }
 
     if (password !== confirmPassword) {
-      toast.error(
-        <div className="text-center">
-          <div className="flex items-center justify-center mb-2">
-            <FaHeart className="text-rose-400 mr-2" />
-            <span className="font-medium">Oops! Passwords don't match</span>
-          </div>
-          <p className="text-sm">Please make sure both passwords are identical.</p>
-        </div>
-      );
+      toast.error("Passwords do not match");
       return;
     }
 
     if (password.length < 6) {
-      toast.error(
-        <div className="text-center">
-          <div className="flex items-center justify-center mb-2">
-            <FaHeart className="text-rose-400 mr-2" />
-            <span className="font-medium">Stronger password needed</span>
-          </div>
-          <p className="text-sm">Your password should be at least 6 characters long for security.</p>
-        </div>
-      );
+      toast.error("Password must be at least 6 characters");
       return;
     }
 
     if (!agreeToTerms) {
-      toast.error(
-        <div className="text-center">
-          <div className="flex items-center justify-center mb-2">
-            <FaHeart className="text-rose-400 mr-2" />
-            <span className="font-medium">One more step!</span>
-          </div>
-          <p className="text-sm">Please agree to our Terms and Conditions to continue.</p>
-        </div>
-      );
+      toast.error("Please agree to Terms and Conditions");
       return;
     }
 
     try {
       setLoading(true);
-      
-      // Get user data (IP and referrer)
+
       const userData = await getUserData();
-      
-      // Prepare registration data
+
       const registrationData = {
         name,
         email,
         password,
-        phone: phone || undefined, // Optional field
+        phone: phone || undefined,
         ipAddress: userData.ipAddress,
         referrer: userData.referrer,
         registrationSource: 'website'
       };
 
       const response = await userRequest.post("/auth/register", registrationData);
-      
-      // Sweet success message
-      toast.success(
-        <div className="text-center">
-          <div className="flex items-center justify-center mb-2">
-            <FaStar className="text-rose-500 mr-2" />
-            <span className="font-serif font-bold">Welcome to Dubois Beauty!</span>
-          </div>
-          <p className="text-sm">Your beauty journey begins now! ✨</p>
-        </div>
-      );
 
-      // Auto-login the user after successful registration
+      toast.success("Registration successful 🎉 Please verify your email.");
+
       if (response.data) {
-        // Dispatch login success to Redux store
         dispatch(loginSuccess(response.data));
-        
-        // Store user data in localStorage for persistence
+
         localStorage.setItem('currentUser', JSON.stringify(response.data));
         if (response.data.accessToken) {
           localStorage.setItem('token', response.data.accessToken);
         }
-        
-        // Start smooth transition
+
         setIsTransitioning(true);
-        
-        // Sweet welcome message with delay
+
+        // 🔥 UPDATED NAVIGATION (ONLY CHANGE)
         setTimeout(() => {
-          toast.success(
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-2">
-                <FaGem className="text-rose-500 mr-2" />
-                <span className="font-medium">You're all set! 🎉</span>
-              </div>
-              <p className="text-sm">Taking you to your beauty dashboard in 3 seconds...</p>
-            </div>
-          );
-        }, 500);
-        
-        // 3-second delay before navigation
-        setTimeout(() => {
-          // Navigate to home after 3 seconds
-          navigate("/");
-          // Optional: Refresh the page to ensure clean state
-          window.location.reload();
-        }, 3000);
+          navigate("/verify-account", {
+            state: { email: registrationData.email }
+          });
+        }, 2000);
       }
-      
+
     } catch (error) {
-      // Sweet error messages
-      if (error.response && error.response.data.message) {
-        toast.error(
-          <div className="text-center">
-            <div className="flex items-center justify-center mb-2">
-              <FaHeart className="text-rose-400 mr-2" />
-              <span className="font-medium">Let's try that again</span>
-            </div>
-            <p className="text-sm">{error.response.data.message}</p>
-          </div>
-        );
-      } else {
-        toast.error(
-          <div className="text-center">
-            <div className="flex items-center justify-center mb-2">
-              <FaHeart className="text-rose-400 mr-2" />
-              <span className="font-medium">Something went wrong</span>
-            </div>
-            <p className="text-sm">Please try again in a moment. Your beauty journey is worth it! 💫</p>
-          </div>
-        );
-      }
+      toast.error(
+        error.response?.data?.message ||
+        "Something went wrong. Please try again."
+      );
     } finally {
       setLoading(false);
     }
   }
-
   return (
     <div className={`min-h-screen bg-gradient-to-b from-rose-50 to-white pt-24 pb-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center transition-all duration-700 ease-in-out ${isTransitioning ? 'opacity-0 transform scale-105' : 'opacity-100'}`}>
       <div className="max-w-5xl w-full">
