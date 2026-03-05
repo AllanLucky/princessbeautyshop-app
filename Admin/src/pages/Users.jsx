@@ -1,210 +1,207 @@
-import { DataGrid } from "@mui/x-data-grid";
-import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { FaTrash, FaEdit, FaSearch, FaUserPlus } from 'react-icons/fa';
+import { DataGrid } from '@mui/x-data-grid';
 import { userRequest } from "../requestMethods";
-import { FaEye, FaTrash } from "react-icons/fa";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { useEffect, useState } from 'react';
 
 const Users = () => {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [deletingId, setDeletingId] = useState(null);
-
-  const [paginationModel, setPaginationModel] = useState({
-    page: 0,
-    pageSize: 10,
-  });
-
-  // ================= GET USERS =================
-  const getUsers = async () => {
-    try {
-      setLoading(true);
-
-      const res = await userRequest.get("/users");
-
-      const onlyUsers = res.data.users.filter(
-        (u) => u.role === "user" || u.role === "customer"
-      );
-
-      setUsers(
-        onlyUsers.map((u) => ({
-          ...u,
-          isActive: true,
-        }))
-      );
-
-    } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Failed to fetch users"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    getUsers();
-  }, []);
-
-  // ================= DELETE USER =================
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this user?")) return;
-
-    try {
-      setDeletingId(id);
-
-      await userRequest.delete(`/users/${id}`);
-
-      setUsers((prev) => prev.filter((user) => user._id !== id));
-
-      toast.success("User deleted successfully 🗑️");
-
-    } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Delete failed"
-      );
-
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
-  // ================= TABLE COLUMNS =================
-  const userColumns = [
-    {
-      field: "_id",
-      headerName: "ID",
-      width: 220,
+  const columns = [
+    { 
+      field: "_id", 
+      headerName: "ID", 
+      width: 90,
+      headerClassName: 'font-bold text-gray-700'
     },
-
-    {
-      field: "user",
-      headerName: "User Info",
-      width: 320,
-      renderCell: (params) => {
-        const user = params.row;
-
-        return (
-          <div className="flex flex-col justify-center h-full leading-tight">
-            <span className="font-semibold text-gray-800">
-              {user?.name || "No Name"}
-            </span>
-
-            <span className="text-sm text-gray-500">
-              {user?.email || "No Email"}
-            </span>
-          </div>
-        );
-      },
-    },
-
-    {
-      field: "role",
-      headerName: "Role",
-      width: 140,
+    { 
+      field: "name", 
+      headerName: "Name", 
+      width: 180,
+      headerClassName: 'font-bold text-gray-700',
       renderCell: (params) => (
-        <span className="px-3 py-1 rounded-full text-xs bg-pink-100 text-pink-600 font-semibold capitalize">
-          {params.value || "user"}
-        </span>
-      ),
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+            {params.row.name?.charAt(0) || 'U'}
+          </div>
+          <span className="font-medium">{params.row.name || 'Unknown'}</span>
+        </div>
+      )
     },
-
-    {
-      field: "isActive",
-      headerName: "Status",
-      width: 140,
+    { field: "email", headerName: "Email", width: 220, headerClassName: 'font-bold text-gray-700' },
+    { field: "phone", headerName: "Phone", width: 150, headerClassName: 'font-bold text-gray-700' },
+    { 
+      field: "role", 
+      headerName: "Role", 
+      width: 120, 
+      headerClassName: 'font-bold text-gray-700',
+      renderCell: (params) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+          params.row.role === 'Admin' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'
+        }`}>
+          {params.row.role || 'User'}
+        </span>
+      )
+    },
+    { 
+      field: "status", 
+      headerName: "Status", 
+      width: 120, 
+      headerClassName: 'font-bold text-gray-700',
       renderCell: () => (
-        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-600">
+        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
           Active
         </span>
-      ),
+      )
     },
-
     {
-      field: "action",
+      field: "actions",
       headerName: "Actions",
-      width: 180,
-      sortable: false,
-      renderCell: (params) => (
-        <div className="flex items-center gap-6">
-
-          <Link to={`/user/${params.row._id}`}>
-            <FaEye className="text-purple-600 text-xl cursor-pointer hover:scale-110 transition" />
-          </Link>
-
-          <button
-            disabled={deletingId === params.row._id}
-            onClick={() => handleDelete(params.row._id)}
-          >
-            <div className="p-2 rounded-full bg-red-50 hover:bg-red-100 transition">
-              <FaTrash className="text-red-500 hover:text-red-700 text-lg" />
-            </div>
+      width: 120,
+      headerClassName: 'font-bold text-gray-700',
+      renderCell: () => (
+        <div className="flex items-center space-x-2">
+          <button className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors duration-200">
+            <FaEdit size={14} />
           </button>
-
+          <button className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors duration-200">
+            <FaTrash size={14} />
+          </button>
         </div>
       ),
     },
   ];
 
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
+
+  useEffect(() => {
+    const getUsers = async () => {
+      try {
+        setLoading(true);
+        const res = await userRequest.get("/users");
+
+        // Make sure users is always an array
+        const usersData = Array.isArray(res.data)
+          ? res.data
+          : Array.isArray(res.data.users)
+            ? res.data.users
+            : [];
+
+        setUsers(usersData);
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
+        setUsers([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    getUsers();
+  }, []);
+
+  // Filter users safely
+  const filteredUsers = Array.isArray(users)
+    ? users.filter(user =>
+        user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.role?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : [];
+
   return (
-    <div className="p-6 md:p-8 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
-
-      <ToastContainer position="top-right" autoClose={2000} />
-
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-3">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">
-            Customers
-          </h1>
-          <p className="text-gray-500 text-sm mt-1">
-            Manage registered users
-          </p>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header Section */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">User Management</h1>
+          <p className="text-gray-600">Manage your team members and their account permissions here.</p>
         </div>
 
-        <span className="bg-white shadow px-4 py-2 rounded-lg text-sm">
-          Total Users: {users.length}
-        </span>
-      </div>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <StatCard title="Total Users" value={users.length} icon={<FaUserPlus size={24} className="text-blue-600" />} bgColor="bg-blue-100" />
+          <StatCard title="Admins" value={users.filter(u => u.role === 'Admin').length} icon={<span className="text-purple-600 font-bold">A</span>} bgColor="bg-purple-100" />
+          <StatCard title="Active Users" value={users.length} icon={<span className="text-green-600 font-bold">✓</span>} bgColor="bg-green-100" />
+          <StatCard title="This Month" value={Math.floor(users.length * 0.1)} icon={<span className="text-orange-600 font-bold">↑</span>} bgColor="bg-orange-100" />
+        </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-2xl shadow-xl p-5 overflow-hidden">
+        {/* Main Content */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          {/* Toolbar */}
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+              <div className="relative flex-1 max-w-md">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaSearch className="text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search users by name, email, or role..."
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <div className="flex space-x-3">
+                <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200 font-medium">Filter</button>
+                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium flex items-center space-x-2">
+                  <FaUserPlus size={14} /> <span>Add User</span>
+                </button>
+              </div>
+            </div>
+          </div>
 
-        <DataGrid
-          rows={users}
-          columns={userColumns}
-          getRowId={(row) => row._id}
-          loading={loading}
-          autoHeight
-          pagination
-          paginationModel={paginationModel}
-          onPaginationModelChange={setPaginationModel}
-          pageSizeOptions={[5, 10, 20, 50]}
-          disableRowSelectionOnClick
+          {/* DataGrid */}
+          <div className="p-6">
+            {loading ? (
+              <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              </div>
+            ) : (
+              <DataGrid
+                getRowId={(row) => row._id}
+                rows={filteredUsers}
+                columns={columns}
+                checkboxSelection
+                paginationModel={paginationModel}
+                onPaginationModelChange={setPaginationModel}
+                pageSizeOptions={[30]}
+                disableSelectionOnClick
+                autoHeight
+                sx={{
+                  border: 'none',
+                  '& .MuiDataGrid-cell': { borderBottom: '1px solid #f3f4f6' },
+                  '& .MuiDataGrid-columnHeaders': { backgroundColor: '#f9fafb', borderBottom: '2px solid #e5e7eb' },
+                  '& .MuiDataGrid-footerContainer': { backgroundColor: '#f9fafb', borderTop: '1px solid #e5e7eb' },
+                  '& .MuiDataGrid-row:hover': { backgroundColor: '#f8fafc' },
+                }}
+              />
+            )}
+          </div>
+        </div>
 
-          sx={{
-            border: "none",
-
-            "& .MuiDataGrid-columnHeaders": {
-              backgroundColor: "#f9fafb",
-              fontWeight: "600",
-            },
-
-            "& .MuiDataGrid-row:hover": {
-              backgroundColor: "#fdf2f8",
-            },
-
-            "& .MuiDataGrid-cell": {
-              borderBottom: "1px solid #f3f4f6",
-              fontSize: "14px",
-            },
-          }}
-        />
-
+        <div className="mt-4 text-sm text-gray-600">
+          Showing {Math.min(filteredUsers.length, 30)} of {filteredUsers.length} users per page
+        </div>
       </div>
     </div>
   );
 };
+
+// Reusable stat card
+function StatCard({ title, value, icon, bgColor }) {
+  return (
+    <div className={`bg-white rounded-xl shadow-sm p-6 border border-gray-200`}>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-600">{title}</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
+        </div>
+        <div className={`w-12 h-12 ${bgColor} rounded-lg flex items-center justify-center`}>
+          {icon}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default Users;
