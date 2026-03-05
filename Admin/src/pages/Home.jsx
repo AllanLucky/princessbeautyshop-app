@@ -1,3 +1,4 @@
+// src/pages/Home.jsx
 import { useState, useEffect } from "react";
 import { userRequest } from "../requestMethods";
 import {
@@ -24,56 +25,35 @@ import {
 const COLORS = ["#4f46e5", "#ef4444", "#facc15"];
 const RADIAN = Math.PI / 180;
 
-/*
-=====================================================
-DASHBOARD HOME
-=====================================================
-*/
-
 const Home = () => {
   const [orders, setOrders] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  /*
-  =====================================================
-  FORMAT MONEY
-  =====================================================
-  */
-
+  // Format KES
   const formatKES = (amount = 0) =>
     Number(amount || 0).toLocaleString("en-KE", {
       style: "currency",
       currency: "KES",
     });
 
-  /*
-  =====================================================
-  ORDER TOTAL CALCULATION
-  =====================================================
-  */
-
+  // Calculate total for an order
   const calculateOrderTotal = (order) => {
     if (!order?.products) return 0;
-
-    return order.products.reduce((sum, p) => {
-      return sum + (p.price || 0) * (p.quantity || 1);
-    }, 0);
+    return order.products.reduce(
+      (sum, p) => sum + (p.price || 0) * (p.quantity || 1),
+      0
+    );
   };
 
-  /*
-  =====================================================
-  FETCH DASHBOARD DATA ⭐ BACKEND SAFE
-  =====================================================
-  */
-
+  // Fetch dashboard data
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
 
         const [ordersRes, usersRes] = await Promise.all([
-          userRequest.get("/orders?limit=20&sort=-createdAt"),
+          userRequest.get("/orders"),
           userRequest.get("/users"),
         ]);
 
@@ -92,12 +72,7 @@ const Home = () => {
     fetchDashboardData();
   }, []);
 
-  /*
-  =====================================================
-  METRICS
-  =====================================================
-  */
-
+  // Metrics
   const totalRevenue = orders.reduce(
     (acc, order) => acc + calculateOrderTotal(order),
     0
@@ -111,12 +86,7 @@ const Home = () => {
       Revenue: calculateOrderTotal(o),
     }));
 
-  /*
-  =====================================================
-  PIE LABEL RENDERER
-  =====================================================
-  */
-
+  // Pie chart label
   const renderCustomizedLabel = ({
     cx,
     cy,
@@ -144,12 +114,6 @@ const Home = () => {
     );
   };
 
-  /*
-  =====================================================
-  LOADING STATE
-  =====================================================
-  */
-
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gray-50">
@@ -160,18 +124,10 @@ const Home = () => {
     );
   }
 
-  /*
-  =====================================================
-  UI RENDER
-  =====================================================
-  */
-
   return (
     <div className="flex flex-col bg-gray-50 min-h-screen p-1">
-
       {/* Stats Boxes */}
       <div className="flex flex-wrap gap-4 w-full mb-6">
-
         <StatBox
           icon={<IoCartOutline className="text-2xl text-white" />}
           iconBg="bg-sky-500"
@@ -199,17 +155,14 @@ const Home = () => {
           title="Orders"
           value={orders.length}
         />
-
       </div>
 
       {/* Charts */}
       <div className="flex flex-wrap gap-6 mb-6">
-
         <div className="flex-1 md:flex-[3] bg-white rounded shadow-lg p-6 min-w-[250px] h-[22rem] flex flex-col">
           <h3 className="text-2xl font-bold mb-4 text-gray-700">
             Revenue Overview
           </h3>
-
           <ResponsiveContainer width="100%" height="85%">
             <BarChart data={barData}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -222,16 +175,11 @@ const Home = () => {
         </div>
 
         <div className="flex-1 md:flex-[1] bg-white rounded shadow-lg p-6 min-w-[200px] h-[22rem] flex flex-col items-center">
-          <h3 className="text-2xl font-bold mb-4 text-gray-700">
-            Buyer Profile
-          </h3>
-
+          <h3 className="text-2xl font-bold mb-4 text-gray-700">Buyer Profile</h3>
           <ResponsiveContainer width="100%" height="85%">
             <PieChart>
               <Pie
-                data={[
-                  { name: "Customers", value: users.length || 1 },
-                ]}
+                data={[{ name: "Customers", value: users.length || 1 }]}
                 cx="50%"
                 cy="50%"
                 labelLine={false}
@@ -243,18 +191,15 @@ const Home = () => {
                   <Cell key={index} fill={color} />
                 ))}
               </Pie>
-
               <Legend verticalAlign="bottom" height={36} />
               <Tooltip />
             </PieChart>
           </ResponsiveContainer>
         </div>
-
       </div>
 
       {/* Latest Transactions */}
       <div className="bg-white rounded shadow-lg p-6">
-
         <h3 className="text-2xl font-bold mb-4 text-gray-700">
           Latest Transactions
         </h3>
@@ -263,9 +208,7 @@ const Home = () => {
           <p className="text-gray-500">No orders yet.</p>
         ) : (
           <div className="overflow-x-auto">
-
             <table className="w-full table-auto border-collapse text-left">
-
               <thead>
                 <tr className="bg-gray-100">
                   <th className="py-3 px-4">Customer</th>
@@ -275,9 +218,7 @@ const Home = () => {
                   <th className="py-3 px-4">Status</th>
                 </tr>
               </thead>
-
               <tbody>
-
                 {orders
                   .slice()
                   .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
@@ -289,57 +230,40 @@ const Home = () => {
                         idx % 2 === 0 ? "bg-gray-50" : ""
                       }`}
                     >
-                      <td className="py-3 px-4 font-medium">
-                        {order.name || "Customer"}
-                      </td>
-
-                      <td className="py-3 px-4">
-                        {order.phone || "N/A"}
-                      </td>
-
-                      <td className="py-3 px-4">
-                        {order.address || "N/A"}
-                      </td>
-
+                      <td className="py-3 px-4 font-medium">{order.name || "Customer"}</td>
+                      <td className="py-3 px-4">{order.phone || "N/A"}</td>
+                      <td className="py-3 px-4">{order.address || "N/A"}</td>
                       <td className="py-3 px-4 font-semibold">
                         {formatKES(calculateOrderTotal(order))}
                       </td>
-
                       <td className="py-3 px-4 font-medium">
-                        {order.orderStatus || "processing"}
+                        {order.orderStatus ||
+                          (order.status === 0
+                            ? "Pending"
+                            : order.status === 1
+                            ? "Processing"
+                            : "Delivered")}
                       </td>
-
                     </tr>
                   ))}
-
               </tbody>
-
             </table>
-
           </div>
         )}
-
       </div>
-
     </div>
   );
 };
 
 export default Home;
 
-/*
-=====================================================
-STAT BOX COMPONENT
-=====================================================
-*/
-
+// STAT BOX COMPONENT
 function StatBox({ icon, iconBg, title, value }) {
   return (
     <div className="bg-white rounded-sm p-4 border border-gray-200 flex-1 flex min-w-[12rem] items-center">
       <div className={`rounded-full w-12 h-12 flex items-center justify-center ${iconBg}`}>
         {icon}
       </div>
-
       <div className="pl-4 flex flex-col">
         <span className="text-sm text-gray-500 font-light">{title}</span>
         <strong className="text-xl text-gray-700 font-semibold">{value}</strong>
