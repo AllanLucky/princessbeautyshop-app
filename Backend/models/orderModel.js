@@ -20,6 +20,7 @@ const OrderSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
     },
 
     email: {
@@ -27,6 +28,7 @@ const OrderSchema = new mongoose.Schema(
       required: true,
       lowercase: true,
       trim: true,
+      index: true,
     },
 
     phone: {
@@ -92,7 +94,6 @@ const OrderSchema = new mongoose.Schema(
       type: Number,
       required: true,
       min: 0,
-     
     },
 
     currency: {
@@ -104,7 +105,6 @@ const OrderSchema = new mongoose.Schema(
       type: String,
       enum: ["pending", "paid", "failed", "refunded"],
       default: "pending",
-      
     },
 
     declineReason: {
@@ -133,7 +133,7 @@ const OrderSchema = new mongoose.Schema(
     */
 
     /*
-    Status Mapping (Background Services Compatible)
+    Status Mapping
 
     0 = Pending
     1 = Confirmed
@@ -147,7 +147,7 @@ const OrderSchema = new mongoose.Schema(
       type: Number,
       enum: [0, 1, 2, 3, 4, 5],
       default: 0,
-      
+      index: true,
     },
 
     trackingNumber: {
@@ -164,39 +164,40 @@ const OrderSchema = new mongoose.Schema(
 
     /*
     =====================================================
-    EMAIL DELIVERY FLAGS (Background Worker Safe)
+    ⭐ NEW ENTERPRISE TRACKING FIELDS
     =====================================================
     */
 
-    pendingEmailSent: {
-      type: Boolean,
-      default: false,
+    // Customer expectation prediction
+    estimatedDeliveryDate: {
+      type: Date,
     },
 
-    confirmedEmailSent: {
-      type: Boolean,
-      default: false,
+    // Progress bar percentage (email + frontend tracking)
+    progress: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
     },
 
-    processingEmailSent: {
-      type: Boolean,
-      default: false,
+    // Last status modification timestamp
+    lastStatusUpdatedAt: {
+      type: Date,
     },
 
-    shippedEmailSent: {
-      type: Boolean,
-      default: false,
-    },
+    /*
+    =====================================================
+    EMAIL DELIVERY FLAGS
+    =====================================================
+    */
 
-    deliveredEmailSent: {
-      type: Boolean,
-      default: false,
-    },
-
-    cancelledEmailSent: {
-      type: Boolean,
-      default: false,
-    },
+    pendingEmailSent: Boolean,
+    confirmedEmailSent: Boolean,
+    processingEmailSent: Boolean,
+    shippedEmailSent: Boolean,
+    deliveredEmailSent: Boolean,
+    cancelledEmailSent: Boolean,
 
     /*
     =====================================================
