@@ -4,6 +4,12 @@ import mongoose from "mongoose";
 
 const OrderSchema = new mongoose.Schema(
   {
+    /*
+    =====================================================
+    CUSTOMER INFORMATION
+    =====================================================
+    */
+
     name: {
       type: String,
       required: true,
@@ -34,6 +40,12 @@ const OrderSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+
+    /*
+    =====================================================
+    ORDER PRODUCTS
+    =====================================================
+    */
 
     products: [
       {
@@ -72,11 +84,16 @@ const OrderSchema = new mongoose.Schema(
       },
     ],
 
+    /*
+    =====================================================
+    ORDER PAYMENT
+    =====================================================
+    */
+
     total: {
       type: Number,
       required: true,
       min: 0,
-      index: true,
     },
 
     currency: {
@@ -84,17 +101,15 @@ const OrderSchema = new mongoose.Schema(
       default: "KES",
     },
 
-    /*
-    =====================================================
-    PAYMENT
-    =====================================================
-    */
-
     paymentStatus: {
       type: String,
       enum: ["pending", "paid", "failed", "refunded"],
       default: "pending",
-      index: true,
+    },
+
+    declineReason: {
+      type: String,
+      default: "",
     },
 
     stripeSessionId: {
@@ -111,15 +126,21 @@ const OrderSchema = new mongoose.Schema(
     paidAt: Date,
     refundedAt: Date,
 
-    declineReason: {
-      type: String,
-      default: "",
-    },
-
     /*
     =====================================================
-    ORDER STATUS
+    ORDER LIFECYCLE STATUS
     =====================================================
+    */
+
+    /*
+    Status Mapping
+
+    0 = Pending
+    1 = Confirmed
+    2 = Processing
+    3 = Shipped
+    4 = Delivered
+    5 = Cancelled
     */
 
     status: {
@@ -129,17 +150,6 @@ const OrderSchema = new mongoose.Schema(
       index: true,
     },
 
-    /*
-    STATUS MAP
-    ----------
-    0 → Pending
-    1 → Confirmed
-    2 → Processing
-    3 → Shipped
-    4 → Delivered
-    5 → Cancelled
-    */
-
     trackingNumber: {
       type: String,
       default: "",
@@ -148,51 +158,50 @@ const OrderSchema = new mongoose.Schema(
     isDelivered: {
       type: Boolean,
       default: false,
-      index: true,
     },
 
     deliveredAt: Date,
 
     /*
     =====================================================
-    EMAIL DELIVERY FLAGS (VERY IMPORTANT)
+    ⭐ NEW ENTERPRISE TRACKING FIELDS
     =====================================================
     */
 
-    pendingEmailSent: {
-      type: Boolean,
-      default: false,
+    // Customer expectation prediction
+    estimatedDeliveryDate: {
+      type: Date,
     },
 
-    confirmedEmailSent: {
-      type: Boolean,
-      default: false,
+    // Progress bar percentage (email + frontend tracking)
+    progress: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
     },
 
-    processingEmailSent: {
-      type: Boolean,
-      default: false,
-    },
-
-    shippedEmailSent: {
-      type: Boolean,
-      default: false,
-    },
-
-    deliveredEmailSent: {
-      type: Boolean,
-      default: false,
-      index: true,
-    },
-
-    cancelledEmailSent: {
-      type: Boolean,
-      default: false,
+    // Last status modification timestamp
+    lastStatusUpdatedAt: {
+      type: Date,
     },
 
     /*
     =====================================================
-    STATUS HISTORY AUDIT LOG
+    EMAIL DELIVERY FLAGS
+    =====================================================
+    */
+
+    pendingEmailSent: Boolean,
+    confirmedEmailSent: Boolean,
+    processingEmailSent: Boolean,
+    shippedEmailSent: Boolean,
+    deliveredEmailSent: Boolean,
+    cancelledEmailSent: Boolean,
+
+    /*
+    =====================================================
+    ORDER TIMELINE HISTORY
     =====================================================
     */
 
@@ -203,33 +212,11 @@ const OrderSchema = new mongoose.Schema(
           type: Date,
           default: Date.now,
         },
-        updatedBy: {
-          type: String,
-          default: "system",
-        },
-        note: {
-          type: String,
-          default: "",
-        },
+        note: String,
       },
     ],
-
-    /*
-    =====================================================
-    META TRACKING
-    =====================================================
-    */
-
-    lastStatusUpdatedAt: {
-      type: Date,
-      default: Date.now,
-    },
-
-    statusUpdatedBy: {
-      type: String,
-      default: "",
-    },
   },
+
   {
     timestamps: true,
     versionKey: false,
@@ -243,26 +230,12 @@ INDEX OPTIMIZATION
 */
 
 OrderSchema.index({ userId: 1, paymentStatus: 1 });
+OrderSchema.index({ status: 1 });
 OrderSchema.index({ createdAt: -1 });
 
 /*
 ====================================================
-AUTO DELIVERY UPDATE
-====================================================
-*/
-
-OrderSchema.pre("save", function (next) {
-  if (this.status === 4) {
-    this.isDelivered = true;
-    this.deliveredAt = new Date();
-  }
-
-  next();
-});
-
-/*
-====================================================
-VIRTUAL STATUS TEXT
+VIRTUAL DISPLAY FIELD
 ====================================================
 */
 
