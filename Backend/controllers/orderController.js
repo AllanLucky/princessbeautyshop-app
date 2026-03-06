@@ -6,7 +6,23 @@ import asyncHandler from "express-async-handler";
 
 /*
 ====================================================
- INVENTORY HELPERS (SAFE VERSION ⭐ PRODUCTION READY)
+ STATUS WORKFLOW VALIDATION ⭐ ENTERPRISE SAFE
+ Pending → Confirmed → Processing → Shipped → Delivered → Cancelled
+====================================================
+*/
+
+const ALLOWED_TRANSITIONS = {
+  0: [1, 5],        // Pending → Confirmed / Cancelled
+  1: [2, 5],        // Confirmed → Processing / Cancelled
+  2: [3, 5],        // Processing → Shipped / Cancelled
+  3: [4, 5],        // Shipped → Delivered / Cancelled
+  4: [],            // Delivered is terminal
+  5: [],            // Cancelled terminal
+};
+
+/*
+====================================================
+ INVENTORY HELPERS
 ====================================================
 */
 
@@ -41,25 +57,15 @@ const addStock = async (productId, quantity) => {
 */
 
 const createOrder = asyncHandler(async (req, res) => {
-  const { products, total, currency, userId } = req.body;
+  const { products, total, currency } = req.body;
 
   if (!Array.isArray(products) || products.length === 0) {
     res.status(400);
-    throw new Error("No order items provided");
-  }
-
-  const orderUserId =
-    ["admin", "super_admin"].includes(req.user.role)
-      ? userId || req.user._id
-      : req.user._id;
-
-  // Deduct inventory safely
-  for (const item of products) {
-    await deductStock(item?.productId, item?.quantity);
+    throw new Error("Order items required");
   }
 
   const order = await Order.create({
-    userId: orderUserId,
+    userId: req.user._id,
     products,
     total,
     currency: currency || "KES",
@@ -67,13 +73,17 @@ const createOrder = asyncHandler(async (req, res) => {
     email: req.body.email || req.user.email,
     phone: req.body.phone || req.user.phone || "",
     address: req.body.address || req.user.address || "",
-
-    orderStatus: "pending", // string status
-    status: 0,              // numeric status for frontend
+    status: 0,
     paymentStatus: "pending",
-    isDelivered: false,
     deliveredEmailSent: false,
   });
+
+  /*
+  Deduct stock safely
+  */
+  for (const item of products) {
+    await deductStock(item.productId, item.quantity);
+  }
 
   res.status(201).json({
     success: true,
@@ -83,7 +93,7 @@ const createOrder = asyncHandler(async (req, res) => {
 
 /*
 ====================================================
- UPDATE ORDER ⭐ ENTERPRISE SAFE LOGIC
+ UPDATE ORDER ⭐ ENTERPRISE SAFE WORKFLOW
 ====================================================
 */
 
@@ -93,30 +103,56 @@ const updateOrder = asyncHandler(async (req, res) => {
     throw new Error("Admin only");
   }
 
-  const { status, paymentStatus } = req.body;
+  const { status, paymentStatus, note, trackingNumber } = req.body;
 
   const order = await Order.findById(req.params.id);
+
   if (!order) {
     res.status(404);
     throw new Error("Order not found");
   }
 
-  // Update numeric status
-  if (status !== undefined) order.status = status;
+  /*
+  ===== STATUS TRANSITION GUARD ⭐
+  */
 
-  // Map numeric status to orderStatus string
-  if (status === 0) order.orderStatus = "pending";
-  if (status === 1) order.orderStatus = "processing";
-  if (status === 2) {
-    order.orderStatus = "delivered";
-    order.isDelivered = true;
-    order.deliveredAt = new Date();
-    order.deliveredEmailSent = false;
-    order.paymentStatus = "paid";
+  if (status !== undefined && status !== order.status) {
+    const allowed = ALLOWED_TRANSITIONS[order.status] || [];
+
+    if (!allowed.includes(status)) {
+      throw new Error("Invalid order status transition");
+    }
+
+    order.status = status;
+
+    /*
+    Timeline tracking
+    */
+
+    order.statusHistory.push({
+      status,
+      note: note || "",
+      date: new Date(),
+    });
+
+    /*
+    Payment + delivery sync
+    */
+
+    if (status === 4) {
+      order.isDelivered = true;
+      order.deliveredAt = new Date();
+      order.deliveredEmailSent = false;
+      order.paymentStatus = "paid";
+    }
+
+    if (status === 5) {
+      order.paymentStatus = "failed";
+    }
   }
 
-  // Update paymentStatus if provided
   if (paymentStatus) order.paymentStatus = paymentStatus;
+  if (trackingNumber) order.trackingNumber = trackingNumber;
 
   await order.save();
 
@@ -128,7 +164,7 @@ const updateOrder = asyncHandler(async (req, res) => {
 
 /*
 ====================================================
- DELETE ORDER (SAFE STOCK RESTORE ⭐)
+ DELETE ORDER ⭐ STOCK RESTORE
 ====================================================
 */
 
@@ -139,18 +175,18 @@ const deleteOrder = asyncHandler(async (req, res) => {
   }
 
   const order = await Order.findById(req.params.id);
+
   if (!order) {
     res.status(404);
     throw new Error("Order not found");
   }
 
-  // Restore stock
   if (Array.isArray(order.products)) {
     for (const item of order.products) {
       try {
-        await addStock(item?.productId, item?.quantity);
+        await addStock(item.productId, item.quantity);
       } catch (err) {
-        console.error("Stock restore error:", err.message);
+        console.error(err.message);
       }
     }
   }
@@ -159,23 +195,25 @@ const deleteOrder = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    message: "Order deleted successfully",
+    message: "Order deleted",
   });
 });
 
 /*
 ====================================================
- GET USER ORDERS
+ GETTERS
 ====================================================
 */
 
 const getUserOrder = asyncHandler(async (req, res) => {
-  if (req.user._id.toString() !== req.params.id && req.user.role !== "admin") {
+  const userId = req.params.id;
+
+  if (req.user._id.toString() !== userId && req.user.role !== "admin") {
     res.status(403);
     throw new Error("Unauthorized");
   }
 
-  const orders = await Order.find({ userId: req.params.id }).sort({ createdAt: -1 });
+  const orders = await Order.find({ userId }).sort({ createdAt: -1 });
 
   res.json({
     success: true,
@@ -184,31 +222,16 @@ const getUserOrder = asyncHandler(async (req, res) => {
   });
 });
 
-/*
-====================================================
- GET ORDER BY ID
-====================================================
-*/
-
 const getOrderById = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id);
 
-  if (!order) {
-    res.status(404);
-    throw new Error("Order not found");
-  }
+  if (!order) throw new Error("Order not found");
 
   res.json({
     success: true,
     order,
   });
 });
-
-/*
-====================================================
- GET ALL ORDERS (ADMIN)
-====================================================
-*/
 
 const getAllOrders = asyncHandler(async (req, res) => {
   if (!["admin", "super_admin"].includes(req.user.role)) {
