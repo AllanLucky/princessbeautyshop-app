@@ -1,136 +1,110 @@
-// EmailServices/sendTimetableEmail.js
+// EmailServices/sendWelcomeEmail.js
+
 import ejs from "ejs";
-import path from "path";
 import dotenv from "dotenv";
 import sendMail from "../helpers/sendMailer.js";
-import Timetable from "../models/timetableModel.js";
-import { generateSkincareRoutine, generateSkincarePDF } from "./createTimetableEmail.js";
-import { fileURLToPath } from "url";
+import User from "../models/userModel.js";
 
 dotenv.config();
 
-// Fix __dirname in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+/*
+====================================================
+WELCOME EMAIL SERVICE
+====================================================
+*/
 
-/**
- * Send emails in batches with rate-limiting
- * @param {Array} emails - array of email objects { options, requestId }
- * @param {number} batchSize - number of emails per batch
- * @param {number} delayMs - delay between batches in ms
- */
-const sendEmailsInBatches = async (emails, batchSize = 5, delayMs = 1000) => {
-  for (let i = 0; i < emails.length; i += batchSize) {
-    const batch = emails.slice(i, i + batchSize);
-
-    await Promise.all(
-      batch.map(async ({ options, requestId }) => {
-        try {
-          const result = await sendMail(options);
-
-          if (result.success) {
-            // Update request status to processed
-            await Timetable.findByIdAndUpdate(requestId, {
-              $set: { status: 1, processedAt: new Date() },
-            });
-            console.log(`✅ Timetable sent successfully to ${options.to}`);
-          } else {
-            console.error(`❌ Failed to send email to ${options.to}:`, result.error);
-            // leave status as 0 for retry
-          }
-        } catch (error) {
-          console.error(`❌ Error sending email to ${options.to}:`, error.message);
-
-          if (error.code === "EENVELOPE" || error.message.includes("Temporary System Problem")) {
-            console.log(`⚠️ Temporary email error for ${options.to}. Will retry later.`);
-          } else {
-            // Permanent error: mark as failed
-            await Timetable.findByIdAndUpdate(requestId, {
-              $set: { status: 2, processedAt: new Date(), error: error.message },
-            });
-            console.log(`❌ Permanent error for ${options.to}. Marked as failed.`);
-          }
-        }
-      })
-    );
-
-    if (i + batchSize < emails.length) {
-      console.log(`⏳ Waiting ${delayMs}ms before sending next batch...`);
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
-    }
-  }
-};
-
-const sendTimetableEmail = async () => {
+const sendWelcomeEmail = async () => {
   try {
-    // Find pending timetable requests (status: 0)
-    const timetableRequests = await Timetable.find({ status: 0 });
+    /*
+    ====================================================
+    FIND NEW USERS ONLY (STATUS = 0)
+    ====================================================
+    */
 
-    if (!timetableRequests.length) {
-      console.log("No pending timetable requests found.");
+    const users = await User.find({
+      status: 0
+    }).lean();
+
+    if (!users.length) {
+      console.log("ℹ️ No pending welcome emails.");
       return;
     }
 
-    console.log(`Processing ${timetableRequests.length} timetable requests...`);
+    console.log(`🚀 Sending welcome emails to ${users.length} users`);
 
-    const templatePath = path.join(__dirname, "../templates/timetable.ejs");
-    const emailsToSend = [];
+    /*
+    ====================================================
+    PROMISE TEMPLATE RENDERER
+    ====================================================
+    */
 
-    for (const request of timetableRequests) {
+    const renderTemplate = (templatePath, data) => {
+      return new Promise((resolve, reject) => {
+        ejs.renderFile(templatePath, data, (err, html) => {
+          if (err) reject(err);
+          else resolve(html);
+        });
+      });
+    };
+
+    /*
+    ====================================================
+    EMAIL WORKER LOOP
+    ====================================================
+    */
+
+    for (const user of users) {
       try {
-        const routine = generateSkincareRoutine(
-          request.skinType,
-          request.concerns,
-          request.morningTime,
-          request.eveningTime
+        const html = await renderTemplate(
+          "templates/welcome.ejs",
+          {
+            name: user.name,
+            email: user.email
+          }
         );
 
-        const pdfBuffer = await generateSkincarePDF(request, routine);
+        const messageOptions = {
+          from: process.env.EMAIL,
+          to: user.email,
+          subject: "🎉 Welcome to Beauty Bliss",
+          html
+        };
 
-        const emailHtml = await ejs.renderFile(templatePath, {
-          name: request.name,
-          skinType: request.skinType,
-          concerns: request.concerns,
-          morningTime: request.morningTime,
-          eveningTime: request.eveningTime,
-          products: routine.products,
-          weeklySchedule: routine.weeklySchedule,
-          instructions: routine.instructions,
-        });
+        const result = await sendMail(messageOptions);
 
-        emailsToSend.push({
-          requestId: request._id,
-          options: {
-            from: process.env.EMAIL,
-            to: request.email,
-            subject: `Your Personalized Skincare Timetable - ${request.name}`,
-            html: emailHtml,
-            attachments: [
-              {
-                filename: `Skincare-Timetable-${request.name.replace(/\s+/g, '-')}.pdf`,
-                content: pdfBuffer,
-                contentType: "application/pdf",
-              },
-            ],
-          },
-        });
+        if (result?.success) {
+          await User.findByIdAndUpdate(user._id, {
+            $set: {
+              status: 1,
+              welcomeEmailSentAt: new Date()
+            }
+          });
+
+          console.log(`✅ Welcome email sent → ${user.email}`);
+        } else {
+          console.log(`❌ Welcome email failed → ${user.email}`);
+        }
+
       } catch (error) {
-        console.error(`❌ Error preparing email for ${request.email}:`, error.message);
-        await Timetable.findByIdAndUpdate(request._id, {
-          $set: { status: 2, processedAt: new Date(), error: error.message },
+        console.error(
+          `❌ Welcome email worker error → ${user.email}`,
+          error.message
+        );
+
+        await User.findByIdAndUpdate(user._id, {
+          $set: {
+            error: error.message,
+            status: 0
+          }
         });
       }
     }
 
-    // Send all prepared emails in batches
-    if (emailsToSend.length > 0) {
-      await sendEmailsInBatches(emailsToSend, 5, 1000);
-    }
+    console.log("✅ Welcome email process completed.");
 
-    console.log("✅ All timetable emails have been processed.");
   } catch (error) {
-    console.error("❌ Error in sendTimetableEmail:", error);
+    console.error("❌ sendWelcomeEmail service crashed:", error);
   }
 };
 
-export default sendTimetableEmail;
+export default sendWelcomeEmail;

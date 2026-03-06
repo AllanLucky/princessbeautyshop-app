@@ -1,152 +1,183 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Your Beauty Bliss Order Has Been Delivered</title>
-    <style type="text/css">
-      body {
-        margin: 0;
-        padding: 0;
-        font-family: Arial, sans-serif;
-        font-size: 16px;
-        line-height: 1.5;
-        color: #222222;
-        background-color: #f4f3f3;
-      }
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Order Delivered</title>
 
-      a {
-        color: #f086d9;
-        text-decoration: none;
-      }
+<style>
+/* =============================
+GLOBAL STYLE
+============================= */
 
-      h1 {
-        font-size: 24px;
-        font-weight: 700;
-        line-height: 1.25;
-        margin: 0 0 15px 0;
-        text-align: center;
-      }
+body{
+margin:0;
+padding:0;
+font-family: Arial, Helvetica, sans-serif;
+background: linear-gradient(135deg,#667eea,#764ba2);
+color:#333;
+}
 
-      h2 {
-        font-size: 20px;
-        font-weight: 600;
-        margin-bottom: 10px;
-      }
+/* Wrapper */
 
-      p {
-        margin: 0 0 16px 0;
-      }
+.email-wrapper{
+max-width:700px;
+margin:40px auto;
+background:white;
+border-radius:20px;
+overflow:hidden;
+box-shadow:0 20px 60px rgba(0,0,0,0.15);
+}
 
-      .email-wrapper {
-        max-width: 700px;
-        margin: 20px auto;
-        background-color: #ffffff;
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      }
+/* Header */
 
-      .email-header {
-        background-color: #1e1e1e;
-        padding: 30px;
-        color: #f086d9;
-        text-align: center;
-      }
+.email-header{
+background: linear-gradient(135deg,#f093fb,#f5576c);
+padding:40px;
+text-align:center;
+color:white;
+}
 
-      .email-body {
-        padding: 20px;
-      }
+.logo{
+max-width:180px;
+border-radius:12px;
+box-shadow:0 8px 25px rgba(0,0,0,.2);
+}
 
-      .email-footer {
-        background-color: #1e1e1e;
-        padding: 14px;
-        color: #d55fbb;
-        text-align: center;
-        font-size: 14px;
-      }
+.brand-name{
+font-size:28px;
+font-weight:bold;
+margin-top:15px;
+}
 
-      .product-list {
-        margin: 20px 0;
-      }
+/* Body */
 
-      .product-item {
-        display: flex;
-        align-items: center;
-        margin-bottom: 20px;
-        border-bottom: 1px solid #ddd;
-        padding-bottom: 10px;
-      }
+.email-body{
+padding:40px;
+background:white;
+}
 
-      .product-img {
-        max-width: 100px;
-        margin-right: 20px;
-        border-radius: 4px;
-      }
+.delivery-badge{
+background: linear-gradient(135deg,#48bb78,#38a169);
+color:white;
+padding:12px 24px;
+border-radius:25px;
+font-weight:bold;
+display:inline-block;
+}
 
-      .product-details p {
-        margin: 4px 0;
-        font-size: 14px;
-      }
+/* Footer */
 
-      img {
-        max-width: 100%;
-        height: auto;
-      }
+.email-footer{
+background: linear-gradient(135deg,#2d3748,#1a202c);
+padding:40px;
+text-align:center;
+color:#a0aec0;
+}
 
-      .divider {
-        border-top: 1px solid #ddd;
-        margin: 20px 0;
-      }
+/* Button */
 
-      @media only screen and (max-width: 600px) {
-        .product-item {
-          flex-direction: column;
-          align-items: flex-start;
-        }
-        .product-img {
-          margin-bottom: 10px;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="email-wrapper">
-      <div class="email-header">
-        <img
-          src="https://res.cloudinary.com/dap91fhxh/image/upload/v1723705045/blisslogo1_hefbyn.png"
-          alt="Beauty Bliss Logo"
-          height="150"
-          width="150"
-        />
-      </div>
-      <div class="email-body">
-        <h1>Your Order Has Been Delivered</h1>
-        <p>Hello <%= name %>,</p>
-        <p>
-          Great news! Your Beauty Bliss order has been delivered and is ready for pick up at the following location:
-        </p>
-        <p><strong>Pickup Station:</strong> <%= pickupStation || "Not Specified" %></p>
-        <div class="divider"></div>
-        <h2>Order Summary</h2>
-        <div class="product-list">
-          <% products.forEach(function(product) { %>
-            <div class="product-item">
-              <img class="product-img" src="<%= product.img %>" alt="<%= product.title %>" />
-              <div class="product-details">
-                <p><strong>Product:</strong> <%= product.title %></p>
-                <p><strong>Quantity:</strong> <%= product.quantity %></p>
-                <p><strong>Price:</strong> $<%= product.price %></p>
-              </div>
-            </div>
-          <% }); %>
-        </div>
-        <p>If you have any questions or need assistance, feel free to <a href="<%= supportLink %>">contact us</a>.</p>
-        <p>Thank you for shopping with us!</p>
-      </div>
-      <div class="email-footer">
-        <p>&copy; <%= new Date().getFullYear() %> Beauty Bliss. All rights reserved.</p>
-      </div>
-    </div>
-  </body>
+.cta-button{
+display:inline-block;
+background: linear-gradient(135deg,#667eea,#764ba2);
+color:white;
+padding:15px 35px;
+border-radius:30px;
+text-decoration:none;
+font-weight:bold;
+}
+
+.cta-button:hover{
+opacity:0.9;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="email-wrapper">
+
+<!-- HEADER -->
+<div class="email-header">
+
+<img src="https://res.cloudinary.com/dkdx7xytz/image/upload/v1772469610/blisslogo1_rwlktl.png"
+class="logo"/>
+
+<div class="brand-name">Kilifonia Beauty</div>
+<p>Elevate Your Natural Beauty</p>
+
+</div>
+
+<!-- BODY -->
+<div class="email-body">
+
+<div style="text-align:center;margin-bottom:30px;">
+<div class="delivery-badge">
+🎉 ORDER DELIVERED SUCCESSFULLY
+</div>
+</div>
+
+<h1 style="text-align:center;background:linear-gradient(135deg,#f093fb,#f5576c);-webkit-background-clip:text;color:transparent;">
+Hello <%= name %>
+</h1>
+
+<p style="text-align:center;font-size:18px;">
+Great news! Your Kilifonia Beauty order has been delivered.
+We are happy to be part of your beauty journey.
+</p>
+
+<hr style="margin:30px 0;border:0;height:2px;background:linear-gradient(90deg,transparent,#667eea,transparent)"/>
+
+<h2>Your Order Summary</h2>
+
+<div>
+
+<% products.forEach(function(product){ %>
+
+<div style="display:flex;align-items:center;padding:20px;background:#f8f9fa;border-radius:12px;margin-bottom:15px;">
+
+<img src="<%= product.img %>"
+style="width:80px;height:80px;object-fit:cover;border-radius:8px;margin-right:20px;"/>
+
+<div style="flex:1">
+
+<p style="font-weight:bold"><%= product.title %></p>
+<p>Quantity: <%= product.quantity %></p>
+<p>Price: $<%= product.price %></p>
+
+</div>
+
+</div>
+
+<% }) %>
+
+</div>
+
+<div style="text-align:center;margin-top:30px;">
+<a href="https://kilifoniabeauty.co.ke/track-order" class="cta-button">
+Track Your Order
+</a>
+</div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="email-footer">
+
+<p style="color:#f5576c;font-weight:bold;font-size:18px;">
+Kilifonia Beauty
+</p>
+
+<p>Elevating Beauty Through Science and Nature</p>
+
+<p>
+&copy; <%= new Date().getFullYear() %> Kilifonia Beauty. All rights reserved.
+</p>
+
+</div>
+
+</div>
+
+</body>
 </html>

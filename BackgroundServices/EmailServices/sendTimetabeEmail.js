@@ -1,4 +1,5 @@
 // EmailServices/sendTimetableEmail.js
+
 import ejs from "ejs";
 import path from "path";
 import dotenv from "dotenv";
@@ -9,27 +10,127 @@ import { fileURLToPath } from "url";
 
 dotenv.config();
 
-// Fix __dirname in ES modules
+/*
+====================================================
+ES MODULE DIRECTORY FIX
+====================================================
+*/
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+/*
+====================================================
+BATCH EMAIL WORKER
+====================================================
+*/
+
+const sendEmailsInBatches = async (emails, batchSize = 5, delayMs = 1000) => {
+  for (let i = 0; i < emails.length; i += batchSize) {
+    const batch = emails.slice(i, i + batchSize);
+
+    await Promise.all(
+      batch.map(async ({ options, requestId }) => {
+        try {
+          const result = await sendMail(options);
+
+          if (result?.success) {
+            await Timetable.findByIdAndUpdate(requestId, {
+              $set: {
+                status: 1,
+                processedAt: new Date(),
+                error: null
+              }
+            });
+
+            console.log(`✅ Timetable email sent → ${options.to}`);
+          } else {
+            console.error(`❌ Mail sending failed → ${options.to}`);
+
+            await Timetable.findByIdAndUpdate(requestId, {
+              $set: {
+                error: result?.error || "Unknown email failure"
+              }
+            });
+          }
+        } catch (error) {
+          console.error(`❌ Email worker error → ${options.to}`, error.message);
+
+          /*
+          ============================================
+          DISTINGUISH TEMPORARY VS PERMANENT FAILURE
+          ============================================
+          */
+
+          const permanent = !(
+            error.code === "EENVELOPE" ||
+            error.message?.includes("Temporary")
+          );
+
+          await Timetable.findByIdAndUpdate(requestId, {
+            $set: {
+              status: permanent ? 2 : 0,
+              processedAt: new Date(),
+              error: error.message
+            }
+          });
+        }
+      })
+    );
+
+    /*
+    ============================================
+    RATE LIMIT CONTROL
+    ============================================
+    */
+
+    if (i + batchSize < emails.length) {
+      console.log(`⏳ Worker cooling down ${delayMs}ms`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+};
+
+/*
+====================================================
+TIMETABLE EMAIL SERVICE
+====================================================
+*/
+
 const sendTimetableEmail = async () => {
   try {
-    // Find pending timetable requests (status: 0)
-    const timetableRequests = await Timetable.find({ status: 0 });
+    /*
+    ============================================
+    FIND ONLY PENDING REQUESTS
+    ============================================
+    */
+
+    const timetableRequests = await Timetable.find({
+      status: 0
+    }).lean();
 
     if (!timetableRequests.length) {
-      console.log("No pending timetable requests found.");
+      console.log("ℹ️ No pending timetable emails.");
       return;
     }
 
-    console.log(`Processing ${timetableRequests.length} timetable requests...`);
+    console.log(`🚀 Processing ${timetableRequests.length} timetable emails`);
 
-    const templatePath = path.join(__dirname, "../templates/timetable.ejs");
+    const templatePath = path.join(
+      __dirname,
+      "../templates/timetable.ejs"
+    );
+
+    const emailsQueue = [];
+
+    /*
+    ============================================
+    PREPARE EMAILS FIRST (AVOID BLOCKING SEND LOOP)
+    ============================================
+    */
 
     for (const request of timetableRequests) {
       try {
-        // Generate personalized skincare routine
         const routine = generateSkincareRoutine(
           request.skinType,
           request.concerns,
@@ -37,10 +138,8 @@ const sendTimetableEmail = async () => {
           request.eveningTime
         );
 
-        // Generate PDF
         const pdfBuffer = await generateSkincarePDF(request, routine);
 
-        // Render email template
         const emailHtml = await ejs.renderFile(templatePath, {
           name: request.name,
           skinType: request.skinType,
@@ -49,60 +148,58 @@ const sendTimetableEmail = async () => {
           eveningTime: request.eveningTime,
           products: routine.products,
           weeklySchedule: routine.weeklySchedule,
-          instructions: routine.instructions,
+          instructions: routine.instructions
         });
 
-        // Prepare email with PDF attachment
-        const messageOptions = {
-          from: process.env.EMAIL,
-          to: request.email,
-          subject: `Your Personalized Skincare Timetable - ${request.name}`,
-          html: emailHtml,
-          attachments: [
-            {
-              filename: `Skincare-Timetable-${request.name.replace(/\s+/g, '-')}.pdf`,
-              content: pdfBuffer,
-              contentType: "application/pdf",
-            },
-          ],
-        };
+        emailsQueue.push({
+          requestId: request._id,
+          options: {
+            from: process.env.EMAIL,
+            to: request.email,
+            subject: `Your Personalized Skincare Timetable - ${request.name}`,
+            html: emailHtml,
+            attachments: [
+              {
+                filename: `Skincare-Timetable-${request.name
+                  .replace(/\s+/g, "-")
+                  .toLowerCase()}.pdf`,
+                content: pdfBuffer,
+                contentType: "application/pdf"
+              }
+            ]
+          }
+        });
 
-        // Send email
-        const result = await sendMail(messageOptions);
-
-        if (result.success) {
-          // Update request status to processed
-          await Timetable.findByIdAndUpdate(request._id, {
-            $set: { status: 1, processedAt: new Date() },
-          });
-          console.log(`✅ Timetable sent successfully to ${request.email}`);
-        } else {
-          console.error(`❌ Failed to send email to ${request.email}:`, result.error);
-          // Leave status as 0 to retry later
-        }
       } catch (error) {
-        console.error(`❌ Error processing timetable for ${request.email}:`, error.message);
+        console.error(
+          `❌ Preparation error → ${request.email}`,
+          error.message
+        );
 
-        // Handle temporary Gmail errors
-        if (error.code === "EENVELOPE" || error.message.includes("Temporary System Problem")) {
-          console.log(`⚠️ Temporary email error for ${request.email}. Will retry later.`);
-        } else {
-          // Permanent error: mark as failed
-          await Timetable.findByIdAndUpdate(request._id, {
-            $set: {
-              status: 2, // 2 = failed
-              processedAt: new Date(),
-              error: error.message,
-            },
-          });
-          console.log(`❌ Permanent error for ${request.email}. Marked as failed.`);
-        }
+        await Timetable.findByIdAndUpdate(request._id, {
+          $set: {
+            status: 2,
+            processedAt: new Date(),
+            error: error.message
+          }
+        });
       }
     }
 
-    console.log("✅ All timetable emails have been processed.");
+    /*
+    ============================================
+    SEND EMAIL WORKER
+    ============================================
+    */
+
+    if (emailsQueue.length > 0) {
+      await sendEmailsInBatches(emailsQueue, 5, 1000);
+    }
+
+    console.log("✅ Timetable email worker finished.");
+
   } catch (error) {
-    console.error("❌ Error in sendTimetableEmail:", error);
+    console.error("❌ Timetable email service crashed:", error);
   }
 };
 

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Order Cancelled</title>
+
+<style>
+body{
+font-family:Arial,Helvetica,sans-serif;
+background:linear-gradient(135deg,#667eea,#764ba2);
+margin:0;
+padding:0;
+}
+
+.wrapper{
+max-width:700px;
+margin:40px auto;
+background:white;
+border-radius:20px;
+overflow:hidden;
+box-shadow:0 20px 60px rgba(0,0,0,.15);
+}
+
+.header{
+background:linear-gradient(135deg,#f5576c,#ff5252);
+padding:40px;
+text-align:center;
+color:white;
+}
+
+.body{
+padding:40px;
+}
+
+.badge{
+display:inline-block;
+background:#ff5252;
+color:white;
+padding:12px 25px;
+border-radius:25px;
+font-weight:bold;
+}
+
+.product{
+background:#f8f9fa;
+padding:20px;
+border-radius:12px;
+margin-top:20px;
+}
+
+.footer{
+background:#1a202c;
+color:#a0aec0;
+text-align:center;
+padding:30px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrapper">
+
+<div class="header">
+<div class="badge">❌ ORDER CANCELLED</div>
+
+<h1>Dear <%= name %></h1>
+</div>
+
+<div class="body">
+
+<p>
+We regret to inform you that your order <strong>#<%= orderNumber %></strong>
+has been cancelled.
+</p>
+
+<p>
+<strong>Cancellation Reason:</strong><br>
+<%= reason %>
+</p>
+
+<div class="product">
+<h3>Order Summary</h3>
+
+<% products.forEach(product => { %>
+
+<p>
+<b><%= product.title %></b><br>
+Quantity: <%= product.quantity %><br>
+Price: $<%= product.price %>
+</p>
+
+<hr/>
+
+<% }) %>
+
+<p>
+<strong>Total Amount:</strong> $<%= total %>
+</p>
+
+</div>
+
+<p style="margin-top:30px">
+If you believe this is a mistake, please contact our support team immediately.
+</p>
+
+</div>
+
+<div class="footer">
+Kilifonia Beauty © <%= new Date().getFullYear() %>
+</div>
+
+</div>
+
+</body>
+</html>

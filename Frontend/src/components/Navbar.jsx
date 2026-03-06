@@ -121,7 +121,7 @@ const Navbar = () => {
           <Link to="/" className="flex-shrink-0 z-10" onClick={() => trackButtonClick("logo_click")}>
             <img
               src="https://res.cloudinary.com/dkdx7xytz/image/upload/v1772469610/blisslogo1_rwlktl.png"
-              alt="Dubois Beauty"
+              alt="Kilifonia Beauty"
               className="h-12 w-auto object-contain"
             />
           </Link>

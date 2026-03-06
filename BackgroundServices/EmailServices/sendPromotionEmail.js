@@ -1,63 +1,92 @@
-// EmailServices/sendPromotionEmail.js
 import ejs from "ejs";
-import path from "path";
 import dotenv from "dotenv";
 import sendMail from "../helpers/sendMailer.js";
 import Product from "../models/productModel.js";
 import User from "../models/userModel.js";
-import { fileURLToPath } from "url";
 
 dotenv.config();
 
-// Fix __dirname in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+/*
+================================================
+SEND PROMOTIONAL EMAIL SERVICE (PRODUCTION)
+================================================
+*/
 
 const sendPromotionEmail = async () => {
   try {
-    const users = await User.find();
+    console.log("Starting promotion email broadcast...");
+
+    const users = await User.find({
+      email: { $exists: true, $ne: null },
+      promotionEmailSent: false,
+    })
+      .limit(50)
+      .lean();
+
     if (!users.length) {
-      console.log("No users found to send promotion emails.");
+      console.log("No users available for promotion email.");
       return;
     }
 
-    // Get 5 random products
-    const products = await Product.aggregate([{ $sample: { size: 5 } }]);
+    /*
+    ============================================
+    SAMPLE FEATURED PRODUCTS
+    ============================================
+    */
 
-    const templatePath = path.join(__dirname, "../templates/promotion.ejs");
+    const products = await Product.aggregate([
+      { $match: { price: { $gt: 0 } } },
+      { $sample: { size: 5 } },
+    ]);
 
     for (const user of users) {
-      if (!user.email) {
-        console.warn(`⚠️ User ${user._id} has no email. Skipping...`);
-        continue;
-      }
-
-      let html;
       try {
-        html = await ejs.renderFile(templatePath, { products });
-      } catch (err) {
-        console.error(`❌ Failed to render template for user ${user._id}:`, err.message);
-        continue;
-      }
+        if (!user.email) continue;
 
-      const mailOptions = {
-        from: process.env.EMAIL,
-        to: user.email,
-        subject: "Your weekly products 🌟",
-        html,
-      };
+        const html = await ejs.renderFile(
+          "templates/promotion.ejs",
+          {
+            name: user.name || "Customer",
+            products,
+          }
+        );
 
-      try {
-        await sendMail(mailOptions);
-        console.log(`✅ Promotion email sent to ${user.email}`);
-      } catch (err) {
-        console.error(`❌ Failed to send email to ${user.email}:`, err.message);
+        const messageOptions = {
+          from: process.env.EMAIL,
+          to: user.email,
+          subject: "🔥 This Week’s Featured Beauty Products",
+          html,
+        };
+
+        await sendMail(messageOptions);
+
+        /*
+        ============================================
+        MARK PROMOTION EMAIL SENT
+        ============================================
+        */
+
+        await User.updateOne(
+          { _id: user._id },
+          {
+            $set: {
+              promotionEmailSent: true,
+              promotionEmailSentAt: new Date(),
+            },
+          }
+        );
+
+        console.log(`Promotion email sent to ${user.email}`);
+
+      } catch (error) {
+        console.log(`Promotion email error for ${user.email}:`, error.message);
       }
     }
 
-    console.log("✅ All promotion emails have been processed.");
+    console.log("Promotion broadcast completed.");
+
   } catch (error) {
-    console.error("❌ Error in sendPromotionEmail:", error.message);
+    console.log("Promotion service error:", error.message);
   }
 };
 

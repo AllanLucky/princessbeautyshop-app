@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Order Confirmed</title>
+
+<style>
+body{
+font-family:Arial,Helvetica,sans-serif;
+background:linear-gradient(135deg,#667eea,#764ba2);
+margin:0;
+padding:0;
+}
+
+.wrapper{
+max-width:700px;
+margin:40px auto;
+background:white;
+border-radius:20px;
+overflow:hidden;
+box-shadow:0 20px 60px rgba(0,0,0,.15);
+}
+
+.header{
+background:linear-gradient(135deg,#38a169,#48bb78);
+color:white;
+text-align:center;
+padding:40px;
+}
+
+.badge{
+display:inline-block;
+background:white;
+color:#38a169;
+padding:12px 25px;
+border-radius:25px;
+font-weight:bold;
+}
+
+.body{
+padding:40px;
+}
+
+.product{
+background:#f8f9fa;
+padding:20px;
+border-radius:12px;
+margin-top:20px;
+}
+
+.footer{
+background:#1a202c;
+color:#a0aec0;
+text-align:center;
+padding:30px;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="wrapper">
+
+<div class="header">
+<div class="badge">✅ ORDER CONFIRMED</div>
+
+<h1>Hello <%= name %></h1>
+
+<p>Your order has been successfully confirmed.</p>
+</div>
+
+<div class="body">
+
+<p>
+Great news! Your order <strong>#<%= orderNumber %></strong> is now confirmed
+and being prepared for shipment.
+</p>
+
+<div class="product">
+
+<h3>Order Summary</h3>
+
+<% products.forEach(product => { %>
+
+<p>
+<b><%= product.title %></b><br>
+Quantity: <%= product.quantity %><br>
+Price: $<%= product.price %>
+</p>
+
+<hr/>
+
+<% }) %>
+
+<p>
+<strong>Total Amount:</strong> $<%= total %>
+</p>
+
+</div>
+
+<p style="margin-top:30px">
+We will notify you once your order is shipped.
+Thank you for shopping with us ❤️
+</p>
+
+</div>
+
+<div class="footer">
+Kilifonia Beauty © <%= new Date().getFullYear() %>
+</div>
+
+</div>
+
+</body>
+</html>

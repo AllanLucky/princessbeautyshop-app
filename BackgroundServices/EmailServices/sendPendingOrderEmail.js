@@ -1,65 +1,68 @@
-// EmailServices/sendPendingOrderEmail.js
 import ejs from "ejs";
-import path from "path";
 import dotenv from "dotenv";
 import sendMail from "../helpers/sendMailer.js";
 import Order from "../models/orderModel.js";
-import { fileURLToPath } from "url";
 
 dotenv.config();
 
-// Fix __dirname in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+/*
+================================================
+SEND PENDING ORDER EMAIL SERVICE
+================================================
+*/
 
 const sendPendingOrderEmail = async () => {
   try {
-    // Fetch orders with status 0 (pending)
-    const orders = await Order.find({ status: 0 });
-    if (!orders.length) {
-      console.log("No pending orders to process.");
-      return;
-    }
+    const orders = await Order.find({
+      status: 0,
+      pendingEmailSent: false,
+      email: { $exists: true, $ne: null },
+    }).limit(50);
+
+    if (!orders.length) return;
 
     for (const order of orders) {
-      if (!order.email) {
-        console.warn(`⚠️ Order ${order._id} has no email. Skipping...`);
-        continue;
-      }
-
-      // Absolute path to EJS template
-      const templatePath = path.join(__dirname, "../templates/pendingorder.ejs");
-
-      let html;
       try {
-        html = await ejs.renderFile(templatePath, {
-          name: order.name,
-          products: order.products,
-        });
-      } catch (err) {
-        console.error(`❌ Failed to render template for order ${order._id}:`, err.message);
-        continue;
-      }
+        if (!order.products || !order.products.length) continue;
 
-      const mailOptions = {
-        from: process.env.EMAIL,
-        to: order.email,
-        subject: "Your order has been placed 🎉",
-        html,
-      };
+        const html = await ejs.renderFile(
+          "templates/pendingorder.ejs",
+          {
+            name: order.name || "Customer",
+            orderNumber: order._id.toString().slice(-8),
+            products: order.products,
+            total: order.total || 0,
+            status: order.status,
+          }
+        );
 
-      try {
-        await sendMail(mailOptions);
-        await Order.findByIdAndUpdate(order._id, { $set: { status: 1 } });
-        console.log(`✅ Email sent for order ${order._id} to ${order.email}`);
-      } catch (err) {
-        console.error(`❌ Failed to send email for order ${order._id}:`, err.message);
+        const messageOptions = {
+          from: process.env.EMAIL,
+          to: order.email,
+          subject:
+            "✅ Your order has been placed successfully. We are preparing it for you.",
+          html,
+        };
+
+        await sendMail(messageOptions);
+
+        /*
+        =============================================
+        MARK EMAIL AS SENT (IMPORTANT)
+        =============================================
+        */
+
+        await Order.updateOne(
+          { _id: order._id },
+          { $set: { pendingEmailSent: true } }
+        );
+
+      } catch (error) {
+        console.log("Order email error:", error.message);
       }
     }
-
-    console.log("✅ All pending orders have been processed.");
   } catch (error) {
-    console.error("❌ Error in sendPendingOrderEmail:", error.message);
+    console.log("Service error:", error.message);
   }
 };
 

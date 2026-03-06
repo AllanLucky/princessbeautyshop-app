@@ -42,29 +42,24 @@ const OrderSchema = new mongoose.Schema(
           ref: "Product",
           required: true,
         },
-
         title: {
           type: String,
           required: true,
         },
-
         desc: {
           type: String,
           default: "",
         },
-
         price: {
           type: Number,
           required: true,
           min: 0,
         },
-
         quantity: {
           type: Number,
           required: true,
           min: 1,
         },
-
         img: {
           type: String,
           default: "",
@@ -100,7 +95,6 @@ const OrderSchema = new mongoose.Schema(
       type: String,
       sparse: true,
       unique: true,
-      // ❗ Do NOT add index: true here (prevents duplicate warning)
     },
 
     paymentIntentId: {
@@ -108,10 +102,11 @@ const OrderSchema = new mongoose.Schema(
       default: "",
     },
 
-    orderStatus: {
-      type: String,
-      enum: ["processing", "confirmed", "shipped", "delivered", "cancelled"],
-      default: "processing",
+    // ✅ Numeric status for frontend
+    status: {
+      type: Number,
+      enum: [0, 1, 2], // 0 = Pending, 1 = Processing, 2 = Delivered
+      default: 0,
       index: true,
     },
 
@@ -122,7 +117,6 @@ const OrderSchema = new mongoose.Schema(
 
     deliveredAt: Date,
 
-    // ⚡ NEW: track if delivered email has already been sent
     deliveredEmailSent: {
       type: Boolean,
       default: false,
@@ -141,13 +135,30 @@ const OrderSchema = new mongoose.Schema(
 
 /*
 ================================================
- INDEX OPTIMIZATION (NO DUPLICATE INDEX WARNING)
+ INDEX OPTIMIZATION
 ================================================
 */
 
-// Only safe composite indexes
 OrderSchema.index({ userId: 1, paymentStatus: 1 });
 OrderSchema.index({ createdAt: -1 });
+
+/*
+================================================
+ VIRTUAL FIELD FOR STATUS TEXT
+================================================
+*/
+OrderSchema.virtual("statusText").get(function () {
+  switch (this.status) {
+    case 0:
+      return "Pending";
+    case 1:
+      return "Processing";
+    case 2:
+      return "Delivered";
+    default:
+      return "Unknown";
+  }
+});
 
 const Order = mongoose.models.Order || mongoose.model("Order", OrderSchema);
 

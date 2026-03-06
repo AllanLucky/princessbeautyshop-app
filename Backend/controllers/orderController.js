@@ -14,7 +14,6 @@ const deductStock = async (productId, quantity) => {
   if (!productId || !quantity) return;
 
   const product = await Product.findById(productId);
-
   if (!product) throw new Error("Product not found");
 
   if (product.stock < quantity) {
@@ -22,7 +21,6 @@ const deductStock = async (productId, quantity) => {
   }
 
   product.stock -= quantity;
-
   await product.save({ validateBeforeSave: false });
 };
 
@@ -30,11 +28,9 @@ const addStock = async (productId, quantity) => {
   if (!productId || !quantity) return;
 
   const product = await Product.findById(productId);
-
   if (!product) return;
 
   product.stock += quantity;
-
   await product.save({ validateBeforeSave: false });
 };
 
@@ -53,11 +49,11 @@ const createOrder = asyncHandler(async (req, res) => {
   }
 
   const orderUserId =
-    req.user.role === "admin" || req.user.role === "super_admin"
+    ["admin", "super_admin"].includes(req.user.role)
       ? userId || req.user._id
       : req.user._id;
 
-  // Inventory deduction safely
+  // Deduct inventory safely
   for (const item of products) {
     await deductStock(item?.productId, item?.quantity);
   }
@@ -67,16 +63,16 @@ const createOrder = asyncHandler(async (req, res) => {
     products,
     total,
     currency: currency || "KES",
-
     name: req.body.name || req.user.name,
     email: req.body.email || req.user.email,
     phone: req.body.phone || req.user.phone || "",
     address: req.body.address || req.user.address || "",
 
-    orderStatus: "processing",
+    orderStatus: "pending", // string status
+    status: 0,              // numeric status for frontend
     paymentStatus: "pending",
-    isDelivered: false,           // Initialize delivered flag
-    deliveredEmailSent: false,    // Initialize delivered email flag
+    isDelivered: false,
+    deliveredEmailSent: false,
   });
 
   res.status(201).json({
@@ -97,43 +93,32 @@ const updateOrder = asyncHandler(async (req, res) => {
     throw new Error("Admin only");
   }
 
-  const { orderStatus, paymentStatus } = req.body;
+  const { status, paymentStatus } = req.body;
 
-  const updateData = {};
-
-  if (orderStatus) updateData.orderStatus = orderStatus;
-  if (paymentStatus) updateData.paymentStatus = paymentStatus;
-
-  /*
-  ============================================
-  AUTO SYNC RULES
-  ============================================
-  */
-
-  if (orderStatus === "delivered") {
-    updateData.paymentStatus = "paid";
-    updateData.isDelivered = true;
-    updateData.deliveredAt = new Date();
-    updateData.deliveredEmailSent = false; // ensure cron picks it up
-  }
-
-  if (orderStatus === "cancelled") {
-    updateData.isDelivered = false;
-  }
-
-  const order = await Order.findByIdAndUpdate(
-    req.params.id,
-    { $set: updateData },
-    {
-      new: true,
-      runValidators: true,
-    }
-  );
-
+  const order = await Order.findById(req.params.id);
   if (!order) {
     res.status(404);
     throw new Error("Order not found");
   }
+
+  // Update numeric status
+  if (status !== undefined) order.status = status;
+
+  // Map numeric status to orderStatus string
+  if (status === 0) order.orderStatus = "pending";
+  if (status === 1) order.orderStatus = "processing";
+  if (status === 2) {
+    order.orderStatus = "delivered";
+    order.isDelivered = true;
+    order.deliveredAt = new Date();
+    order.deliveredEmailSent = false;
+    order.paymentStatus = "paid";
+  }
+
+  // Update paymentStatus if provided
+  if (paymentStatus) order.paymentStatus = paymentStatus;
+
+  await order.save();
 
   res.json({
     success: true,
@@ -154,12 +139,12 @@ const deleteOrder = asyncHandler(async (req, res) => {
   }
 
   const order = await Order.findById(req.params.id);
-
   if (!order) {
     res.status(404);
     throw new Error("Order not found");
   }
 
+  // Restore stock
   if (Array.isArray(order.products)) {
     for (const item of order.products) {
       try {
@@ -185,17 +170,12 @@ const deleteOrder = asyncHandler(async (req, res) => {
 */
 
 const getUserOrder = asyncHandler(async (req, res) => {
-  if (
-    req.user._id.toString() !== req.params.id &&
-    req.user.role !== "admin"
-  ) {
+  if (req.user._id.toString() !== req.params.id && req.user.role !== "admin") {
     res.status(403);
     throw new Error("Unauthorized");
   }
 
-  const orders = await Order.find({
-    userId: req.params.id,
-  }).sort({ createdAt: -1 });
+  const orders = await Order.find({ userId: req.params.id }).sort({ createdAt: -1 });
 
   res.json({
     success: true,
