@@ -117,7 +117,7 @@ Our team is preparing your products for shipment.
         <p>
         <b><%= product.title || "Product" %></b><br>
         Quantity: <%= product.quantity || 0 %><br>
-        Price: $<%= product.price || 0 %>
+        Price: KES<%= product.price || 0 %>
         </p>
         <hr/>
     <% }) %>
@@ -125,7 +125,7 @@ Our team is preparing your products for shipment.
     <p>No product information available.</p>
 <% } %>
 
-<p><strong>Total Amount:</strong> $<%= total || 0 %></p>
+<p><strong>Total Amount:</strong> KES<%= total || 0 %></p>
 </div>
 
 <p style="margin-top:30px">
