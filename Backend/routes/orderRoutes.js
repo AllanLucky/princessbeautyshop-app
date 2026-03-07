@@ -7,6 +7,7 @@ import {
   updateOrder,
   getOrderById
 } from "../controllers/orderController.js";
+
 import { protect, adminOnly } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
@@ -20,19 +21,19 @@ const router = express.Router();
 // Create order
 router.post("/", protect, createOrder);
 
-// Get user orders (move before dynamic routes)
+// Get user orders (placed before dynamic routes)
 router.get("/user/:id", protect, getUserOrder);
 
-// Get single order
+// Get single order (use explicit path to avoid route collision)
 router.get("/find/:id", protect, getOrderById);
 
 /*
 =====================================================
- ADMIN ORDER MANAGEMENT ⭐
+ ADMIN ORDER MANAGEMENT
 =====================================================
 */
 
-// Update order status (ADMIN ONLY ✅)
+// Update order status (ADMIN ONLY)
 router.put("/:id", protect, adminOnly, updateOrder);
 
 // Get all orders (ADMIN ONLY)
