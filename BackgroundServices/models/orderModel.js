@@ -2,6 +2,14 @@
 
 import mongoose from "mongoose";
 
+/*
+========================================================
+ORDER WORKFLOW MODEL (ENTERPRISE READY ⭐)
+Pipeline:
+Pending → Confirmed → Processing → Shipped → Delivered → Cancelled
+========================================================
+*/
+
 const OrderSchema = new mongoose.Schema(
   {
     /*
@@ -20,7 +28,6 @@ const OrderSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
 
     email: {
@@ -28,7 +35,6 @@ const OrderSchema = new mongoose.Schema(
       required: true,
       lowercase: true,
       trim: true,
-      index: true,
     },
 
     phone: {
@@ -86,7 +92,7 @@ const OrderSchema = new mongoose.Schema(
 
     /*
     =====================================================
-    ORDER PAYMENT
+    PAYMENT
     =====================================================
     */
 
@@ -105,6 +111,7 @@ const OrderSchema = new mongoose.Schema(
       type: String,
       enum: ["pending", "paid", "failed", "refunded"],
       default: "pending",
+      index: true,
     },
 
     declineReason: {
@@ -128,26 +135,25 @@ const OrderSchema = new mongoose.Schema(
 
     /*
     =====================================================
-    ORDER LIFECYCLE STATUS
+    ORDER STATUS WORKFLOW
     =====================================================
     */
 
     /*
-    Status Mapping
+    Mapping:
 
-    0 = Pending
-    1 = Confirmed
-    2 = Processing
-    3 = Shipped
-    4 = Delivered
-    5 = Cancelled
+    0 → Pending
+    1 → Confirmed
+    2 → Processing
+    3 → Shipped
+    4 → Delivered
+    5 → Cancelled
     */
 
     status: {
       type: Number,
       enum: [0, 1, 2, 3, 4, 5],
       default: 0,
-     
     },
 
     trackingNumber: {
@@ -164,16 +170,12 @@ const OrderSchema = new mongoose.Schema(
 
     /*
     =====================================================
-    ⭐ NEW ENTERPRISE TRACKING FIELDS
+    ⭐ ENTERPRISE TRACKING FIELDS
     =====================================================
     */
 
-    // Customer expectation prediction
-    estimatedDeliveryDate: {
-      type: Date,
-    },
+    estimatedDeliveryDate: Date,
 
-    // Progress bar percentage (email + frontend tracking)
     progress: {
       type: Number,
       default: 0,
@@ -181,23 +183,44 @@ const OrderSchema = new mongoose.Schema(
       max: 100,
     },
 
-    // Last status modification timestamp
-    lastStatusUpdatedAt: {
-      type: Date,
-    },
+    lastStatusUpdatedAt: Date,
 
     /*
     =====================================================
-    EMAIL DELIVERY FLAGS
+    EMAIL WORKER FLAGS (IMPORTANT ⭐)
+    Default = false prevents background worker skipping
     =====================================================
     */
 
-    pendingEmailSent: Boolean,
-    confirmedEmailSent: Boolean,
-    processingEmailSent: Boolean,
-    shippedEmailSent: Boolean,
-    deliveredEmailSent: Boolean,
-    cancelledEmailSent: Boolean,
+    pendingEmailSent: {
+      type: Boolean,
+      default: false,
+    },
+
+    confirmedEmailSent: {
+      type: Boolean,
+      default: false,
+    },
+
+    processingEmailSent: {
+      type: Boolean,
+      default: false,
+    },
+
+    shippedEmailSent: {
+      type: Boolean,
+      default: false,
+    },
+
+    deliveredEmailSent: {
+      type: Boolean,
+      default: false,
+    },
+
+    cancelledEmailSent: {
+      type: Boolean,
+      default: false,
+    },
 
     /*
     =====================================================
