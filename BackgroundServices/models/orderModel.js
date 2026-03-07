@@ -1,5 +1,3 @@
-// src/models/orderModel.js
-
 import mongoose from "mongoose";
 
 /*
@@ -74,7 +72,6 @@ const OrderSchema = new mongoose.Schema(
         price: {
           type: Number,
           required: true,
-          min: 0,
         },
 
         quantity: {
@@ -99,7 +96,6 @@ const OrderSchema = new mongoose.Schema(
     total: {
       type: Number,
       required: true,
-      min: 0,
     },
 
     currency: {
@@ -111,7 +107,6 @@ const OrderSchema = new mongoose.Schema(
       type: String,
       enum: ["pending", "paid", "failed", "refunded"],
       default: "pending",
-      index: true,
     },
 
     declineReason: {
@@ -135,19 +130,14 @@ const OrderSchema = new mongoose.Schema(
 
     /*
     =====================================================
-    ORDER STATUS WORKFLOW
+    ORDER STATUS WORKFLOW ⭐ (NUMERIC PIPELINE)
+    0 Pending
+    1 Confirmed
+    2 Processing
+    3 Shipped
+    4 Delivered
+    5 Cancelled
     =====================================================
-    */
-
-    /*
-    Mapping:
-
-    0 → Pending
-    1 → Confirmed
-    2 → Processing
-    3 → Shipped
-    4 → Delivered
-    5 → Cancelled
     */
 
     status: {
@@ -170,11 +160,19 @@ const OrderSchema = new mongoose.Schema(
 
     /*
     =====================================================
-    ⭐ ENTERPRISE TRACKING FIELDS
+    ⭐ SHIPPING ETA CONFIGURATION
     =====================================================
     */
 
-    estimatedDeliveryDate: Date,
+    shippingWindowHours: {
+      type: Number,
+      default: 6,
+    },
+
+    estimatedDeliveryDate: {
+      type: Date,
+      default: null,
+    },
 
     progress: {
       type: Number,
@@ -183,43 +181,15 @@ const OrderSchema = new mongoose.Schema(
       max: 100,
     },
 
-    lastStatusUpdatedAt: Date,
-
     /*
     =====================================================
-    EMAIL WORKER FLAGS (IMPORTANT ⭐)
-    Default = false prevents background worker skipping
+    ⭐ UPDATE TRACKING TIME (NEW ⭐)
     =====================================================
     */
 
-    pendingEmailSent: {
-      type: Boolean,
-      default: false,
-    },
-
-    confirmedEmailSent: {
-      type: Boolean,
-      default: false,
-    },
-
-    processingEmailSent: {
-      type: Boolean,
-      default: false,
-    },
-
-    shippedEmailSent: {
-      type: Boolean,
-      default: false,
-    },
-
-    deliveredEmailSent: {
-      type: Boolean,
-      default: false,
-    },
-
-    cancelledEmailSent: {
-      type: Boolean,
-      default: false,
+    lastStatusUpdatedAt: {
+      type: Date,
+      default: Date.now,
     },
 
     /*
@@ -231,17 +201,30 @@ const OrderSchema = new mongoose.Schema(
     statusHistory: [
       {
         status: Number,
+        note: String,
         date: {
           type: Date,
           default: Date.now,
         },
-        note: String,
       },
     ],
+
+    /*
+    =====================================================
+    EMAIL WORKER FLAGS
+    =====================================================
+    */
+
+    pendingEmailSent: { type: Boolean, default: false },
+    confirmedEmailSent: { type: Boolean, default: false },
+    processingEmailSent: { type: Boolean, default: false },
+    shippedEmailSent: { type: Boolean, default: false },
+    deliveredEmailSent: { type: Boolean, default: false },
+    cancelledEmailSent: { type: Boolean, default: false },
   },
 
   {
-    timestamps: true,
+    timestamps: true, // ⭐ This already gives createdAt + updatedAt
     versionKey: false,
   }
 );
@@ -258,7 +241,7 @@ OrderSchema.index({ createdAt: -1 });
 
 /*
 ====================================================
-VIRTUAL DISPLAY FIELD
+DISPLAY HELPER FIELD
 ====================================================
 */
 
