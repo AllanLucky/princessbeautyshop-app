@@ -7,7 +7,7 @@ dotenv.config();
 
 /*
 ================================================
-SEND PENDING ORDER EMAIL SERVICE
+SEND PENDING ORDER EMAIL SERVICE (ENTERPRISE SAFE ⭐)
 ================================================
 */
 
@@ -17,13 +17,17 @@ const sendPendingOrderEmail = async () => {
       status: 0,
       pendingEmailSent: false,
       email: { $exists: true, $ne: null },
-    }).limit(50);
+    })
+      .limit(50)
+      .sort({ createdAt: 1 });
 
     if (!orders.length) return;
 
     for (const order of orders) {
       try {
-        if (!order.products || !order.products.length) continue;
+        if (!order.products?.length) continue;
+
+        const progress = 20;
 
         const html = await ejs.renderFile(
           "templates/pendingorder.ejs",
@@ -33,6 +37,11 @@ const sendPendingOrderEmail = async () => {
             products: order.products,
             total: order.total || 0,
             status: order.status,
+            statusText: "Pending Confirmation",
+            progress,
+            estimatedDeliveryDate: new Date(
+              Date.now() + 7 * 24 * 60 * 60 * 1000
+            ).toDateString(),
           }
         );
 
@@ -40,27 +49,28 @@ const sendPendingOrderEmail = async () => {
           from: process.env.EMAIL,
           to: order.email,
           subject:
-            "✅ Your order has been placed successfully. We are preparing it for you.",
+            "🛍️ Your order has been placed successfully. We are preparing it for you.",
           html,
         };
 
-        await sendMail(messageOptions);
+        const mailResult = await sendMail(messageOptions);
 
-        /*
-        =============================================
-        MARK EMAIL AS SENT (IMPORTANT)
-        =============================================
-        */
-
-        await Order.updateOne(
-          { _id: order._id },
-          { $set: { pendingEmailSent: true } }
-        );
+        if (mailResult?.success !== false) {
+          await Order.updateOne(
+            { _id: order._id },
+            {
+              $set: {
+                pendingEmailSent: true,
+              },
+            }
+          );
+        }
 
       } catch (error) {
         console.log("Order email error:", error.message);
       }
     }
+
   } catch (error) {
     console.log("Service error:", error.message);
   }
