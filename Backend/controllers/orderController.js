@@ -1,5 +1,3 @@
-// src/controllers/orderController.js
-
 import Order from "../models/orderModel.js";
 import Product from "../models/productModel.js";
 import asyncHandler from "express-async-handler";
@@ -7,7 +5,6 @@ import asyncHandler from "express-async-handler";
 /*
 ====================================================
 STATUS WORKFLOW VALIDATION
-Pending → Confirmed → Processing → Shipped → Delivered → Cancelled
 ====================================================
 */
 
@@ -19,12 +16,6 @@ const ALLOWED_TRANSITIONS = {
   4: [],
   5: [],
 };
-
-/*
-====================================================
-ORDER PROGRESS + DELIVERY ESTIMATION
-====================================================
-*/
 
 const STATUS_PROGRESS = {
   0: 10,
@@ -82,40 +73,44 @@ CREATE ORDER
 */
 
 const createOrder = asyncHandler(async (req, res) => {
-  const { products, total, currency } = req.body;
+  try {
+    const { products, total, currency } = req.body;
 
-  if (!Array.isArray(products) || products.length === 0) {
-    res.status(400);
-    throw new Error("Order items required");
+    if (!Array.isArray(products) || products.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Order items required"
+      });
+    }
+
+    const order = await Order.create({
+      userId: req.user._id,
+      products,
+      total,
+      currency: currency || "KES",
+      name: req.body.name || req.user.name,
+      email: req.body.email || req.user.email,
+      phone: req.body.phone || "",
+      address: req.body.address || "",
+      status: 0,
+      progress: STATUS_PROGRESS[0],
+      paymentStatus: "pending",
+      deliveredEmailSent: false,
+    });
+
+    for (const item of products || []) {
+      if (!item?.productId) continue;
+      await deductStock(item.productId, item.quantity || 0);
+    }
+
+    return res.status(201).json({
+      success: true,
+      order
+    });
+
+  } catch (error) {
+    throw error;
   }
-
-  const order = await Order.create({
-    userId: req.user._id,
-    products,
-    total,
-    currency: currency || "KES",
-    name: req.body.name || req.user.name,
-    email: req.body.email || req.user.email,
-    phone: req.body.phone || req.user.phone || "",
-    address: req.body.address || req.user.address || "",
-    status: 0,
-    progress: STATUS_PROGRESS[0],
-    paymentStatus: "pending",
-    deliveredEmailSent: false,
-  });
-
-  /*
-  Deduct stock safely
-  */
-
-  for (const item of products) {
-    await deductStock(item.productId, item.quantity);
-  }
-
-  res.status(201).json({
-    success: true,
-    order,
-  });
 });
 
 /*
@@ -125,9 +120,12 @@ UPDATE ORDER
 */
 
 const updateOrder = asyncHandler(async (req, res) => {
+
   if (!["admin", "super_admin"].includes(req.user.role)) {
-    res.status(403);
-    throw new Error("Admin only");
+    return res.status(403).json({
+      success: false,
+      message: "Admin only"
+    });
   }
 
   const { status, paymentStatus, note, trackingNumber } = req.body;
@@ -135,86 +133,86 @@ const updateOrder = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id);
 
   if (!order) {
-    res.status(404);
-    throw new Error("Order not found");
-  }
-
-  /*
-  STATUS TRANSITION GUARD
-  */
-
-  if (status !== undefined && status !== order.status) {
-    const allowed = ALLOWED_TRANSITIONS[order.status] || [];
-
-    if (!allowed.includes(status)) {
-      throw new Error("Invalid order status transition");
-    }
-
-    order.status = status;
-
-    /*
-    PROGRESS BAR UPDATE
-    */
-
-    order.progress = STATUS_PROGRESS[status] || 0;
-
-    order.lastStatusUpdatedAt = new Date();
-
-    /*
-    DELIVERY ESTIMATION
-    */
-
-    if (DELIVERY_ESTIMATE_DAYS[status]) {
-      const eta = new Date();
-
-      eta.setDate(eta.getDate() + DELIVERY_ESTIMATE_DAYS[status]);
-
-      order.estimatedDeliveryDate = eta;
-    }
-
-    /*
-    TIMELINE HISTORY
-    */
-
-    order.statusHistory.push({
-      status,
-      note: note || "",
-      date: new Date(),
+    return res.status(404).json({
+      success: false,
+      message: "Order not found"
     });
-
-    /*
-    DELIVERY LOGIC
-    */
-
-    if (status === 4) {
-      order.isDelivered = true;
-      order.deliveredAt = new Date();
-      order.deliveredEmailSent = false;
-      order.paymentStatus = "paid";
-    }
-
-    /*
-    CANCELLED
-    */
-
-    if (status === 5) {
-      order.paymentStatus = "failed";
-    }
   }
 
   /*
-  OPTIONAL UPDATE FIELDS
+  STATUS WORKFLOW VALIDATION
   */
+
+  if (status !== undefined) {
+
+    const newStatus = Number(status);
+    const currentStatus = Number(order.status);
+
+    if (newStatus !== currentStatus) {
+
+      const allowed = ALLOWED_TRANSITIONS[currentStatus] || [];
+
+      if (!allowed.includes(newStatus)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid order status transition"
+        });
+      }
+
+      order.status = newStatus;
+      order.progress = STATUS_PROGRESS[newStatus] || 0;
+      order.lastStatusUpdatedAt = new Date();
+
+      /*
+      DELIVERY ESTIMATION
+      */
+
+      if (DELIVERY_ESTIMATE_DAYS[newStatus]) {
+        const eta = new Date();
+        eta.setDate(
+          eta.getDate() + DELIVERY_ESTIMATE_DAYS[newStatus]
+        );
+
+        order.estimatedDeliveryDate = eta;
+      }
+
+      /*
+      HISTORY TRACKING
+      */
+
+      order.statusHistory = order.statusHistory || [];
+
+      order.statusHistory.push({
+        status: newStatus,
+        note: note || "",
+        date: new Date(),
+      });
+
+      /*
+      DELIVERY LOGIC
+      */
+
+      if (newStatus === 4) {
+        order.isDelivered = true;
+        order.deliveredAt = new Date();
+        order.deliveredEmailSent = false;
+        order.paymentStatus = "paid";
+      }
+
+      if (newStatus === 5) {
+        order.paymentStatus = "failed";
+      }
+    }
+  }
 
   if (paymentStatus) order.paymentStatus = paymentStatus;
-
   if (trackingNumber) order.trackingNumber = trackingNumber;
 
-  await order.save();
+  await order.save({ validateBeforeSave: false });
 
-  res.json({
+  return res.json({
     success: true,
-    order,
+    order
   });
 });
 
@@ -225,22 +223,27 @@ DELETE ORDER
 */
 
 const deleteOrder = asyncHandler(async (req, res) => {
+
   if (!["admin", "super_admin"].includes(req.user.role)) {
-    res.status(403);
-    throw new Error("Admin only");
+    return res.status(403).json({
+      success: false,
+      message: "Admin only"
+    });
   }
 
   const order = await Order.findById(req.params.id);
 
   if (!order) {
-    res.status(404);
-    throw new Error("Order not found");
+    return res.status(404).json({
+      success: false,
+      message: "Order not found"
+    });
   }
 
   if (Array.isArray(order.products)) {
     for (const item of order.products) {
       try {
-        await addStock(item.productId, item.quantity);
+        await addStock(item?.productId, item?.quantity || 0);
       } catch (err) {
         console.error(err.message);
       }
@@ -249,9 +252,9 @@ const deleteOrder = asyncHandler(async (req, res) => {
 
   await order.deleteOne();
 
-  res.json({
+  return res.json({
     success: true,
-    message: "Order deleted",
+    message: "Order deleted"
   });
 });
 
@@ -262,14 +265,21 @@ GET USER ORDERS
 */
 
 const getUserOrder = asyncHandler(async (req, res) => {
+
   const userId = req.params.id;
 
-  if (req.user._id.toString() !== userId && req.user.role !== "admin") {
-    res.status(403);
-    throw new Error("Unauthorized");
+  if (
+    req.user._id.toString() !== userId &&
+    req.user.role !== "admin"
+  ) {
+    return res.status(403).json({
+      success: false,
+      message: "Unauthorized"
+    });
   }
 
-  const orders = await Order.find({ userId }).sort({ createdAt: -1 });
+  const orders = await Order.find({ userId })
+    .sort({ createdAt: -1 });
 
   res.json({
     success: true,
@@ -285,13 +295,19 @@ GET SINGLE ORDER
 */
 
 const getOrderById = asyncHandler(async (req, res) => {
+
   const order = await Order.findById(req.params.id);
 
-  if (!order) throw new Error("Order not found");
+  if (!order) {
+    return res.status(404).json({
+      success: false,
+      message: "Order not found"
+    });
+  }
 
   res.json({
     success: true,
-    order,
+    order
   });
 });
 
@@ -302,12 +318,16 @@ GET ALL ORDERS
 */
 
 const getAllOrders = asyncHandler(async (req, res) => {
+
   if (!["admin", "super_admin"].includes(req.user.role)) {
-    res.status(403);
-    throw new Error("Admin only");
+    return res.status(403).json({
+      success: false,
+      message: "Admin only"
+    });
   }
 
-  const orders = await Order.find().sort({ createdAt: -1 });
+  const orders = await Order.find()
+    .sort({ createdAt: -1 });
 
   res.json({
     success: true,
@@ -315,12 +335,6 @@ const getAllOrders = asyncHandler(async (req, res) => {
     orders,
   });
 });
-
-/*
-====================================================
-EXPORTS
-====================================================
-*/
 
 export {
   createOrder,
