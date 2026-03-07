@@ -6,23 +6,44 @@ import asyncHandler from "express-async-handler";
 
 /*
 ====================================================
- STATUS WORKFLOW VALIDATION ⭐ ENTERPRISE SAFE
- Pending → Confirmed → Processing → Shipped → Delivered → Cancelled
+STATUS WORKFLOW VALIDATION
+Pending → Confirmed → Processing → Shipped → Delivered → Cancelled
 ====================================================
 */
 
 const ALLOWED_TRANSITIONS = {
-  0: [1, 5],        // Pending → Confirmed / Cancelled
-  1: [2, 5],        // Confirmed → Processing / Cancelled
-  2: [3, 5],        // Processing → Shipped / Cancelled
-  3: [4, 5],        // Shipped → Delivered / Cancelled
-  4: [],            // Delivered is terminal
-  5: [],            // Cancelled terminal
+  0: [1, 5],
+  1: [2, 5],
+  2: [3, 5],
+  3: [4, 5],
+  4: [],
+  5: [],
 };
 
 /*
 ====================================================
- INVENTORY HELPERS
+ORDER PROGRESS + DELIVERY ESTIMATION
+====================================================
+*/
+
+const STATUS_PROGRESS = {
+  0: 10,
+  1: 30,
+  2: 55,
+  3: 80,
+  4: 100,
+  5: 0,
+};
+
+const DELIVERY_ESTIMATE_DAYS = {
+  1: 5,
+  2: 4,
+  3: 3,
+};
+
+/*
+====================================================
+INVENTORY HELPERS
 ====================================================
 */
 
@@ -30,6 +51,7 @@ const deductStock = async (productId, quantity) => {
   if (!productId || !quantity) return;
 
   const product = await Product.findById(productId);
+
   if (!product) throw new Error("Product not found");
 
   if (product.stock < quantity) {
@@ -37,6 +59,7 @@ const deductStock = async (productId, quantity) => {
   }
 
   product.stock -= quantity;
+
   await product.save({ validateBeforeSave: false });
 };
 
@@ -44,15 +67,17 @@ const addStock = async (productId, quantity) => {
   if (!productId || !quantity) return;
 
   const product = await Product.findById(productId);
+
   if (!product) return;
 
   product.stock += quantity;
+
   await product.save({ validateBeforeSave: false });
 };
 
 /*
 ====================================================
- CREATE ORDER
+CREATE ORDER
 ====================================================
 */
 
@@ -74,6 +99,7 @@ const createOrder = asyncHandler(async (req, res) => {
     phone: req.body.phone || req.user.phone || "",
     address: req.body.address || req.user.address || "",
     status: 0,
+    progress: STATUS_PROGRESS[0],
     paymentStatus: "pending",
     deliveredEmailSent: false,
   });
@@ -81,6 +107,7 @@ const createOrder = asyncHandler(async (req, res) => {
   /*
   Deduct stock safely
   */
+
   for (const item of products) {
     await deductStock(item.productId, item.quantity);
   }
@@ -93,7 +120,7 @@ const createOrder = asyncHandler(async (req, res) => {
 
 /*
 ====================================================
- UPDATE ORDER ⭐ ENTERPRISE SAFE WORKFLOW
+UPDATE ORDER
 ====================================================
 */
 
@@ -113,7 +140,7 @@ const updateOrder = asyncHandler(async (req, res) => {
   }
 
   /*
-  ===== STATUS TRANSITION GUARD ⭐
+  STATUS TRANSITION GUARD
   */
 
   if (status !== undefined && status !== order.status) {
@@ -126,7 +153,27 @@ const updateOrder = asyncHandler(async (req, res) => {
     order.status = status;
 
     /*
-    Timeline tracking
+    PROGRESS BAR UPDATE
+    */
+
+    order.progress = STATUS_PROGRESS[status] || 0;
+
+    order.lastStatusUpdatedAt = new Date();
+
+    /*
+    DELIVERY ESTIMATION
+    */
+
+    if (DELIVERY_ESTIMATE_DAYS[status]) {
+      const eta = new Date();
+
+      eta.setDate(eta.getDate() + DELIVERY_ESTIMATE_DAYS[status]);
+
+      order.estimatedDeliveryDate = eta;
+    }
+
+    /*
+    TIMELINE HISTORY
     */
 
     order.statusHistory.push({
@@ -136,7 +183,7 @@ const updateOrder = asyncHandler(async (req, res) => {
     });
 
     /*
-    Payment + delivery sync
+    DELIVERY LOGIC
     */
 
     if (status === 4) {
@@ -146,12 +193,21 @@ const updateOrder = asyncHandler(async (req, res) => {
       order.paymentStatus = "paid";
     }
 
+    /*
+    CANCELLED
+    */
+
     if (status === 5) {
       order.paymentStatus = "failed";
     }
   }
 
+  /*
+  OPTIONAL UPDATE FIELDS
+  */
+
   if (paymentStatus) order.paymentStatus = paymentStatus;
+
   if (trackingNumber) order.trackingNumber = trackingNumber;
 
   await order.save();
@@ -164,7 +220,7 @@ const updateOrder = asyncHandler(async (req, res) => {
 
 /*
 ====================================================
- DELETE ORDER ⭐ STOCK RESTORE
+DELETE ORDER
 ====================================================
 */
 
@@ -201,7 +257,7 @@ const deleteOrder = asyncHandler(async (req, res) => {
 
 /*
 ====================================================
- GETTERS
+GET USER ORDERS
 ====================================================
 */
 
@@ -222,6 +278,12 @@ const getUserOrder = asyncHandler(async (req, res) => {
   });
 });
 
+/*
+====================================================
+GET SINGLE ORDER
+====================================================
+*/
+
 const getOrderById = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id);
 
@@ -232,6 +294,12 @@ const getOrderById = asyncHandler(async (req, res) => {
     order,
   });
 });
+
+/*
+====================================================
+GET ALL ORDERS
+====================================================
+*/
 
 const getAllOrders = asyncHandler(async (req, res) => {
   if (!["admin", "super_admin"].includes(req.user.role)) {
@@ -250,7 +318,7 @@ const getAllOrders = asyncHandler(async (req, res) => {
 
 /*
 ====================================================
- EXPORTS
+EXPORTS
 ====================================================
 */
 
