@@ -71,6 +71,7 @@ import Bundles from "./pages/Bundles";
 import NewBundle from "./pages/NewBundle";
 import Analytics from "./pages/Analytics";
 import EditBundle from "./pages/EditBundle";
+import OrderDetail from "./pages/OrderDetail";
 
 
 
@@ -110,6 +111,7 @@ const router = createBrowserRouter([
       // ORDERS
       { path: "orders", element: <Orders /> },
       { path: "create-order", element: <CreateOrder /> },
+      { path: "orders/:id", element: <OrderDetail /> },
       { path: "inventory", element: <Inventory /> },
       { path: "invoices", element: <AdminInvoices /> },
 
