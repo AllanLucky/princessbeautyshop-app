@@ -24,7 +24,7 @@ const sendCancelledOrderEmail = async () => {
     for (const order of orders) {
       try {
         const html = await ejs.renderFile(
-          "templates/cancelled.ejs",
+          "templates/cancelledorder.ejs",
           {
             name: order.name,
             orderNumber: order._id.toString().slice(-8),
