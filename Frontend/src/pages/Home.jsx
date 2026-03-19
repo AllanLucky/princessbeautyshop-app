@@ -4,6 +4,7 @@ import Products from "../components/Products";
 import Category from "../components/Category";
 import LatestBlogs from "../components/LatestBlogs"; // ✅ Add this
 import Packages from "./Package";
+import Timetable from "./Timetable";
 
 const Home = () => {
   return (
@@ -12,6 +13,7 @@ const Home = () => {
       {/* <Category /> */}
       {<Packages/>}
       <Products />
+      <Timetable/>
       <LatestBlogs />
     </div>
   );
