@@ -132,8 +132,8 @@ const Product = () => {
 
   const shareOnSocialMedia = (platform) => {
     const shareUrl = window.location.href;
-    const title = `Check out ${product.title} from Dubois Beauty`;
-    const text = product.desc ? product.desc.substring(0, 100) + '...' : 'Amazing beauty product from Dubois Beauty';
+    const title = `Check out ${product.title} from KILIFONIA BEAUTY`;
+    const text = product.desc ? product.desc.substring(0, 100) + '...' : 'Amazing beauty product from KILIFONIA BEAUTY!';
     
     let shareLink = '';
     
@@ -199,7 +199,7 @@ const Product = () => {
       const pinkColor = [219, 39, 119]; // Pink for QR code
       
       // Load logo image
-      const logoUrl = 'https://res.cloudinary.com/dap91fhxh/image/upload/v1759863437/Screenshot_from_2025-10-07_21-56-04_sspduo.png';
+      const logoUrl = "https://res.cloudinary.com/dkdx7xytz/image/upload/v1772469610/blisslogo1_rwlktl.png"
       
       try {
         // Add header with black background
@@ -210,11 +210,11 @@ const Product = () => {
         const logoDataUrl = await loadImageAsBase64(logoUrl);
         pdf.addImage(logoDataUrl, 'PNG', 20, 10, 30, 30);
         
-        // Dubois Beauty text in gold
+        // KILIFONIA BEAUTY text in gold
         pdf.setTextColor(...goldColor);
         pdf.setFontSize(16);
         pdf.setFont('helvetica', 'bold');
-        pdf.text('DUBOIS BEAUTY', 60, 25);
+        pdf.text('KILIFONIA BEAUTY', 60, 25);
         pdf.setFontSize(10);
         pdf.setFont('helvetica', 'normal');
         pdf.text('Premium Skincare Solutions', 60, 32);
@@ -227,7 +227,7 @@ const Product = () => {
         pdf.setTextColor(...goldColor);
         pdf.setFontSize(16);
         pdf.setFont('helvetica', 'bold');
-        pdf.text('DUBOIS BEAUTY', pageWidth / 2, 25, { align: 'center' });
+        pdf.text('KILIFONIA BEAUTY', pageWidth / 2, 25, { align: 'center' });
       }
       
       let yPosition = 60;
@@ -377,7 +377,7 @@ const Product = () => {
           pdf.rect(10, 10, pageWidth - 20, pageHeight - 20);
         }
         
-        const productUrl = `https://www.duboisbeauty.co.ke/product/${product._id}`;
+        const productUrl = `https://www. kilifoniabeautybliss.co.ke/product/${product._id}`;
         const qrCodeDataUrl = await QRCode.toDataURL(productUrl, {
           width: 80,
           margin: 1,
@@ -410,7 +410,7 @@ const Product = () => {
         pdf.text('or visit:', pageWidth / 2, yPosition + 5, { align: 'center' });
         pdf.setTextColor(...goldColor);
         pdf.setFont('helvetica', 'bold');
-        pdf.text(`duboisbeauty.co.ke/product/${product._id}`, pageWidth / 2, yPosition + 12, { align: 'center' });
+        pdf.text(` kilifoniabeautybliss.co.ke/product/${product._id}`, pageWidth / 2, yPosition + 12, { align: 'center' });
         
       } catch (qrError) {
         console.log('QR Code generation failed:', qrError);
@@ -430,7 +430,7 @@ const Product = () => {
         pdf.setTextColor(...lightGold);
         pdf.setFontSize(20);
         pdf.setFont('helvetica', 'bold');
-        pdf.text('DUBOIS BEAUTY', pageWidth / 2, pageHeight / 2, { 
+        pdf.text(' KILIFONIA BEAUTY', pageWidth / 2, pageHeight / 2, { 
           align: 'center',
           angle: 45 
         });
@@ -446,7 +446,7 @@ const Product = () => {
       pdf.setPage(pageCount);
       pdf.setTextColor(...blackColor);
       pdf.setFontSize(8);
-      pdf.text(`Generated on ${new Date().toLocaleDateString()} • Dubois Beauty - Premium Skincare Solutions`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+      pdf.text(`Generated on ${new Date().toLocaleDateString()} • KILIFONIA BEAUTY - Premium Skincare Solutions`, pageWidth / 2, pageHeight - 10, { align: 'center' });
       
       // Save the PDF
       pdf.save(`${product.title.replace(/[^a-zA-Z0-9]/g, '_')}_Manual.pdf`);
