@@ -1,9 +1,14 @@
 import { FaMinus, FaPlus, FaTrashAlt } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
-import { removeProduct, updateQuantity, clearCart } from "../redux/cartRedux";
+import {
+  removeProduct,
+  updateQuantity,
+  clearCart,
+} from "../redux/cartRedux";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 const Cart = () => {
   const cart = useSelector((state) => state.cart || {});
@@ -14,17 +19,37 @@ const Cart = () => {
 
   const products = Array.isArray(cart?.products) ? cart.products : [];
 
+  /*
+  ====================================================
+  🔥 AUTO FIX CART IF STOCK CHANGED
+  ====================================================
+  */
+  useEffect(() => {
+    products.forEach((item) => {
+      const stock = item.stock ?? item.countInStock ?? Infinity;
+
+      if (item.quantity > stock) {
+        dispatch(
+          updateQuantity({
+            _id: item._id,
+            quantity: stock > 0 ? stock : 1,
+          })
+        );
+
+        toast.warning(`${item.title} quantity adjusted due to stock`);
+      }
+    });
+  }, [products, dispatch]);
+
   // ================= REMOVE PRODUCT =================
   const handleRemoveProduct = (product) => {
-    if (!product) return;
-
     dispatch(removeProduct(product));
     toast.info(`${product.title} removed`);
   };
 
   // ================= QUANTITY CONTROL =================
   const handleDecrease = (product) => {
-    if (!product || product.quantity <= 1) return;
+    if (product.quantity <= 1) return;
 
     dispatch(
       updateQuantity({
@@ -35,12 +60,10 @@ const Cart = () => {
   };
 
   const handleIncrease = (product) => {
-    if (!product) return;
-
     const stock = product.stock ?? product.countInStock ?? Infinity;
 
     if (product.quantity >= stock) {
-      toast.error(`Only ${stock} items available in stock`);
+      toast.error(`Only ${stock} items available`);
       return;
     }
 
@@ -64,8 +87,7 @@ const Cart = () => {
 
   // ================= PRICE CALCULATION =================
   const subtotal = products.reduce(
-    (acc, item) =>
-      acc + Number(item.price || 0) * Number(item.quantity || 0),
+    (acc, item) => acc + item.price * item.quantity,
     0
   );
 
@@ -75,7 +97,7 @@ const Cart = () => {
   const formatCurrency = (num) =>
     `KES ${Number(num || 0).toLocaleString()}`;
 
-  // ================= CHECKOUT NAVIGATION =================
+  // ================= CHECKOUT =================
   const handleProceedCheckout = () => {
     if (!user) {
       toast.error("Please login first");
@@ -88,15 +110,32 @@ const Cart = () => {
       return;
     }
 
-    // Stock validation
-    for (const item of products) {
-      const stock = item.stock ?? item.countInStock ?? Infinity;
+    let hasError = false;
 
-      if (Number(item.quantity) > Number(stock)) {
-        toast.error(`${item.title} exceeds available stock`);
-        return;
+    for (const item of products) {
+      const stock = item.stock ?? item.countInStock ?? 0;
+
+      if (stock <= 0) {
+        toast.error(`${item.title} is out of stock`);
+        dispatch(removeProduct(item));
+        hasError = true;
+        continue;
+      }
+
+      if (item.quantity > stock) {
+        dispatch(
+          updateQuantity({
+            _id: item._id,
+            quantity: stock,
+          })
+        );
+
+        toast.warning(`${item.title} adjusted to ${stock}`);
+        hasError = true;
       }
     }
+
+    if (hasError) return;
 
     navigate("/checkout");
   };
@@ -110,7 +149,7 @@ const Cart = () => {
       </h2>
 
       <div className="flex flex-col lg:flex-row gap-10">
-        {/* LEFT SECTION */}
+        {/* LEFT */}
         <div className="flex-1 bg-white shadow-md rounded-xl p-6">
           <h3 className="font-semibold text-lg mb-6 border-b pb-3">
             Your Items ({products.length})
@@ -118,7 +157,7 @@ const Cart = () => {
 
           {products.length ? (
             products.map((item) => {
-              const stock = item.stock ?? item.countInStock ?? Infinity;
+              const stock = item.stock ?? item.countInStock ?? 0;
 
               return (
                 <div
@@ -146,11 +185,11 @@ const Cart = () => {
                       Stock: {stock}
                     </p>
 
-                    {/* Quantity Control */}
+                    {/* Quantity */}
                     <div className="flex items-center gap-4 mt-4">
                       <button
                         onClick={() => handleDecrease(item)}
-                        className="bg-pink-500 hover:bg-pink-600 text-white p-2 rounded-full"
+                        className="bg-pink-500 text-white p-2 rounded-full"
                       >
                         <FaMinus size={12} />
                       </button>
@@ -164,8 +203,8 @@ const Cart = () => {
                         disabled={item.quantity >= stock}
                         className={`p-2 rounded-full text-white ${
                           item.quantity >= stock
-                            ? "bg-gray-400 cursor-not-allowed"
-                            : "bg-pink-500 hover:bg-pink-600"
+                            ? "bg-gray-400"
+                            : "bg-pink-500"
                         }`}
                       >
                         <FaPlus size={12} />
@@ -173,14 +212,14 @@ const Cart = () => {
                     </div>
                   </div>
 
-                  <div className="flex flex-col justify-between items-end">
+                  <div className="flex flex-col items-end">
                     <span className="font-bold text-pink-600 text-lg">
                       {formatCurrency(item.price * item.quantity)}
                     </span>
 
                     <FaTrashAlt
                       onClick={() => handleRemoveProduct(item)}
-                      className="text-red-500 cursor-pointer hover:scale-110"
+                      className="text-red-500 cursor-pointer mt-4"
                     />
                   </div>
                 </div>
@@ -195,26 +234,26 @@ const Cart = () => {
           {products.length > 0 && (
             <button
               onClick={handleClearCart}
-              className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg mt-4"
+              className="bg-red-500 text-white px-6 py-3 rounded-lg mt-4"
             >
               Clear Cart
             </button>
           )}
         </div>
 
-        {/* RIGHT SUMMARY */}
-        <div className="w-full lg:w-[360px] bg-white shadow-md rounded-xl p-6 h-fit">
+        {/* RIGHT */}
+        <div className="w-full lg:w-[360px] bg-white shadow-md rounded-xl p-6">
           <h3 className="font-semibold text-lg mb-6 border-b pb-3">
             Order Summary
           </h3>
 
           <div className="space-y-4">
-            <div className="flex justify-between text-gray-600">
+            <div className="flex justify-between">
               <span>Subtotal</span>
               <span>{formatCurrency(subtotal)}</span>
             </div>
 
-            <div className="flex justify-between text-gray-600">
+            <div className="flex justify-between">
               <span>Delivery</span>
               <span>{formatCurrency(deliveryFee)}</span>
             </div>
@@ -229,10 +268,10 @@ const Cart = () => {
             <button
               onClick={handleProceedCheckout}
               disabled={!products.length}
-              className={`w-full py-3 rounded-lg text-white font-semibold ${
+              className={`w-full py-3 rounded-lg text-white ${
                 products.length
                   ? "bg-pink-600 hover:bg-pink-700"
-                  : "bg-gray-400 cursor-not-allowed"
+                  : "bg-gray-400"
               }`}
             >
               Proceed to Checkout
