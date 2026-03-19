@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Order from "../models/orderModel.js";
 import Product from "../models/productModel.js";
 import asyncHandler from "express-async-handler";
@@ -34,14 +35,16 @@ const DELIVERY_ESTIMATE_DAYS = {
 
 /*
 ====================================================
-INVENTORY HELPERS
+INVENTORY HELPERS (UPDATED)
 ====================================================
 */
 
-const deductStock = async (productId, quantity) => {
-  if (!productId || !quantity) return;
+const deductStock = async (productId, quantity, session) => {
+  if (!productId || quantity <= 0) {
+    throw new Error("Invalid product or quantity");
+  }
 
-  const product = await Product.findById(productId);
+  const product = await Product.findById(productId).session(session);
 
   if (!product) throw new Error("Product not found");
 
@@ -49,67 +52,87 @@ const deductStock = async (productId, quantity) => {
     throw new Error(`Insufficient stock for ${product.title}`);
   }
 
-  product.stock -= quantity;
-
-  await product.save({ validateBeforeSave: false });
+  await Product.findByIdAndUpdate(
+    productId,
+    { $inc: { stock: -quantity } },
+    { session }
+  );
 };
 
 const addStock = async (productId, quantity) => {
-  if (!productId || !quantity) return;
+  if (!productId || quantity <= 0) return;
 
-  const product = await Product.findById(productId);
-
-  if (!product) return;
-
-  product.stock += quantity;
-
-  await product.save({ validateBeforeSave: false });
+  await Product.findByIdAndUpdate(productId, {
+    $inc: { stock: quantity },
+  });
 };
 
 /*
 ====================================================
-CREATE ORDER
+CREATE ORDER (FIXED WITH TRANSACTION)
 ====================================================
 */
 
 const createOrder = asyncHandler(async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const { products, total, currency } = req.body;
 
     if (!Array.isArray(products) || products.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Order items required"
-      });
+      throw new Error("Order items required");
     }
 
-    const order = await Order.create({
-      userId: req.user._id,
-      products,
-      total,
-      currency: currency || "KES",
-      name: req.body.name || req.user.name,
-      email: req.body.email || req.user.email,
-      phone: req.body.phone || "",
-      address: req.body.address || "",
-      status: 0,
-      progress: STATUS_PROGRESS[0],
-      paymentStatus: "pending",
-      deliveredEmailSent: false,
-    });
-
-    for (const item of products || []) {
+    // ✅ DEDUCT STOCK FIRST
+    for (const item of products) {
       if (!item?.productId) continue;
-      await deductStock(item.productId, item.quantity || 0);
+
+      await deductStock(
+        item.productId,
+        item.quantity || 0,
+        session
+      );
     }
+
+    // ✅ CREATE ORDER AFTER STOCK SUCCESS
+    const order = await Order.create(
+      [
+        {
+          userId: req.user._id,
+          products,
+          total,
+          currency: currency || "KES",
+          name: req.body.name || req.user.name,
+          email: req.body.email || req.user.email,
+          phone: req.body.phone || "",
+          address: req.body.address || "",
+          status: 0,
+          progress: STATUS_PROGRESS[0],
+          paymentStatus: "pending",
+          deliveredEmailSent: false,
+        },
+      ],
+      { session }
+    );
+
+    await session.commitTransaction();
+    session.endSession();
 
     return res.status(201).json({
       success: true,
-      order
+      message: "Order placed successfully & stock updated",
+      order: order[0],
     });
 
   } catch (error) {
-    throw error;
+    await session.abortTransaction();
+    session.endSession();
+
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
   }
 });
 
@@ -120,11 +143,10 @@ UPDATE ORDER
 */
 
 const updateOrder = asyncHandler(async (req, res) => {
-
   if (!["admin", "super_admin"].includes(req.user.role)) {
     return res.status(403).json({
       success: false,
-      message: "Admin only"
+      message: "Admin only",
     });
   }
 
@@ -135,27 +157,21 @@ const updateOrder = asyncHandler(async (req, res) => {
   if (!order) {
     return res.status(404).json({
       success: false,
-      message: "Order not found"
+      message: "Order not found",
     });
   }
 
-  /*
-  STATUS WORKFLOW VALIDATION
-  */
-
   if (status !== undefined) {
-
     const newStatus = Number(status);
     const currentStatus = Number(order.status);
 
     if (newStatus !== currentStatus) {
-
       const allowed = ALLOWED_TRANSITIONS[currentStatus] || [];
 
       if (!allowed.includes(newStatus)) {
         return res.status(400).json({
           success: false,
-          message: "Invalid order status transition"
+          message: "Invalid order status transition",
         });
       }
 
@@ -163,22 +179,13 @@ const updateOrder = asyncHandler(async (req, res) => {
       order.progress = STATUS_PROGRESS[newStatus] || 0;
       order.lastStatusUpdatedAt = new Date();
 
-      /*
-      DELIVERY ESTIMATION
-      */
-
       if (DELIVERY_ESTIMATE_DAYS[newStatus]) {
         const eta = new Date();
         eta.setDate(
           eta.getDate() + DELIVERY_ESTIMATE_DAYS[newStatus]
         );
-
         order.estimatedDeliveryDate = eta;
       }
-
-      /*
-      HISTORY TRACKING
-      */
 
       order.statusHistory = order.statusHistory || [];
 
@@ -187,10 +194,6 @@ const updateOrder = asyncHandler(async (req, res) => {
         note: note || "",
         date: new Date(),
       });
-
-      /*
-      DELIVERY LOGIC
-      */
 
       if (newStatus === 4) {
         order.isDelivered = true;
@@ -201,6 +204,11 @@ const updateOrder = asyncHandler(async (req, res) => {
 
       if (newStatus === 5) {
         order.paymentStatus = "failed";
+
+        // 🔥 RESTORE STOCK ON FAILURE
+        for (const item of order.products || []) {
+          await addStock(item.productId, item.quantity || 0);
+        }
       }
     }
   }
@@ -212,7 +220,7 @@ const updateOrder = asyncHandler(async (req, res) => {
 
   return res.json({
     success: true,
-    order
+    order,
   });
 });
 
@@ -223,11 +231,10 @@ DELETE ORDER
 */
 
 const deleteOrder = asyncHandler(async (req, res) => {
-
   if (!["admin", "super_admin"].includes(req.user.role)) {
     return res.status(403).json({
       success: false,
-      message: "Admin only"
+      message: "Admin only",
     });
   }
 
@@ -236,25 +243,20 @@ const deleteOrder = asyncHandler(async (req, res) => {
   if (!order) {
     return res.status(404).json({
       success: false,
-      message: "Order not found"
+      message: "Order not found",
     });
   }
 
-  if (Array.isArray(order.products)) {
-    for (const item of order.products) {
-      try {
-        await addStock(item?.productId, item?.quantity || 0);
-      } catch (err) {
-        console.error(err.message);
-      }
-    }
+  // 🔥 RESTORE STOCK
+  for (const item of order.products || []) {
+    await addStock(item.productId, item.quantity || 0);
   }
 
   await order.deleteOne();
 
   return res.json({
     success: true,
-    message: "Order deleted"
+    message: "Order deleted & stock restored",
   });
 });
 
@@ -265,7 +267,6 @@ GET USER ORDERS
 */
 
 const getUserOrder = asyncHandler(async (req, res) => {
-
   const userId = req.params.id;
 
   if (
@@ -274,12 +275,13 @@ const getUserOrder = asyncHandler(async (req, res) => {
   ) {
     return res.status(403).json({
       success: false,
-      message: "Unauthorized"
+      message: "Unauthorized",
     });
   }
 
-  const orders = await Order.find({ userId })
-    .sort({ createdAt: -1 });
+  const orders = await Order.find({ userId }).sort({
+    createdAt: -1,
+  });
 
   res.json({
     success: true,
@@ -295,19 +297,18 @@ GET SINGLE ORDER
 */
 
 const getOrderById = asyncHandler(async (req, res) => {
-
   const order = await Order.findById(req.params.id);
 
   if (!order) {
     return res.status(404).json({
       success: false,
-      message: "Order not found"
+      message: "Order not found",
     });
   }
 
   res.json({
     success: true,
-    order
+    order,
   });
 });
 
@@ -318,16 +319,16 @@ GET ALL ORDERS
 */
 
 const getAllOrders = asyncHandler(async (req, res) => {
-
   if (!["admin", "super_admin"].includes(req.user.role)) {
     return res.status(403).json({
       success: false,
-      message: "Admin only"
+      message: "Admin only",
     });
   }
 
-  const orders = await Order.find()
-    .sort({ createdAt: -1 });
+  const orders = await Order.find().sort({
+    createdAt: -1,
+  });
 
   res.json({
     success: true,
