@@ -1,6 +1,6 @@
 import asyncHandler from "express-async-handler";
-import Invoice from "../models/InvoiceModel.js";
-import Order from "../models/OrderModel.js";
+import Order from "../models/orderModel.js";
+import Invoice from "../models/invoiceModel.js";
 import PDFDocument from "pdfkit";
 import fs from "fs";
 import path from "path";
@@ -147,5 +147,3 @@ export const downloadInvoice = asyncHandler(async (req, res) => {
 
   res.download(invoice.pdfUrl);
 });
-
-
