@@ -10,9 +10,78 @@ import "react-toastify/dist/ReactToastify.css";
 const MySwal = withReactContent(Swal);
 
 const Users = () => {
+  const columns = [
+    { 
+      field: "_id", 
+      headerName: "ID", 
+      width: 90,
+      headerClassName: 'font-bold text-gray-700'
+    },
+    { 
+      field: "name", 
+      headerName: "Name", 
+      width: 180,
+      headerClassName: 'font-bold text-gray-700',
+      renderCell: (params) => (
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+            {params.row.name?.charAt(0) || 'U'}
+          </div>
+          <span className="font-medium">{params.row.name || 'Unknown'}</span>
+        </div>
+      )
+    },
+    { field: "email", headerName: "Email", width: 220, headerClassName: 'font-bold text-gray-700' },
+    { field: "phone", headerName: "Phone", width: 150, headerClassName: 'font-bold text-gray-700' },
+    { 
+      field: "role", 
+      headerName: "Role", 
+      width: 120, 
+      headerClassName: 'font-bold text-gray-700',
+      renderCell: (params) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+          params.row.role === 'Admin' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'
+        }`}>
+          {params.row.role || 'User'}
+        </span>
+      )
+    },
+    { 
+      field: "status", 
+      headerName: "Status", 
+      width: 120, 
+      headerClassName: 'font-bold text-gray-700',
+      renderCell: () => (
+        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+          Active
+        </span>
+      )
+    },
+    {
+      field: "actions",
+      headerName: "Actions",
+      width: 120,
+      headerClassName: 'font-bold text-gray-700',
+      renderCell: (params) => (
+        <div className="flex items-center space-x-2">
+          <button className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors duration-200">
+            <FaEdit size={14} />
+          </button>
+          <button
+            onClick={() => handleDeleteUser(params.row._id, params.row.name)}
+            className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors duration-200"
+          >
+            <FaTrash size={14} />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 30 }); // keep using
 
   // ================= LOAD USERS =================
   useEffect(() => {
@@ -65,59 +134,7 @@ const Users = () => {
     }
   };
 
-  const columns = [
-    { field: "_id", headerName: "ID", width: 90, headerClassName: 'font-bold text-gray-700' },
-    { 
-      field: "name", 
-      headerName: "Name", 
-      width: 180,
-      headerClassName: 'font-bold text-gray-700',
-      renderCell: (params) => (
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
-            {params.row.name?.charAt(0) || 'U'}
-          </div>
-          <span className="font-medium">{params.row.name || 'Unknown'}</span>
-        </div>
-      )
-    },
-    { field: "email", headerName: "Email", width: 220, headerClassName: 'font-bold text-gray-700' },
-    { field: "phone", headerName: "Phone", width: 150, headerClassName: 'font-bold text-gray-700' },
-    { 
-      field: "role", 
-      headerName: "Role", 
-      width: 120, 
-      headerClassName: 'font-bold text-gray-700',
-      renderCell: (params) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          params.row.role === 'Admin' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'
-        }`}>
-          {params.row.role || 'User'}
-        </span>
-      )
-    },
-    {
-      field: "actions",
-      headerName: "Actions",
-      width: 120,
-      headerClassName: 'font-bold text-gray-700',
-      renderCell: (params) => (
-        <div className="flex items-center space-x-2">
-          <button className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors duration-200">
-            <FaEdit size={14} />
-          </button>
-          <button
-            onClick={() => handleDeleteUser(params.row._id, params.row.name)}
-            className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors duration-200"
-          >
-            <FaTrash size={14} />
-          </button>
-        </div>
-      ),
-    },
-  ];
-
-  // ================= FILTER USERS =================
+  // Filter users safely
   const filteredUsers = Array.isArray(users)
     ? users.filter(user =>
         user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -130,34 +147,47 @@ const Users = () => {
     <div className="min-h-screen bg-gray-50 p-6">
       <ToastContainer position="top-right" autoClose={3000} />
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">User Management</h1>
-
-        {/* Toolbar */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-4">
-          <div className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-            <div className="relative w-full sm:max-w-md">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaSearch className="text-gray-400" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search users..."
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div className="flex space-x-3">
-              <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200 font-medium">Filter</button>
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium flex items-center space-x-2">
-                <FaUserPlus size={14} /> <span>Add User</span>
-              </button>
-            </div>
-          </div>
+        {/* Header Section */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">User Management</h1>
+          <p className="text-gray-600">Manage your team members and their account permissions here.</p>
         </div>
 
-        {/* DataGrid */}
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <StatCard title="Total Users" value={users.length} icon={<FaUserPlus size={24} className="text-blue-600" />} bgColor="bg-blue-100" />
+          <StatCard title="Admins" value={users.filter(u => u.role === 'Admin').length} icon={<span className="text-purple-600 font-bold">A</span>} bgColor="bg-purple-100" />
+          <StatCard title="Active Users" value={users.length} icon={<span className="text-green-600 font-bold">✓</span>} bgColor="bg-green-100" />
+          <StatCard title="This Month" value={Math.floor(users.length * 0.1)} icon={<span className="text-orange-600 font-bold">↑</span>} bgColor="bg-orange-100" />
+        </div>
+
+        {/* Main Content */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          {/* Toolbar */}
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+              <div className="relative flex-1 max-w-md">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaSearch className="text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search users by name, email, or role..."
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <div className="flex space-x-3">
+                <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200 font-medium">Filter</button>
+                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium flex items-center space-x-2">
+                  <FaUserPlus size={14} /> <span>Add User</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* DataGrid */}
           <div className="p-6">
             {loading ? (
               <div className="flex justify-center items-center h-64">
@@ -169,7 +199,9 @@ const Users = () => {
                 rows={filteredUsers}
                 columns={columns}
                 checkboxSelection
-                pageSizeOptions={[10, 30, 50]}
+                paginationModel={paginationModel}
+                onPaginationModelChange={setPaginationModel}
+                pageSizeOptions={[30]}
                 disableSelectionOnClick
                 autoHeight
                 sx={{
@@ -183,9 +215,30 @@ const Users = () => {
             )}
           </div>
         </div>
+
+        <div className="mt-4 text-sm text-gray-600">
+          Showing {Math.min(filteredUsers.length, 30)} of {filteredUsers.length} users per page
+        </div>
       </div>
     </div>
   );
 };
+
+// Reusable stat card
+function StatCard({ title, value, icon, bgColor }) {
+  return (
+    <div className={`bg-white rounded-xl shadow-sm p-6 border border-gray-200`}>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-600">{title}</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
+        </div>
+        <div className={`w-12 h-12 ${bgColor} rounded-lg flex items-center justify-center`}>
+          {icon}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default Users;
