@@ -181,7 +181,7 @@ const Register = () => {
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end">
                 <div className="p-8 text-white">
                   <h2 className="text-2xl font-serif font-bold mb-2">Begin Your Beauty Journey</h2>
-                  <p className="text-rose-100">Join DB for a personalized beauty experience</p>
+                  <p className="text-rose-100">Join KILIFONIA BEAUTY for a personalized beauty experience</p>
                 </div>
               </div>
             </div>
@@ -194,7 +194,7 @@ const Register = () => {
                 <div className="bg-gradient-to-r from-rose-600 to-pink-500 h-12 w-12 rounded-full flex items-center justify-center mr-3 shadow-lg">
                   <span className="text-white font-bold text-xl">KB</span>
                 </div>
-                <span className="text-2xl font-serif font-bold bg-gradient-to-r from-rose-700 to-pink-600 bg-clip-text text-transparent">Kilifonia Beauty</span>
+                <span className="text-2xl font-serif font-bold bg-gradient-to-r from-rose-700 to-pink-600 bg-clip-text text-transparent">KILIFONIA BEAUTY</span>
               </div>
               <h1 className="text-3xl font-serif font-bold text-gray-800 mb-2">Create Your KB Account</h1>
               <p className="text-gray-600">Start your sweet beauty journey with us today! 🌸</p>

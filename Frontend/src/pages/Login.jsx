@@ -202,7 +202,7 @@ const Login = () => {
                   <input
                     type={showPassword ? "text" : "password"}
                     className="w-full pl-10 pr-12 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-300 focus:border-transparent transition-colors duration-300"
-                    placeholder="Enter your DB password"
+                    placeholder="Enter your KB password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required

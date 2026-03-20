@@ -6,7 +6,7 @@ import axios from "axios";
 import { userRequest } from "../requestMethods";
 import { logout, updateAdmin } from "../redux/adminRedux";
 import { useNavigate } from "react-router-dom";
-import { FaUpload, FaSignOutAlt, FaSave } from "react-icons/fa";
+import { FaUpload, FaSignOutAlt, FaSave, FaSpinner } from "react-icons/fa";
 
 const Myaccounts = () => {
   const dispatch = useDispatch();
@@ -21,18 +21,17 @@ const Myaccounts = () => {
   const [loading, setLoading] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
-  // originals for cancel
+  // Originals for cancel/reset
   const [originalName, setOriginalName] = useState("");
   const [originalEmail, setOriginalEmail] = useState("");
   const [originalAvatar, setOriginalAvatar] = useState("");
 
-  // ================= LOAD ADMIN DATA =================
+  // Load admin data on mount
   useEffect(() => {
     if (admin) {
       setName(admin.name || "");
       setEmail(admin.email || "");
       setProfilePic(admin.avatar || "/avatar.png");
-
       setOriginalName(admin.name || "");
       setOriginalEmail(admin.email || "");
       setOriginalAvatar(admin.avatar || "/avatar.png");
@@ -47,64 +46,69 @@ const Myaccounts = () => {
     );
   }
 
-  // ================= UPLOAD IMAGE =================
+  // ================= UPLOAD AVATAR =================
   const uploadAvatar = async () => {
-    if (profilePic instanceof File) {
-      const data = new FormData();
-      data.append("file", profilePic);
-      data.append("upload_preset", "uploads");
+    if (!(profilePic instanceof File)) return profilePic;
 
-      try {
-        const res = await axios.post(
-          "https://api.cloudinary.com/v1_1/dkdx7xytz/image/upload",
-          data
-        );
-        return res.data.secure_url;
-      } catch (err) {
-        toast.error("Image upload failed");
-        throw err;
-      }
+    const data = new FormData();
+    data.append("file", profilePic);
+    data.append("upload_preset", "uploads");
+
+    try {
+      const res = await axios.post(
+        "https://api.cloudinary.com/v1_1/dkdx7xytz/image/upload",
+        data
+      );
+      return res.data.secure_url;
+    } catch (err) {
+      toast.error("Image upload failed");
+      throw err;
     }
-    return profilePic;
   };
 
-  // ================= SAVE =================
+  // ================= SAVE CHANGES =================
   const handleSaveChanges = async () => {
-    if (!name || !email) return toast.error("Name & email required");
+    if (!name.trim() || !email.trim()) {
+      return toast.error("Name & Email are required");
+    }
 
     if ((currentPassword && !newPassword) || (!currentPassword && newPassword)) {
-      return toast.error("Both current & new password required");
+      return toast.error("Both Current & New password are required to change password");
     }
 
     setLoading(true);
+
     try {
+      // Upload avatar if changed
       const avatarUrl = await uploadAvatar();
 
-      // update profile
+      // Update profile
       const res = await userRequest.put("/users/update-profile", {
         name,
         email,
         avatar: avatarUrl,
       });
-
       dispatch(updateAdmin(res.data.user));
 
-      // password change
+      // Update password if provided
       if (currentPassword && newPassword) {
         await userRequest.put("/users/change-password", {
           currentPassword,
           newPassword,
         });
+        toast.success("Password updated successfully");
       }
 
       toast.success("Profile updated successfully");
-      setEditMode(false);
-      setCurrentPassword("");
-      setNewPassword("");
 
+      // Update originals
       setOriginalName(name);
       setOriginalEmail(email);
       setOriginalAvatar(avatarUrl);
+
+      setEditMode(false);
+      setCurrentPassword("");
+      setNewPassword("");
     } catch (err) {
       toast.error(err.response?.data?.message || "Update failed");
     } finally {
@@ -123,7 +127,7 @@ const Myaccounts = () => {
   };
 
   const handleImageChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
+    if (e.target.files?.[0]) {
       setProfilePic(e.target.files[0]);
     }
   };
@@ -131,7 +135,7 @@ const Myaccounts = () => {
   const handleLogout = () => {
     if (!window.confirm("Logout now?")) return;
     dispatch(logout());
-    toast.success("Logged out");
+    toast.success("Logged out successfully");
     setTimeout(() => navigate("/login"), 800);
   };
 
@@ -144,28 +148,23 @@ const Myaccounts = () => {
       </h1>
 
       <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-2xl p-8">
-        {/* IMAGE */}
+        {/* Profile Image */}
         <div className="flex flex-col items-center gap-4 mb-8">
           <img
-            src={
-              profilePic instanceof File
-                ? URL.createObjectURL(profilePic)
-                : profilePic || "/avatar.png"
-            }
+            src={profilePic instanceof File ? URL.createObjectURL(profilePic) : profilePic || "/avatar.png"}
             alt="Profile"
             className="h-32 w-32 rounded-full object-cover border"
           />
-
-          <label className="cursor-pointer text-pink-600 font-semibold flex gap-2 items-center">
-            <FaUpload /> Change Photo
-            <input type="file" hidden onChange={handleImageChange} />
-          </label>
+          {editMode && (
+            <label className="cursor-pointer text-pink-600 font-semibold flex gap-2 items-center">
+              <FaUpload /> Change Photo
+              <input type="file" hidden onChange={handleImageChange} />
+            </label>
+          )}
         </div>
 
-        {/* FORM */}
+        {/* Profile Form */}
         <div className="flex flex-col gap-4">
-
-          {/* FULL NAME */}
           <div>
             <label className="font-semibold">Full Name</label>
             <input
@@ -173,13 +172,10 @@ const Myaccounts = () => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               disabled={!editMode}
-              className={`w-full border px-4 py-2 rounded-lg ${
-                !editMode ? "bg-gray-100" : ""
-              }`}
+              className={`w-full border px-4 py-2 rounded-lg ${!editMode ? "bg-gray-100" : ""}`}
             />
           </div>
 
-          {/* EMAIL */}
           <div>
             <label className="font-semibold">Email</label>
             <input
@@ -187,36 +183,34 @@ const Myaccounts = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={!editMode}
-              className={`w-full border px-4 py-2 rounded-lg ${
-                !editMode ? "bg-gray-100" : ""
-              }`}
+              className={`w-full border px-4 py-2 rounded-lg ${!editMode ? "bg-gray-100" : ""}`}
             />
           </div>
 
-          {/* PASSWORD */}
-          <div>
-            <label className="font-semibold">Current Password</label>
-            <input
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              disabled={!editMode}
-              className="w-full border px-4 py-2 rounded-lg"
-            />
-          </div>
+          {editMode && (
+            <>
+              <div>
+                <label className="font-semibold">Current Password</label>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="w-full border px-4 py-2 rounded-lg"
+                />
+              </div>
+              <div>
+                <label className="font-semibold">New Password</label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full border px-4 py-2 rounded-lg"
+                />
+              </div>
+            </>
+          )}
 
-          <div>
-            <label className="font-semibold">New Password</label>
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              disabled={!editMode}
-              className="w-full border px-4 py-2 rounded-lg"
-            />
-          </div>
-
-          {/* BUTTONS */}
+          {/* Buttons */}
           <div className="flex flex-wrap gap-4 mt-4">
             <button
               onClick={editMode ? handleCancel : () => setEditMode(true)}
@@ -231,7 +225,8 @@ const Myaccounts = () => {
                 disabled={loading}
                 className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-3 rounded-xl flex gap-2 items-center"
               >
-                <FaSave /> {loading ? "Saving..." : "Save Changes"}
+                {loading ? <FaSpinner className="animate-spin" /> : <FaSave />}
+                {loading ? "Saving..." : "Save Changes"}
               </button>
             )}
 

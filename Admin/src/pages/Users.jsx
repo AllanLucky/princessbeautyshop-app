@@ -2,6 +2,12 @@ import { FaTrash, FaEdit, FaSearch, FaUserPlus } from 'react-icons/fa';
 import { DataGrid } from '@mui/x-data-grid';
 import { userRequest } from "../requestMethods";
 import { useEffect, useState } from 'react';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+const MySwal = withReactContent(Swal);
 
 const Users = () => {
   const columns = [
@@ -56,12 +62,15 @@ const Users = () => {
       headerName: "Actions",
       width: 120,
       headerClassName: 'font-bold text-gray-700',
-      renderCell: () => (
+      renderCell: (params) => (
         <div className="flex items-center space-x-2">
           <button className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors duration-200">
             <FaEdit size={14} />
           </button>
-          <button className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors duration-200">
+          <button
+            onClick={() => handleDeleteUser(params.row._id, params.row.name)}
+            className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors duration-200"
+          >
             <FaTrash size={14} />
           </button>
         </div>
@@ -72,24 +81,24 @@ const Users = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 10 });
+  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 30 }); // keep using
 
+  // ================= LOAD USERS =================
   useEffect(() => {
     const getUsers = async () => {
       try {
         setLoading(true);
         const res = await userRequest.get("/users");
-
-        // Make sure users is always an array
         const usersData = Array.isArray(res.data)
           ? res.data
           : Array.isArray(res.data.users)
             ? res.data.users
             : [];
-
         setUsers(usersData);
       } catch (error) {
         console.error("Failed to fetch users:", error);
+        toast.error("Failed to fetch users");
+        MySwal.fire('Error', 'Failed to fetch users', 'error');
         setUsers([]);
       } finally {
         setLoading(false);
@@ -97,6 +106,33 @@ const Users = () => {
     };
     getUsers();
   }, []);
+
+  // ================= DELETE USER =================
+  const handleDeleteUser = async (userId, userName) => {
+    const result = await MySwal.fire({
+      title: 'Are you sure?',
+      text: `Do you want to delete user "${userName}"? This action cannot be undone!`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!',
+      cancelButtonText: 'Cancel'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await userRequest.delete(`/users/${userId}`);
+        setUsers(prev => prev.filter(user => user._id !== userId));
+        toast.success(`User "${userName}" deleted successfully`);
+        MySwal.fire('Deleted!', `User "${userName}" has been deleted.`, 'success');
+      } catch (err) {
+        console.error(err);
+        toast.error(err.response?.data?.message || "Failed to delete user");
+        MySwal.fire('Error', err.response?.data?.message || 'Failed to delete user', 'error');
+      }
+    }
+  };
 
   // Filter users safely
   const filteredUsers = Array.isArray(users)
@@ -109,6 +145,7 @@ const Users = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
+      <ToastContainer position="top-right" autoClose={3000} />
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="mb-8">
