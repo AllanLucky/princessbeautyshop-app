@@ -1,6 +1,6 @@
 import asyncHandler from "express-async-handler";
 import Order from "../models/orderModel.js";
-import Invoice from "../models/invoiceModel.js";
+import Invoice from "../models/InvoiceModel.js";
 import PDFDocument from "pdfkit";
 import fs from "fs";
 import path from "path";
@@ -82,6 +82,7 @@ export const generateInvoice = asyncHandler(async (req, res) => {
 
   doc.end();
 
+  // Save invoice in DB
   const invoice = await Invoice.create({
     invoiceNumber,
     order: order._id,
@@ -95,7 +96,9 @@ export const generateInvoice = asyncHandler(async (req, res) => {
   res.status(201).json(invoice);
 });
 
-// GET ALL INVOICES
+// @desc    Get all invoices
+// @route   GET /api/invoices
+// @access  Admin
 export const getAllInvoices = asyncHandler(async (req, res) => {
   const invoices = await Invoice.find()
     .populate({
@@ -110,7 +113,9 @@ export const getAllInvoices = asyncHandler(async (req, res) => {
   res.json(invoices);
 });
 
-// GET USER INVOICES
+// @desc    Get invoices for logged-in user
+// @route   GET /api/invoices/user
+// @access  User
 export const getUserInvoices = asyncHandler(async (req, res) => {
   const invoices = await Invoice.find({ user: req.user._id }).populate({
     path: "order",
@@ -119,7 +124,9 @@ export const getUserInvoices = asyncHandler(async (req, res) => {
   res.json(invoices);
 });
 
-// GET INVOICE BY ID
+// @desc    Get invoice by ID
+// @route   GET /api/invoices/:id
+// @access  Admin/User
 export const getInvoiceById = asyncHandler(async (req, res) => {
   const invoice = await Invoice.findById(req.params.id).populate({
     path: "order",
@@ -129,10 +136,19 @@ export const getInvoiceById = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error("Invoice not found");
   }
+
+  // Only admin or invoice owner can access
+  if (!req.user.isAdmin && invoice.user.toString() !== req.user._id.toString()) {
+    res.status(403);
+    throw new Error("Not authorized to view this invoice");
+  }
+
   res.json(invoice);
 });
 
-// DOWNLOAD PDF
+// @desc    Download invoice PDF
+// @route   GET /api/invoices/download/:id
+// @access  Admin/User
 export const downloadInvoice = asyncHandler(async (req, res) => {
   const invoice = await Invoice.findById(req.params.id);
   if (!invoice) {
@@ -140,6 +156,7 @@ export const downloadInvoice = asyncHandler(async (req, res) => {
     throw new Error("Invoice not found");
   }
 
+  // Only admin or invoice owner can download
   if (!req.user.isAdmin && invoice.user.toString() !== req.user._id.toString()) {
     res.status(403);
     throw new Error("Not authorized to download this invoice");
