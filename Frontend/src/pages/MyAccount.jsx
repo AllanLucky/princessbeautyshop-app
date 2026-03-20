@@ -319,6 +319,38 @@ const MyAccount = () => {
           </div>
         </div>
       </div>
+       {/* Additional Account Features */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 px-4 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-2xl shadow-lg p-6 text-center">
+            <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+              </svg>
+            </div>
+            <h3 className="font-semibold text-gray-800 mb-2">Order History</h3>
+            <p className="text-gray-600 text-sm">View your past orders and purchases</p>
+          </div>
+          
+          <div className="bg-white rounded-2xl shadow-lg p-6 text-center">
+            <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </div>
+            <h3 className="font-semibold text-gray-800 mb-2">Wishlist</h3>
+            <p className="text-gray-600 text-sm">See your saved favorite products</p>
+          </div>
+          
+          <div className="bg-white rounded-2xl shadow-lg p-6 text-center">
+            <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="font-semibold text-gray-800 mb-2">Preferences</h3>
+            <p className="text-gray-600 text-sm">Customize your shopping experience</p>
+          </div>
+        </div>
     </div>
   );
 };
