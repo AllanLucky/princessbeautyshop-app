@@ -9,26 +9,42 @@ import nodemailer from "nodemailer";
  */
 const sendEmail = async (to, subject, text, html = null) => {
   try {
+    // Create transporter using SMTP (more reliable than "service: gmail")
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: process.env.EMAIL_HOST || "smtp.gmail.com",
+      port: Number(process.env.EMAIL_PORT) || 587,
+      secure: false, // true if using port 465
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
     });
 
+    // Verify SMTP connection
+    await transporter.verify();
+    console.log("✅ SMTP server is ready to send emails");
+
+    // Email options
     const mailOptions = {
-      from: `"BeautyBlis Shop Support" <${process.env.EMAIL_USER}>`,
+      from: `"BeautyBliss Shop Support" <${process.env.EMAIL_USER}>`,
       to,
       subject,
       text,
       html: html || undefined,
     };
 
+    // Send email
     const info = await transporter.sendMail(mailOptions);
-    console.log("Email sent:", info.messageId, "to:", to);
+
+    console.log("📧 Email sent successfully:");
+    console.log("➡️ To:", to);
+    console.log("➡️ Response:", info.response);
+
+    return info;
   } catch (error) {
-    console.error("Email sending failed:", error.message);
+    console.error("❌ Email sending failed:");
+    console.error(error); // full error (important for debugging)
+    throw error; // allow calling function to handle it
   }
 };
 
