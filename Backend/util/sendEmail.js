@@ -9,15 +9,19 @@ import nodemailer from "nodemailer";
  */
 const sendEmail = async (to, subject, text, html = null) => {
   try {
-    // Create transporter using Gmail SMTP
+    // Create transporter using Truehost SMTP
     const transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST || "smtp.gmail.com",
-      port: Number(process.env.EMAIL_PORT) || 587,
-      secure: process.env.EMAIL_SECURE === "true", // false for STARTTLS
+      host: process.env.EMAIL_HOST || "lim117.truehost.cloud",
+      port: Number(process.env.EMAIL_PORT) || 465,
+      secure: process.env.EMAIL_SECURE === "true", // true for SSL/TLS (465)
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
+      tls: {
+        rejectUnauthorized: false, // allow self-signed certs if needed
+      },
+      family: 4, // force IPv4
     });
 
     // Verify SMTP connection
