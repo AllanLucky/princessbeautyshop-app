@@ -6,15 +6,19 @@ function createTransporter(config) {
   const transporter = nodemailer.createTransport(config);
   return transporter;
 }
+
 let configurations = {
-  service: "gmail",
-  host: "smtp.gmail.com",
-  port: 587,
-  requireTls: true,
+  host: process.env.EMAIL_HOST || "lim117.truehost.cloud",
+  port: Number(process.env.EMAIL_PORT) || 465,
+  secure: process.env.EMAIL_SECURE === "true", // true for SSL/TLS
   auth: {
-    user: process.env.EMAIL,
-    pass: process.env.PASSWORD,
+    user: process.env.EMAIL_USER ,
+    pass: process.env.EMAIL_PASS ,
   },
+  tls: {
+    rejectUnauthorized: false,
+  },
+  family: 4, // force IPv4
 };
 
 const sendMail = async (messageoption) => {
@@ -25,10 +29,10 @@ const sendMail = async (messageoption) => {
   console.log("Transporter verified. Sending email...");
   await transporter.sendMail(messageoption, (error, info) => {
     if (error) {
-      console.log(error);
+      console.log("❌ Email sending failed:", error);
+    } else {
+      console.log("📧 Email sent: " + info.response);
     }
-    console.log("Email sent: " + info.response);
-    console.log(info.response);
   });
 };
 

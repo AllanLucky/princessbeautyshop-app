@@ -19,7 +19,7 @@ import sendShippedOrderEmail from "./EmailServices/sendShippedOrderEmail.js";
 import sendDeliveredOrderEmail from "./EmailServices/sendDeliveredOrderEmail.js";
 import sendCancelledOrderEmail from "./EmailServices/sendCancelledOrderEmail.js";
 
-import sendPromotionEmail from "./EmailServices/sendPromotionemail.js";
+import sendPromotionEmail from "./EmailServices/sendPromotionEmail.js";
 import sendTimetableEmail from "./EmailServices/sendTimetabeEmail.js";
 import sendSkincareReminder from "./EmailServices/sendingSkincareReminder.js";
 

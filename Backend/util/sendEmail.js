@@ -9,15 +9,19 @@ import nodemailer from "nodemailer";
  */
 const sendEmail = async (to, subject, text, html = null) => {
   try {
-    // Create transporter using SMTP (more reliable than "service: gmail")
+    // Create transporter using Truehost SMTP
     const transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST || "smtp.gmail.com",
+      host: process.env.EMAIL_HOST || "lim117.truehost.cloud",
       port: Number(process.env.EMAIL_PORT) || 587,
-      secure: false, // true if using port 465
+      secure: process.env.EMAIL_SECURE === "true", // true for SSL/TLS (465)
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
+      tls: {
+        rejectUnauthorized: false, // allow self-signed certs if needed
+      },
+      family: 4, // force IPv4
     });
 
     // Verify SMTP connection
@@ -26,7 +30,7 @@ const sendEmail = async (to, subject, text, html = null) => {
 
     // Email options
     const mailOptions = {
-      from: `"BeautyBliss Shop Support" <${process.env.EMAIL_USER}>`,
+      from: process.env.EMAIL_FROM || `"BeautyBliss Shop Support" <${process.env.EMAIL_USER}>`,
       to,
       subject,
       text,
@@ -49,3 +53,4 @@ const sendEmail = async (to, subject, text, html = null) => {
 };
 
 export default sendEmail;
+
