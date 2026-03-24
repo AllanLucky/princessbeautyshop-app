@@ -10,18 +10,16 @@ defaultClient.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
 const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 
 const sendEmail = async (to, subject, text, html = null) => {
-  try {
-    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail({
-      to: [{ email: to }],
-      sender: { 
-        name: process.env.EMAIL_FROM.split("<")[0].trim(), 
-        email: process.env.EMAIL_FROM.split("<")[1].replace(">", "") 
-      },
-      subject,
-      textContent: text,
-      htmlContent: html || `<p>${text}</p>`,
-    });
+  // Brevo email object
+  const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail({
+    to: [{ email: to }],
+    sender: { name: "BeautyBliss Shop Support", email: process.env.EMAIL_FROM },
+    subject,
+    textContent: text,
+    htmlContent: html || `<p>${text}</p>`,
+  });
 
+  try {
     const response = await apiInstance.sendTransacEmail(sendSmtpEmail);
     console.log("📧 Email sent successfully to", to);
     return response;
@@ -32,3 +30,4 @@ const sendEmail = async (to, subject, text, html = null) => {
 };
 
 export default sendEmail;
+
