@@ -1,258 +1,229 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Skincare Reminder - Kilifonia Beauty</title>
 
 <style>
-
-body{
-font-family: Arial, sans-serif;
-margin:0;
-padding:0;
-background: linear-gradient(135deg,#667eea,#764ba2);
-color:#333;
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(135deg,#667eea,#764ba2);
+  color: #333;
 }
 
-.container{
-max-width:600px;
-margin:0 auto;
-background:white;
-border-radius:20px;
-overflow:hidden;
-box-shadow:0 15px 40px rgba(0,0,0,.15);
+/* CONTAINER */
+.container {
+  max-width: 650px;
+  margin: 30px auto;
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0,0,0,.15);
 }
 
 /* HEADER */
-
-.header{
-background: linear-gradient(135deg,#f093fb,#f5576c);
-color:white;
-padding:40px 30px;
-text-align:center;
+.header {
+  background: linear-gradient(135deg,#f093fb,#f5576c);
+  color: white;
+  text-align: center;
+  padding: 35px 25px;
 }
 
-.logo{
-max-width:180px;
-border-radius:12px;
-box-shadow:0 8px 25px rgba(0,0,0,.2);
+.logo {
+  max-width: 160px;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.2);
 }
 
-.brand-name{
-font-size:28px;
-font-weight:bold;
-margin-top:15px;
+.brand-name {
+  font-size: 26px;
+  font-weight: bold;
+  margin-top: 12px;
 }
 
-.brand-tagline{
-font-size:14px;
-opacity:.9;
+.brand-tagline {
+  font-size: 14px;
+  opacity: 0.9;
+  margin-bottom: 15px;
+}
+
+.header h1 {
+  margin-top: 20px;
+  font-size: 22px;
+}
+
+.header p {
+  font-size: 16px;
+  margin-top: 10px;
 }
 
 /* CONTENT */
-
-.content{
-padding:40px 35px;
+.content {
+  padding: 35px 30px;
+  line-height: 1.6;
 }
 
-.reminder-card{
-background: linear-gradient(135deg,#f8f9fa,#e9ecef);
-border-radius:15px;
-padding:25px;
-margin:25px 0;
-border-left:5px solid #667eea;
-box-shadow:0 5px 15px rgba(0,0,0,.08);
+.content h2 {
+  color: #2d3748;
+  margin-bottom: 15px;
 }
 
-.routine-time{
-font-size:20px;
-font-weight:bold;
-color:#667eea;
-margin-bottom:12px;
+.reminder-card {
+  background: linear-gradient(135deg,#f8f9fa,#f1f3f6);
+  border-radius: 15px;
+  padding: 25px;
+  margin: 25px 0;
+  border-left: 5px solid #667eea;
+  box-shadow: 0 5px 15px rgba(0,0,0,.08);
 }
 
-.routine-tips{
-background: linear-gradient(135deg,#e3f2fd,#bbdefb);
-border-radius:12px;
-padding:20px;
-margin:20px 0;
-border:1px solid #bbdefb;
+.routine-time {
+  font-size: 18px;
+  font-weight: bold;
+  color: #667eea;
+  margin-bottom: 10px;
 }
 
-.routine-tips h3{
-color:#1976d2;
-margin-top:0;
+.routine-tips {
+  background: linear-gradient(135deg,#e3f2fd,#bbdefb);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+  border: 1px solid #bbdefb;
 }
 
-.routine-tips ul{
-padding-left:20px;
+.routine-tips h3 {
+  color: #1976d2;
+  margin-top: 0;
 }
 
-.button{
-display:inline-block;
-background: linear-gradient(135deg,#667eea,#764ba2);
-color:white;
-padding:15px 35px;
-border-radius:30px;
-text-decoration:none;
-font-weight:bold;
-margin:20px 0;
+.routine-tips ul {
+  padding-left: 20px;
+  margin-top: 10px;
+}
+
+.button {
+  display: inline-block;
+  background: linear-gradient(135deg,#667eea,#764ba2);
+  color: white;
+  padding: 14px 32px;
+  border-radius: 30px;
+  text-decoration: none;
+  font-weight: bold;
+  margin: 20px 0;
+  transition: all 0.3s ease;
+}
+
+.button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,.15);
 }
 
 /* FOOTER */
-
-.footer{
-background: linear-gradient(135deg,#f8f9fa,#e9ecef);
-padding:30px;
-text-align:center;
-font-size:13px;
-color:#666;
-border-top:1px solid #e0e0e0;
+.footer {
+  background: linear-gradient(135deg,#f8f9fa,#e9ecef);
+  padding: 25px;
+  text-align: center;
+  font-size: 13px;
+  color: #666;
+  border-top: 1px solid #e0e0e0;
 }
 
-.social-links a{
-color:#667eea;
-margin:0 10px;
-text-decoration:none;
+.footer .social-links a {
+  color: #667eea;
+  margin: 0 8px;
+  text-decoration: none;
+}
+
+.footer p {
+  margin: 10px 0;
 }
 
 /* RESPONSIVE */
-
-@media(max-width:600px){
-
-.container{
-margin:10px;
+@media(max-width: 600px){
+  .container { margin: 15px; }
+  .content { padding: 25px 20px; }
+  .header { padding: 25px 20px; }
+  .logo { max-width: 140px; }
+  .brand-name { font-size: 22px; }
+  .header h1 { font-size: 20px; }
+  .routine-time { font-size: 16px; }
 }
-
-.content{
-padding:30px 25px;
-}
-
-.header{
-padding:30px 20px;
-}
-
-.logo{
-max-width:140px;
-}
-
-.brand-name{
-font-size:24px;
-}
-
-}
-
 </style>
 
 </head>
-
 <body>
 
 <div class="container">
 
-<!-- HEADER -->
+  <!-- HEADER -->
+  <div class="header">
+    <img src="https://res.cloudinary.com/dkdx7xytz/image/upload/v1772469610/blisslogo1_rwlktl.png" class="logo"/>
+    <div class="brand-name">Kilifonia Beauty</div>
+    <div class="brand-tagline">Elevate Your Natural Beauty</div>
 
-<div class="header">
+    <h1>
+      <% if(timeOfDay === 'morning'){ %>
+      🌅 Morning Skincare Time!
+      <% } else { %>
+      🌙 Evening Skincare Time!
+      <% } %>
+    </h1>
 
-<img src="https://res.cloudinary.com/dkdx7xytz/image/upload/v1772469610/blisslogo1_rwlktl.png"
-class="logo"/>
+    <p>Your <%= timeOfDay %> self-care ritual awaits</p>
+  </div>
 
-<div class="brand-name">Kilifonia Beauty</div>
-<div class="brand-tagline">Elevate Your Natural Beauty</div>
+  <!-- CONTENT -->
+  <div class="content">
+    <h2>Hello <%= name %>,</h2>
 
-<h1 style="margin-top:20px">
-<% if(timeOfDay === 'morning'){ %>
-🌅 Morning Skincare Time!
-<% } else { %>
-🌙 Evening Skincare Time!
-<% } %>
-</h1>
+    <p>
+      It's time for your <strong style="color:#667eea"><%= routineType %> skincare routine</strong>.
+      Consistency is key for radiant skin and a healthy glow.
+    </p>
 
-<p>Your <%= timeOfDay %> self-care ritual awaits</p>
+    <div class="reminder-card">
+      <div class="routine-time">⏰ Scheduled Time: <%= scheduledTime %></div>
+      <p>Your <strong><%= skinType %></strong> skin deserves this care moment. Stay consistent for best results.</p>
+    </div>
 
-</div>
+    <div class="routine-tips">
+      <h3>💡 Expert Tips for Your <%= routineType %> Routine</h3>
+      <ul>
+        <% if(routineType === 'AM'){ %>
+          <li>Gentle cleansing to start your day</li>
+          <li>Apply serum on damp skin</li>
+          <li>Always use SPF protection</li>
+          <li>Keep skin hydrated</li>
+        <% } else { %>
+          <li>Double cleanse before sleeping</li>
+          <li>Use active treatment products</li>
+          <li>Allow skin repair overnight</li>
+          <li>Apply nourishing oils</li>
+        <% } %>
+      </ul>
+    </div>
 
-<!-- CONTENT -->
+    <div style="text-align:center;">
+      <a href="https://kilifoniabeauty.co.ke/skincare-timetable" class="button">
+        View Your Skincare Timetable
+      </a>
+    </div>
+  </div>
 
-<div class="content">
-
-<h2>Hello <%= name %>,</h2>
-
-<p>
-It's time for your
-<strong style="color:#667eea"><%= routineType %> skincare routine</strong>.
-Consistency is the secret to radiant skin and healthy glow.
-</p>
-
-<div class="reminder-card">
-
-<div class="routine-time">
-⏰ Scheduled Time: <%= scheduledTime %>
-</div>
-
-<p>
-Your beautiful <strong><%= skinType %></strong> skin deserves this care moment.
-Stay consistent for the best results.
-</p>
-
-</div>
-
-<div class="routine-tips">
-
-<h3>💡 Expert Tips for Your <%= routineType %> Routine</h3>
-
-<ul>
-
-<% if(routineType === 'AM'){ %>
-
-<li>Gentle cleansing to start your day</li>
-<li>Apply serum on damp skin</li>
-<li>Always use SPF protection</li>
-<li>Keep skin hydrated</li>
-
-<% } else { %>
-
-<li>Double cleanse before sleeping</li>
-<li>Use active treatment products</li>
-<li>Allow skin repair overnight</li>
-<li>Apply nourishing oils</li>
-
-<% } %>
-
-</ul>
-
-</div>
-
-<div style="text-align:center">
-<a href="https://kilifoniabeauty.co.ke/skincare-timetable"
-class="button">
-View Your Skincare Timetable
-</a>
-</div>
-
-</div>
-
-<!-- FOOTER -->
-
-<div class="footer">
-
-<p>
-<strong>Kilifonia Beauty</strong><br>
-Elevating Beauty Through Science and Nature
-</p>
-
-<div class="social-links">
-<a href="https://kilifoniabeauty.co.ke">Website</a> •
-<a href="https://instagram.com/kilifoniabeauty">Instagram</a> •
-<a href="https://facebook.com/kilifoniabeauty">Facebook</a>
-</div>
-
-<p>
-&copy; <%= new Date().getFullYear() %> Kilifonia Beauty. All rights reserved.
-</p>
-
-</div>
+  <!-- FOOTER -->
+  <div class="footer">
+    <p><strong>Kilifonia Beauty</strong><br>Elevating Beauty Through Science and Nature</p>
+    <div class="social-links">
+      <a href="https://kilifoniabeauty.co.ke">Website</a> •
+      <a href="https://instagram.com/kilifoniabeauty">Instagram</a> •
+      <a href="https://facebook.com/kilifoniabeauty">Facebook</a>
+    </div>
+    <p>&copy; <%= new Date().getFullYear() %> Kilifonia Beauty. All rights reserved.</p>
+  </div>
 
 </div>
 

@@ -1,4 +1,5 @@
 // EmailServices/sendCancelledOrderEmail.js
+
 import ejs from "ejs";
 import dotenv from "dotenv";
 import sendMail from "../helpers/sendMailer.js";
@@ -15,21 +16,27 @@ SEND CANCELLED ORDER EMAIL SERVICE
 const sendCancelledOrderEmail = async () => {
   try {
     const orders = await Order.find({
-      status: 5, // Cancelled order status
+      status: 5, // Cancelled
       cancelledEmailSent: false,
-    });
+      email: { $exists: true, $ne: null },
+    })
+      .limit(50)
+      .lean();
 
-    if (!orders.length) return;
+    if (!orders.length) {
+      console.log("No cancelled orders to send emails for.");
+      return;
+    }
 
     for (const order of orders) {
       try {
         const html = await ejs.renderFile(
           "templates/cancelledorder.ejs",
           {
-            name: order.name,
+            name: order.name || "Customer",
             orderNumber: order._id.toString().slice(-8),
-            products: order.products,
-            total: order.total,
+            products: order.products || [],
+            total: order.total || 0,
             reason: order.declineReason || "No reason provided",
           }
         );
@@ -43,17 +50,23 @@ const sendCancelledOrderEmail = async () => {
 
         await sendMail(messageOptions);
 
-        await Order.findByIdAndUpdate(order._id, {
-          $set: {
-            cancelledEmailSent: true,
-          },
-        });
+        await Order.updateOne(
+          { _id: order._id },
+          { $set: { cancelledEmailSent: true } }
+        );
+
+        console.log(`Cancelled email sent → ${order.email}`);
+
       } catch (error) {
-        console.error("Cancelled order email error:", error);
+        console.error(
+          `❌ Cancelled email error for order ${order._id}:`,
+          error.message
+        );
       }
     }
+
   } catch (error) {
-    console.error("Cancelled service error:", error);
+    console.error("❌ Cancelled email service error:", error.message);
   }
 };
 

@@ -1,6 +1,7 @@
 // EmailServices/sendWelcomeEmail.js
 
 import ejs from "ejs";
+import path from "path";
 import dotenv from "dotenv";
 import sendMail from "../helpers/sendMailer.js";
 import User from "../models/userModel.js";
@@ -15,30 +16,28 @@ WELCOME EMAIL SERVICE
 
 const sendWelcomeEmail = async () => {
   try {
-    /*
-    ====================================================
-    FIND NEW USERS ONLY (STATUS = 0)
-    ====================================================
-    */
-
-    const users = await User.find({
-      status: 0
-    }).lean();
+    // ====================================================
+    // FIND NEW USERS ONLY (STATUS = 0)
+    // ====================================================
+    const users = await User.find({ status: 0 }).lean();
 
     if (!users.length) {
       console.log("ℹ️ No pending welcome emails.");
       return;
     }
 
-    console.log(`🚀 Sending welcome emails to ${users.length} users`);
+    console.log(`🚀 Sending welcome emails to ${users.length} user(s)`);
 
-    /*
-    ====================================================
-    PROMISE TEMPLATE RENDERER
-    ====================================================
-    */
+    // ====================================================
+    // PROMISE TEMPLATE RENDERER
+    // ====================================================
+    const renderTemplate = (templateName, data) => {
+      const templatePath = path.join(
+        process.cwd(),
+        "templates",
+        `${templateName}.ejs`
+      );
 
-    const renderTemplate = (templatePath, data) => {
       return new Promise((resolve, reject) => {
         ejs.renderFile(templatePath, data, (err, html) => {
           if (err) reject(err);
@@ -47,21 +46,15 @@ const sendWelcomeEmail = async () => {
       });
     };
 
-    /*
-    ====================================================
-    EMAIL WORKER LOOP
-    ====================================================
-    */
-
+    // ====================================================
+    // EMAIL WORKER LOOP
+    // ====================================================
     for (const user of users) {
       try {
-        const html = await renderTemplate(
-          "templates/welcome.ejs",
-          {
-            name: user.name,
-            email: user.email
-          }
-        );
+        const html = await renderTemplate("welcome", {
+          name: user.name,
+          email: user.email
+        });
 
         const messageOptions = {
           from: process.env.EMAIL,
@@ -76,21 +69,19 @@ const sendWelcomeEmail = async () => {
           await User.findByIdAndUpdate(user._id, {
             $set: {
               status: 1,
-              welcomeEmailSentAt: new Date()
+              welcomeEmailSentAt: new Date(),
+              error: null
             }
           });
 
           console.log(`✅ Welcome email sent → ${user.email}`);
         } else {
           console.log(`❌ Welcome email failed → ${user.email}`);
+          await User.findByIdAndUpdate(user._id, { $set: { status: 0 } });
         }
 
       } catch (error) {
-        console.error(
-          `❌ Welcome email worker error → ${user.email}`,
-          error.message
-        );
-
+        console.error(`❌ Error sending to ${user.email}:`, error.message);
         await User.findByIdAndUpdate(user._id, {
           $set: {
             error: error.message,
@@ -103,7 +94,7 @@ const sendWelcomeEmail = async () => {
     console.log("✅ Welcome email process completed.");
 
   } catch (error) {
-    console.error("❌ sendWelcomeEmail service crashed:", error);
+    console.error("❌ sendWelcomeEmail service crashed:", error.message);
   }
 };
 

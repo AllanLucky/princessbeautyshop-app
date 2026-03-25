@@ -1,116 +1,170 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Order Cancelled</title>
 
 <style>
-body{
-font-family:Arial,Helvetica,sans-serif;
-background:linear-gradient(135deg,#667eea,#764ba2);
-margin:0;
-padding:0;
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: linear-gradient(135deg,#667eea,#764ba2);
+  color: #333;
 }
 
-.wrapper{
-max-width:700px;
-margin:40px auto;
-background:white;
-border-radius:20px;
-overflow:hidden;
-box-shadow:0 20px 60px rgba(0,0,0,.15);
+.email-wrapper {
+  max-width: 700px;
+  margin: 40px auto;
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
 }
 
-.header{
-background:linear-gradient(135deg,#f5576c,#ff5252);
-padding:40px;
-text-align:center;
-color:white;
+.email-header {
+  background: linear-gradient(135deg,#f5576c,#ff5252);
+  padding: 40px;
+  text-align: center;
+  color: white;
 }
 
-.body{
-padding:40px;
+.badge {
+  display: inline-block;
+  background: #ff5252;
+  color: white;
+  padding: 12px 25px;
+  border-radius: 25px;
+  font-weight: bold;
+  margin-bottom: 20px;
 }
 
-.badge{
-display:inline-block;
-background:#ff5252;
-color:white;
-padding:12px 25px;
-border-radius:25px;
-font-weight:bold;
+.email-body {
+  padding: 40px;
+  background: white;
 }
 
-.product{
-background:#f8f9fa;
-padding:20px;
-border-radius:12px;
-margin-top:20px;
+.product-list {
+  margin-top: 20px;
 }
 
-.footer{
-background:#1a202c;
-color:#a0aec0;
-text-align:center;
-padding:30px;
+.product-item {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.product-img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.product-info p {
+  margin: 5px 0;
+}
+
+.cta-button {
+  display: inline-block;
+  margin-top: 25px;
+  padding: 12px 30px;
+  background: linear-gradient(135deg,#3182ce,#2b6cb0);
+  color: white;
+  text-decoration: none;
+  border-radius: 30px;
+  font-weight: bold;
+}
+
+.footer {
+  background: #1a202c;
+  color: #a0aec0;
+  text-align: center;
+  padding: 30px;
+  margin-top: 30px;
+}
+
+@media(max-width:600px) {
+  .email-body {
+    padding: 20px;
+  }
+  .email-header {
+    padding: 20px;
+  }
+  .product-item {
+    flex-direction: column;
+    text-align: center;
+  }
 }
 </style>
 </head>
 
 <body>
+<div class="email-wrapper">
 
-<div class="wrapper">
+  <!-- HEADER -->
+  <div class="email-header">
+    <div class="badge">❌ ORDER CANCELLED</div>
+    <h1>Dear <%= name || "Customer" %></h1>
+    <p>We regret to inform you that your order has been cancelled.</p>
+  </div>
 
-<div class="header">
-<div class="badge">❌ ORDER CANCELLED</div>
+  <!-- BODY -->
+  <div class="email-body">
 
-<h1>Dear <%= name %></h1>
+    <p>
+      Your order <strong>#<%= orderNumber %></strong> has been cancelled.
+    </p>
+
+    <p>
+      <strong>Reason:</strong> <%= reason || "No reason provided" %>
+    </p>
+
+    <div class="product-list">
+      <% if (products && products.length) { %>
+        <% products.forEach(function(product) { %>
+          <div class="product-item">
+            <% if(product.img){ %>
+              <img src="<%= product.img %>" class="product-img" alt="<%= product.title %>"/>
+            <% } %>
+            <div class="product-info">
+              <p><b><%= product.title %></b></p>
+              <p>Quantity: <%= product.quantity %></p>
+              <p>Price: KES <%= product.price %></p>
+            </div>
+          </div>
+        <% }) %>
+      <% } else { %>
+        <p>No product information available.</p>
+      <% } %>
+    </div>
+
+    <p style="margin-top:20px;">
+      <strong>Total Amount:</strong> KES <%= total || 0 %>
+    </p>
+
+    <p style="margin-top:30px;">
+      If you believe this is a mistake, please contact our support team immediately.
+    </p>
+
+    <div style="text-align:center;">
+      <a href="https://kilifoniabeauty.co.ke/contact" class="cta-button">
+        Contact Support
+      </a>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    Kilifonia Beauty © <%= new Date().getFullYear() %>
+  </div>
+
 </div>
-
-<div class="body">
-
-<p>
-We regret to inform you that your order <strong>#<%= orderNumber %></strong>
-has been cancelled.
-</p>
-
-<p>
-<strong>Cancellation Reason:</strong><br>
-<%= reason %>
-</p>
-
-<div class="product">
-<h3>Order Summary</h3>
-
-<% products.forEach(product => { %>
-
-<p>
-<b><%= product.title %></b><br>
-Quantity: <%= product.quantity %><br>
-Price: $<%= product.price %>
-</p>
-
-<hr/>
-
-<% }) %>
-
-<p>
-<strong>Total Amount:</strong> $<%= total %>
-</p>
-
-</div>
-
-<p style="margin-top:30px">
-If you believe this is a mistake, please contact our support team immediately.
-</p>
-
-</div>
-
-<div class="footer">
-Kilifonia Beauty © <%= new Date().getFullYear() %>
-</div>
-
-</div>
-
 </body>
 </html>
