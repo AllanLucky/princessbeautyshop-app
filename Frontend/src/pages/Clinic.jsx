@@ -141,7 +141,7 @@ const SkinClinic = () => {
       
       try {
         const uploadRes = await axios.post(
-          "https://api.cloudinary.com/v1_1/dkjenslgr/image/upload",
+          "https://backend.res.cloudinary.com/dkdx7xytz/image/upload",
           data,
           {
             onUploadProgress: (progressEvent) => {
