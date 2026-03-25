@@ -1,36 +1,28 @@
-import nodemailer from "nodemailer";
+import SibApiV3Sdk from "sib-api-v3-sdk";
+import dotenv from "dotenv";
 
-let transporter;
+dotenv.config();
 
-const getTransporter = () => {
-  if (!transporter) {
-    transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST || "lim117.truehost.cloud",
-      port: Number(process.env.EMAIL_PORT) || 465,
-      secure: process.env.EMAIL_SECURE === "true",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-      tls: { rejectUnauthorized: false },
-      family: 4,
-    });
-  }
-  return transporter;
-};
+// Configure Brevo client
+const defaultClient = SibApiV3Sdk.ApiClient.instance;
+defaultClient.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
+
+const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 
 const sendEmail = async (to, subject, text, html = null) => {
-  try {
-    const info = await getTransporter().sendMail({
-      from: process.env.EMAIL_FROM || `"BeautyBliss Shop Support" <${process.env.EMAIL_USER}>`,
-      to,
-      subject,
-      text,
-      html: html || undefined,
-    });
+  // Brevo email object
+  const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail({
+    to: [{ email: to }],
+    sender: { name: "BeautyBliss Shop Support", email: process.env.EMAIL_FROM },
+    subject,
+    textContent: text,
+    htmlContent: html || `<p>${text}</p>`,
+  });
 
+  try {
+    const response = await apiInstance.sendTransacEmail(sendSmtpEmail);
     console.log("📧 Email sent successfully to", to);
-    return info;
+    return response;
   } catch (error) {
     console.error(`❌ Failed to send email to ${to}:`, error);
     throw error;
@@ -38,3 +30,4 @@ const sendEmail = async (to, subject, text, html = null) => {
 };
 
 export default sendEmail;
+
