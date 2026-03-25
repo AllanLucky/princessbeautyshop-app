@@ -7,79 +7,153 @@
 
 <style>
 body{
-margin:0;
-padding:0;
-font-family: Arial, Helvetica, sans-serif;
-background:#f4f4f4; 
+  margin:0;
+  padding:0;
+  font-family: Arial, Helvetica, sans-serif;
+  background:#f4f4f4; 
 }
 
 .email-wrapper{
-max-width:700px;
-margin:20px auto;
-background:#ffffff;
-border-radius:12px;
-overflow:hidden;
+  max-width:700px;
+  margin:20px auto;
+  background:#ffffff;
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow:0 10px 30px rgba(0,0,0,0.1);
 }
 
 /* HEADER */
 .email-header{
-background:#f5576c;
-padding:30px;
-text-align:center;
-color:white;
+  background:#f5576c;
+  padding:30px;
+  text-align:center;
+  color:white;
 }
 
 .logo{
-max-width:150px;
-border-radius:10px;
+  max-width:150px;
+  border-radius:10px;
 }
 
 .brand-name{
-font-size:24px;
-font-weight:bold;
-margin-top:10px;
+  font-size:24px;
+  font-weight:bold;
+  margin-top:10px;
 }
 
 /* BODY */
 .email-body{
-padding:30px;
+  padding:30px;
 }
 
 .processing-badge{
-background:#dd6b20;
-color:white;
-padding:10px 20px;
-border-radius:20px;
-font-weight:bold;
-display:inline-block;
+  background:#dd6b20;
+  color:white;
+  padding:10px 20px;
+  border-radius:20px;
+  font-weight:bold;
+  display:inline-block;
+  margin-bottom:20px;
 }
 
 /* PROGRESS */
 .progress-bar-bg{
-height:12px;
-border-radius:20px;
-background:#e2e8f0;
-overflow:hidden;
+  height:12px;
+  border-radius:20px;
+  background:#e2e8f0;
+  overflow:hidden;
 }
 
 .progress-bar-fill{
-height:100%;
-background:#38a169;
-border-radius:20px;
+  height:100%;
+  background:#38a169;
+  border-radius:20px;
+  transition: width 0.5s ease;
+}
+
+/* PRODUCT TABLE */
+.product-table{
+  width:100%;
+  border-collapse:collapse;
+  margin-bottom:15px;
+  border:1px solid #eee;
+  border-radius:8px;
+  overflow:hidden;
+}
+
+.product-table td{
+  padding:10px;
+  vertical-align:top;
+}
+
+.product-img{
+  width:80px;
+  height:80px;
+  border-radius:6px;
+  object-fit:cover;
+}
+
+/* AMOUNT SUMMARY */
+.amount-summary{
+  background:#f1f5f9;
+  padding:15px 20px;
+  border-radius:12px;
+  margin-top:20px;
+  font-size:16px;
+  text-align:right;
+}
+
+.balance-positive{
+  color:#38a169; 
+  font-weight:bold;
+}
+
+.balance-partial{
+  color:#dd6b20; 
+  font-weight:bold;
+}
+
+.balance-negative{
+  color:#e53e3e; 
+  font-weight:bold;
+}
+
+/* BUTTON */
+.cta-button{
+  display:inline-block;
+  background:#667eea;
+  color:#ffffff;
+  padding:12px 30px;
+  border-radius:25px;
+  text-decoration:none;
+  font-weight:bold;
+  margin-top:25px;
 }
 
 /* FOOTER */
 .email-footer{
-background:#1a202c;
-padding:30px;
-text-align:center;
-color:#a0aec0;
+  background:#1a202c;
+  padding:30px;
+  text-align:center;
+  color:#a0aec0;
 }
 
+/* RESPONSIVE */
 @media(max-width:600px){
-.email-body{
-padding:20px;
-}
+  .email-body{
+    padding:20px;
+  }
+  .product-table td{
+    display:block;
+    text-align:center;
+  }
+  .product-img{
+    margin:0 auto 10px auto;
+  }
+  .cta-button{
+    width:100%;
+    display:block;
+  }
 }
 </style>
 </head>
@@ -95,34 +169,32 @@ Your order is being processed. Track it now.
 
 <!-- HEADER -->
 <div class="email-header">
-<img src="https://res.cloudinary.com/dkdx7xytz/image/upload/v1772469610/blisslogo1_rwlktl.png" class="logo"/>
-<div class="brand-name">Kilifonia Beauty</div>
-<p>Elevate Your Natural Beauty</p>
+  <img src="https://res.cloudinary.com/dkdx7xytz/image/upload/v1772469610/blisslogo1_rwlktl.png" class="logo"/>
+  <div class="brand-name">Kilifonia Beauty</div>
+  <p>Elevate Your Natural Beauty</p>
 </div>
 
 <!-- BODY -->
 <div class="email-body">
 
-<div style="text-align:center;margin-bottom:25px;">
-<span class="processing-badge">⏳ ORDER PROCESSING</span>
+<div style="text-align:center;">
+  <span class="processing-badge">⏳ ORDER PROCESSING</span>
 </div>
 
-<h2 style="text-align:center;">
-Hello <%= name %>
-</h2>
+<h2 style="text-align:center;margin-top:10px;">Hello <%= name || "Customer" %></h2>
 
 <p style="text-align:center;font-size:16px;">
-Your order is currently being processed.  
+Your order <strong>#<%= orderNumber || "N/A" %></strong> is currently being processed.  
 We are preparing your premium skincare products.
 </p>
 
 <!-- PROGRESS BAR -->
 <div style="margin:30px 0;">
 <p style="text-align:center;font-weight:bold;">Order Progress</p>
-
 <div class="progress-bar-bg">
-<div class="progress-bar-fill" style="width:<%= progress || 0 %>%;"></div>
+  <div class="progress-bar-fill" style="width:<%= progress || 0 %>%;"></div>
 </div>
+<p style="text-align:center;margin-top:10px;"><%= progress || 0 %>% Completed</p>
 </div>
 
 <hr style="margin:30px 0;border:0;height:1px;background:#eee"/>
@@ -130,67 +202,54 @@ We are preparing your premium skincare products.
 <h3>Your Order Details</h3>
 
 <!-- PRODUCTS -->
-<% products.forEach(product => { %>
-
-<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:15px;border:1px solid #eee;border-radius:8px;">
-<tr>
-
-<td width="90" valign="top" style="padding:10px;">
-<img src="<%= product.img || 'https://via.placeholder.com/80' %>"
-style="width:80px;height:80px;border-radius:6px;object-fit:cover;" />
-</td>
-
-<td valign="top" style="padding:10px;">
-<p style="font-weight:bold;margin:0;">
-<%= product.title %>
-</p>
-
-<p style="margin:5px 0;color:#555;">
-Price: $<%= product.price %>
-</p>
-
-<% if(product.quantity){ %>
-<p style="margin:0;color:#777;">
-Quantity: <%= product.quantity %>
-</p>
+<% if(products && products.length){ %>
+  <% products.forEach(product => { %>
+  <table class="product-table">
+    <tr>
+      <td width="90">
+        <img src="<%= product.img || 'https://via.placeholder.com/80' %>" class="product-img"/>
+      </td>
+      <td>
+        <p style="font-weight:bold;margin:0;"><%= product.title || "Product" %></p>
+        <p style="margin:5px 0;color:#555;">Price: KES <%= product.price || 0 %></p>
+        <% if(product.quantity){ %>
+          <p style="margin:0;color:#777;">Quantity: <%= product.quantity %></p>
+        <% } %>
+      </td>
+    </tr>
+  </table>
+  <% }) %>
+<% } else { %>
+  <p>No products available.</p>
 <% } %>
 
-</td>
+<!-- AMOUNT SUMMARY -->
+<div class="amount-summary">
+  <p><strong>Total: KES <%= total || 0 %></strong></p>
+  <% if(typeof amountPaid !== "undefined"){ %>
+    <p><strong>Amount Paid:</strong> KES <%= amountPaid %></p>
+    <% 
+      const balance = total - amountPaid;
+      let balanceClass = "balance-positive";
+      if(balance > 0 && amountPaid > 0) balanceClass = "balance-partial";
+      if(balance > 0 && amountPaid === 0) balanceClass = "balance-negative";
+    %>
+    <p class="<%= balanceClass %>"><strong>Balance:</strong> KES <%= balance %></p>
+  <% } %>
+</div>
 
-</tr>
-</table>
-
-<% }) %>
-
-<!-- BUTTON -->
-<div style="text-align:center;margin-top:25px;">
-<table align="center" cellpadding="0" cellspacing="0">
-<tr>
-<td bgcolor="#667eea" style="border-radius:25px;">
-<a href="https://kilifoniabeauty.co.ke/track-order"
-style="display:inline-block;padding:12px 25px;color:#ffffff;text-decoration:none;font-weight:bold;">
-Track Order Status
-</a>
-</td>
-</tr>
-</table>
+<!-- CTA BUTTON -->
+<div style="text-align:center;">
+  <a href="https://kilifoniabeauty.co.ke/track-order" class="cta-button">Track Order Status</a>
 </div>
 
 </div>
 
 <!-- FOOTER -->
 <div class="email-footer">
-
-<p style="color:#f5576c;font-weight:bold;font-size:16px;">
-Kilifonia Beauty
-</p>
-
-<p>Elevating Beauty Through Science and Nature</p>
-
-<p>
-&copy; <%= new Date().getFullYear() %> Kilifonia Beauty. All rights reserved.
-</p>
-
+  <p style="color:#f5576c;font-weight:bold;font-size:16px;">Kilifonia Beauty</p>
+  <p>Elevating Beauty Through Science and Nature</p>
+  <p>&copy; <%= new Date().getFullYear() %> Kilifonia Beauty. All rights reserved.</p>
 </div>
 
 </div>

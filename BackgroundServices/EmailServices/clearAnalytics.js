@@ -1,6 +1,10 @@
 // analyticsCleanup.js
+
 import cron from 'node-cron';
 import Analytics from '../models/analyticsModel.js';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 /**
  * Cleanup old analytics records
@@ -8,7 +12,8 @@ import Analytics from '../models/analyticsModel.js';
  */
 const cleanupOldAnalytics = async (retentionDays = 7) => {
   try {
-    console.log('📊 Starting analytics cleanup...');
+    const now = new Date();
+    console.log(`📊 [${now.toISOString()}] Starting analytics cleanup...`);
 
     // Calculate cutoff date
     const cutoffDate = new Date();
@@ -20,12 +25,13 @@ const cleanupOldAnalytics = async (retentionDays = 7) => {
     });
 
     console.log(
-      `✅ Analytics cleanup completed: Deleted ${result.deletedCount} records older than ${retentionDays} days`
+      `✅ [${now.toISOString()}] Analytics cleanup completed: Deleted ${result.deletedCount} record(s) older than ${retentionDays} day(s)`
     );
   } catch (error) {
-    console.error('❌ Analytics cleanup failed:', error);
+    console.error(`❌ [${new Date().toISOString()}] Analytics cleanup failed:`, error);
 
-    // Optional: implement retry logic or notify admin
+    // Optional: implement retry logic or notify admin via email/slack
+    // e.g., notifyAdmin(error);
   }
 };
 
@@ -34,12 +40,12 @@ const cleanupOldAnalytics = async (retentionDays = 7) => {
  * Runs daily at 2:00 AM New York time
  * @param {number} retentionDays - number of days to keep data
  */
-const scheduleAnalyticsCleanup = (retentionDays = 7) => {
+const scheduleAnalyticsCleanup = (retentionDays = process.env.ANALYTICS_RETENTION_DAYS || 7) => {
   cron.schedule(
     '0 2 * * *', // 2:00 AM daily
     async () => {
-      console.log('⏰ Running scheduled analytics cleanup...');
-      await cleanupOldAnalytics(retentionDays);
+      console.log(`⏰ [${new Date().toISOString()}] Running scheduled analytics cleanup...`);
+      await cleanupOldAnalytics(Number(retentionDays));
     },
     {
       scheduled: true,
@@ -47,7 +53,7 @@ const scheduleAnalyticsCleanup = (retentionDays = 7) => {
     }
   );
 
-  console.log('⏰ Analytics cleanup scheduled: Daily at 2:00 AM New York time');
+  console.log(`⏰ Analytics cleanup scheduled: Daily at 2:00 AM New York time (Retention: ${retentionDays} days)`);
 };
 
 export { cleanupOldAnalytics, scheduleAnalyticsCleanup };

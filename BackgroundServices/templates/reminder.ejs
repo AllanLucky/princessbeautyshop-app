@@ -6,6 +6,9 @@
 <title>Skincare Reminder - Kilifonia Beauty</title>
 
 <style>
+/* ===========================
+   GLOBAL STYLES
+=========================== */
 body {
   font-family: Arial, Helvetica, sans-serif;
   margin: 0;
@@ -14,7 +17,6 @@ body {
   color: #333;
 }
 
-/* CONTAINER */
 .container {
   max-width: 650px;
   margin: 30px auto;
@@ -24,7 +26,9 @@ body {
   box-shadow: 0 20px 50px rgba(0,0,0,.15);
 }
 
-/* HEADER */
+/* ===========================
+   HEADER
+=========================== */
 .header {
   background: linear-gradient(135deg,#f093fb,#f5576c);
   color: white;
@@ -60,7 +64,9 @@ body {
   margin-top: 10px;
 }
 
-/* CONTENT */
+/* ===========================
+   CONTENT
+=========================== */
 .content {
   padding: 35px 30px;
   line-height: 1.6;
@@ -122,7 +128,9 @@ body {
   box-shadow: 0 8px 25px rgba(0,0,0,.15);
 }
 
-/* FOOTER */
+/* ===========================
+   FOOTER
+=========================== */
 .footer {
   background: linear-gradient(135deg,#f8f9fa,#e9ecef);
   padding: 25px;
@@ -142,7 +150,9 @@ body {
   margin: 10px 0;
 }
 
-/* RESPONSIVE */
+/* ===========================
+   RESPONSIVE
+=========================== */
 @media(max-width: 600px){
   .container { margin: 15px; }
   .content { padding: 25px 20px; }
@@ -161,25 +171,23 @@ body {
 
   <!-- HEADER -->
   <div class="header">
-    <img src="https://res.cloudinary.com/dkdx7xytz/image/upload/v1772469610/blisslogo1_rwlktl.png" class="logo"/>
+    <img src="https://res.cloudinary.com/dkdx7xytz/image/upload/v1772469610/blisslogo1_rwlktl.png" class="logo" alt="Kilifonia Beauty Logo"/>
     <div class="brand-name">Kilifonia Beauty</div>
     <div class="brand-tagline">Elevate Your Natural Beauty</div>
 
     <h1>
       <% if(timeOfDay === 'morning'){ %>
-      🌅 Morning Skincare Time!
+        🌅 Morning Skincare Time!
       <% } else { %>
-      🌙 Evening Skincare Time!
+        🌙 Evening Skincare Time!
       <% } %>
     </h1>
-
     <p>Your <%= timeOfDay %> self-care ritual awaits</p>
   </div>
 
   <!-- CONTENT -->
   <div class="content">
     <h2>Hello <%= name %>,</h2>
-
     <p>
       It's time for your <strong style="color:#667eea"><%= routineType %> skincare routine</strong>.
       Consistency is key for radiant skin and a healthy glow.

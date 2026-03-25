@@ -1,3 +1,5 @@
+// EmailServices/sendDeliveredOrderEmail.js
+
 import ejs from "ejs";
 import dotenv from "dotenv";
 import sendMail from "../helpers/sendMailer.js";
@@ -21,7 +23,10 @@ const sendDeliveredOrderEmail = async () => {
       email: { $exists: true, $ne: null },
     }).limit(50);
 
-    if (!orders.length) return;
+    if (!orders.length) {
+      console.log("ℹ️ No delivered orders pending email.");
+      return;
+    }
 
     for (const order of orders) {
       try {
@@ -34,12 +39,13 @@ const sendDeliveredOrderEmail = async () => {
           "deliveredorder.ejs"
         );
 
-        // Render EJS template with fallback values
+        // Render EJS template with amountPaid included
         const html = await ejs.renderFile(templatePath, {
           name: order.name || "Customer",
           orderNumber: order._id.toString().slice(-8),
           products: order.products,
           total: order.total || 0,
+          amountPaid: order.amountPaid || 0, // ✅ NEW: amount paid
           progress: 100, // Delivered is always 100%
           statusText: order.statusText || "Delivered",
           estimatedDeliveryDate: order.estimatedDeliveryDate

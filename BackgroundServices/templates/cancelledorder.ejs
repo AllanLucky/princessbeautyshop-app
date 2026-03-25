@@ -70,6 +70,18 @@ body {
   margin: 5px 0;
 }
 
+.amount-summary {
+  background: #f1f5f9;
+  padding: 15px 20px;
+  border-radius: 12px;
+  margin-top: 20px;
+}
+
+.amount-summary p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
 .cta-button {
   display: inline-block;
   margin-top: 25px;
@@ -144,9 +156,13 @@ body {
       <% } %>
     </div>
 
-    <p style="margin-top:20px;">
-      <strong>Total Amount:</strong> KES <%= total || 0 %>
-    </p>
+    <div class="amount-summary">
+      <p><strong>Total Amount:</strong> KES <%= total || 0 %></p>
+      <% if(typeof amountPaid !== "undefined"){ %>
+        <p><strong>Amount Paid:</strong> KES <%= amountPaid %></p>
+        <p><strong>Refund Status:</strong> <%= amountPaid > 0 ? "Pending / Processed" : "Not Paid" %></p>
+      <% } %>
+    </div>
 
     <p style="margin-top:30px;">
       If you believe this is a mistake, please contact our support team immediately.

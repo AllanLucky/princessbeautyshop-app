@@ -121,6 +121,31 @@ h1 {
   margin: 3px 0;
 }
 
+/* AMOUNT SUMMARY */
+.amount-summary {
+  background: #f1f5f9;
+  padding: 15px 20px;
+  border-radius: 12px;
+  margin-top: 20px;
+  font-size: 16px;
+  text-align: right;
+}
+
+.balance-positive {
+    color: #38a169; /* Fully paid */
+    font-weight: bold;
+}
+
+.balance-partial {
+    color: #dd6b20; /* Partial payment */
+    font-weight: bold;
+}
+
+.balance-negative {
+    color: #e53e3e; /* Unpaid / due */
+    font-weight: bold;
+}
+
 /* CTA BUTTON */
 .cta-button {
   display: inline-block;
@@ -215,8 +240,19 @@ h1 {
       <% } %>
     </div>
 
-    <div style="margin-top:25px;text-align:right;font-size:18px;">
-      <strong>Total: KES <%= total || 0 %></strong>
+    <!-- AMOUNT SUMMARY -->
+    <div class="amount-summary">
+      <p><strong>Total: KES <%= total || 0 %></strong></p>
+      <% if(typeof amountPaid !== "undefined"){ %>
+        <p><strong>Amount Paid:</strong> KES <%= amountPaid %></p>
+        <% 
+            const balance = total - amountPaid;
+            let balanceClass = "balance-positive";
+            if(balance > 0 && amountPaid > 0) balanceClass = "balance-partial";
+            if(balance > 0 && amountPaid === 0) balanceClass = "balance-negative";
+        %>
+        <p class="<%= balanceClass %>"><strong>Balance:</strong> KES <%= balance %></p>
+      <% } %>
     </div>
 
     <div style="text-align:center;">
