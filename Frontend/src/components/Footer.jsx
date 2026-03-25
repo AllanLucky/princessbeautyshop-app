@@ -29,7 +29,7 @@ const Footer = () => {
           <h3 className="text-xl font-semibold">Contact Us</h3>
           <p className="mt-2">123 Kilifonia Beauty Ave, City, Country</p>
           <p className="mt-2">Phone: (+254) 788425000</p>
-          <p className="mt-2">Email: info@kilifonialbeautyblis.com</p>
+          <p className="mt-2">Email: support@kilifonialbeautyblis.co.ke</p>
         </div>
 
       </div>
