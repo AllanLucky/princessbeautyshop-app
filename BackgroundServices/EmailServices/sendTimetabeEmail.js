@@ -18,7 +18,6 @@ const __dirname = path.dirname(__filename);
 
 /* ====================================================
    BATCH EMAIL WORKER
-   Sends emails in batches to avoid throttling limits
 ==================================================== */
 const sendEmailsInBatches = async (emails, batchSize = 5, delayMs = 1000) => {
   for (let i = 0; i < emails.length; i += batchSize) {
@@ -27,33 +26,27 @@ const sendEmailsInBatches = async (emails, batchSize = 5, delayMs = 1000) => {
     await Promise.all(
       batch.map(async ({ options, requestId }) => {
         try {
+          if (!options.to) {
+            console.warn(`[${new Date().toISOString()}] ⚠️ Skipping empty email address for request ${requestId}`);
+            return;
+          }
+
           const result = await sendMail(options);
 
           if (result?.success) {
             await Timetable.findByIdAndUpdate(requestId, {
-              $set: {
-                status: 1, // Sent successfully
-                processedAt: new Date(),
-                error: null
-              }
+              $set: { status: 1, processedAt: new Date(), error: null }
             });
-            console.log(`✅ Timetable email sent → ${options.to}`);
+            console.log(`[${new Date().toISOString()}] ✅ Timetable email sent → ${options.to}`);
           } else {
-            console.error(`❌ Mail sending failed → ${options.to}`);
+            console.error(`[${new Date().toISOString()}] ❌ Email failed → ${options.to}`);
             await Timetable.findByIdAndUpdate(requestId, {
-              $set: {
-                error: result?.error || "Unknown email failure"
-              }
+              $set: { status: 0, error: result?.error || "Unknown email failure", processedAt: new Date() }
             });
           }
         } catch (error) {
-          console.error(`❌ Email worker error → ${options.to}`, error.message);
-
-          // Determine permanent vs temporary failure
-          const permanent = !(
-            error.code === "EENVELOPE" ||
-            error.message?.includes("Temporary")
-          );
+          console.error(`[${new Date().toISOString()}] ❌ Email worker error → ${options.to}`, error.message);
+          const permanent = !(error.code === "EENVELOPE" || error.message?.includes("Temporary"));
 
           await Timetable.findByIdAndUpdate(requestId, {
             $set: {
@@ -66,9 +59,8 @@ const sendEmailsInBatches = async (emails, batchSize = 5, delayMs = 1000) => {
       })
     );
 
-    // Rate limit control between batches
     if (i + batchSize < emails.length) {
-      console.log(`⏳ Cooling down for ${delayMs}ms before next batch...`);
+      console.log(`[${new Date().toISOString()}] ⏳ Cooling down for ${delayMs}ms before next batch...`);
       await new Promise(resolve => setTimeout(resolve, delayMs));
     }
   }
@@ -79,22 +71,25 @@ const sendEmailsInBatches = async (emails, batchSize = 5, delayMs = 1000) => {
 ==================================================== */
 const sendTimetableEmail = async () => {
   try {
-    // Fetch pending timetable requests
     const timetableRequests = await Timetable.find({ status: 0 }).lean();
 
     if (!timetableRequests.length) {
-      console.log("ℹ️ No pending timetable emails to send.");
+      console.log(`[${new Date().toISOString()}] ℹ️ No pending timetable emails.`);
       return;
     }
 
-    console.log(`🚀 Processing ${timetableRequests.length} timetable emails...`);
+    console.log(`[${new Date().toISOString()}] 🚀 Processing ${timetableRequests.length} timetable emails...`);
 
     const templatePath = path.join(__dirname, "../templates/timetable.ejs");
     const emailsQueue = [];
 
-    // Prepare all emails first
     for (const request of timetableRequests) {
       try {
+        if (!request.email) {
+          console.warn(`[${new Date().toISOString()}] ⚠️ Skipping request with missing email → ${request._id}`);
+          continue;
+        }
+
         const routine = generateSkincareRoutine(
           request.skinType,
           request.concerns,
@@ -105,7 +100,7 @@ const sendTimetableEmail = async () => {
         const pdfBuffer = await generateSkincarePDF(request, routine);
 
         const emailHtml = await ejs.renderFile(templatePath, {
-          name: request.name,
+          name: request.name || "Customer",
           skinType: request.skinType,
           concerns: request.concerns,
           morningTime: request.morningTime,
@@ -120,11 +115,11 @@ const sendTimetableEmail = async () => {
           options: {
             from: process.env.EMAIL,
             to: request.email,
-            subject: `Your Personalized Skincare Timetable - ${request.name}`,
+            subject: `Your Personalized Skincare Timetable - ${request.name || "Customer"}`,
             html: emailHtml,
             attachments: [
               {
-                filename: `Skincare-Timetable-${request.name.replace(/\s+/g, "-").toLowerCase()}.pdf`,
+                filename: `Skincare-Timetable-${(request.name || "customer").replace(/\s+/g, "-").toLowerCase()}.pdf`,
                 content: pdfBuffer,
                 contentType: "application/pdf"
               }
@@ -133,26 +128,21 @@ const sendTimetableEmail = async () => {
         });
 
       } catch (error) {
-        console.error(`❌ Preparation error → ${request.email}:`, error.message);
+        console.error(`[${new Date().toISOString()}] ❌ Preparation error → ${request.email}:`, error.message);
         await Timetable.findByIdAndUpdate(request._id, {
-          $set: {
-            status: 2,
-            processedAt: new Date(),
-            error: error.message
-          }
+          $set: { status: 2, processedAt: new Date(), error: error.message }
         });
       }
     }
 
-    // Send emails in batches
     if (emailsQueue.length > 0) {
       await sendEmailsInBatches(emailsQueue, 5, 1000);
     }
 
-    console.log("✅ Timetable email worker completed.");
+    console.log(`[${new Date().toISOString()}] ✅ Timetable email worker completed.`);
 
   } catch (error) {
-    console.error("❌ Timetable email service crashed:", error);
+    console.error(`[${new Date().toISOString()}] ❌ Timetable email service crashed:`, error);
   }
 };
 

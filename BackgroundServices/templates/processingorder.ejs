@@ -109,6 +109,33 @@ body {
 }
 
 /* ==============================
+   AMOUNT SUMMARY
+============================== */
+.amount-summary {
+    background: #f1f5f9;
+    padding: 15px 20px;
+    border-radius: 12px;
+    margin-top: 20px;
+    font-size: 16px;
+    text-align: right;
+}
+
+.balance-positive {
+    color: #38a169; 
+    font-weight: bold;
+}
+
+.balance-partial {
+    color: #dd6b20; 
+    font-weight: bold;
+}
+
+.balance-negative {
+    color: #e53e3e; 
+    font-weight: bold;
+}
+
+/* ==============================
    CTA BUTTON
 ============================== */
 .cta-button {
@@ -201,7 +228,7 @@ body {
                     <p>
                         <b><%= product.title || "Product" %></b><br>
                         Quantity: <%= product.quantity || 0 %><br>
-                        Price: KES<%= product.price || 0 %>
+                        Price: KES <%= product.price || 0 %>
                     </p>
                     <hr/>
                 <% }) %>
@@ -209,7 +236,20 @@ body {
                 <p>No product information available.</p>
             <% } %>
 
-            <p><strong>Total Amount:</strong> KES<%= total || 0 %></p>
+            <!-- AMOUNT SUMMARY -->
+            <div class="amount-summary">
+                <p><strong>Total:</strong> KES <%= total || 0 %></p>
+                <% if(typeof amountPaid !== "undefined"){ %>
+                    <p><strong>Amount Paid:</strong> KES <%= amountPaid %></p>
+                    <% 
+                        const balance = total - amountPaid;
+                        let balanceClass = "balance-positive";
+                        if(balance > 0 && amountPaid > 0) balanceClass = "balance-partial";
+                        if(balance > 0 && amountPaid === 0) balanceClass = "balance-negative";
+                    %>
+                    <p class="<%= balanceClass %>"><strong>Balance:</strong> KES <%= balance %></p>
+                <% } %>
+            </div>
         </div>
 
         <p style="margin-top:30px; text-align:center;">

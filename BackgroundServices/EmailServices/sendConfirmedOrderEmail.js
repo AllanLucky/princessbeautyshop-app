@@ -38,7 +38,10 @@ const sendConfirmedOrderEmail = async () => {
       .limit(50)
       .sort({ createdAt: 1 });
 
-    if (!orders.length) return;
+    if (!orders.length) {
+      console.log("ℹ️ No new confirmed orders to send emails.");
+      return;
+    }
 
     for (const order of orders) {
       try {
@@ -52,11 +55,15 @@ const sendConfirmedOrderEmail = async () => {
           "confirmorder.ejs"
         );
 
+        // Fallback for amountPaid to be at least total if missing
+        const amountPaid = order.amountPaid ?? order.total ?? 0;
+
         const html = await ejs.renderFile(templatePath, {
           name: order.name || "Customer",
           orderNumber: order._id.toString().slice(-8),
           products: order.products,
           total: order.total || 0,
+          amountPaid,
           progress,
           estimatedDeliveryDate: order.estimatedDeliveryDate
             ? new Date(order.estimatedDeliveryDate).toDateString()
@@ -65,7 +72,7 @@ const sendConfirmedOrderEmail = async () => {
         });
 
         const messageOptions = {
-          from: process.env.EMAIL,
+          from: `"Kilifonia Beauty" <${process.env.EMAIL}>`,
           to: order.email,
           subject: "✅ Your Order Has Been Confirmed",
           html,
@@ -79,6 +86,8 @@ const sendConfirmedOrderEmail = async () => {
             { $set: { confirmedEmailSent: true } }
           );
           console.log(`✅ Confirmation email sent to ${order.email}`);
+        } else {
+          console.error(`❌ Failed to send confirmation email to ${order.email}`);
         }
       } catch (error) {
         console.error(

@@ -4,7 +4,6 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Welcome to Kilifonia Beauty</title>
-
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
@@ -89,6 +88,31 @@ p {
   font-size: 22px;
 }
 
+.product-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 25px;
+  margin-top: 20px;
+}
+
+.product-item {
+  background: linear-gradient(135deg,#f8f9fa,#fff);
+  padding: 20px;
+  border-radius: 15px;
+  border: 1px solid #eee;
+  width: 200px;
+  text-align: center;
+}
+
+.product-item img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+
 .cta {
   display: inline-block;
   padding: 18px 45px;
@@ -133,36 +157,21 @@ p {
 }
 
 @media (max-width: 600px) {
-  .body {
-    padding: 30px 20px;
-  }
-
-  h1 {
-    font-size: 28px;
-  }
-
-  .cta {
-    padding: 15px 30px;
-    font-size: 14px;
-  }
-
-  .section {
-    padding: 20px;
-  }
+  .body { padding: 30px 20px; }
+  h1 { font-size: 28px; }
+  .cta { padding: 15px 30px; font-size: 14px; }
+  .section { padding: 20px; }
 }
 </style>
 </head>
 
 <body>
-
 <div class="email-wrapper">
 
   <div class="header">
-    <img class="logo"
-         src="https://res.cloudinary.com/dkdx7xytz/image/upload/v1772469610/blisslogo1_rwlktl.png"
-         alt="Kilifonia Beauty Logo" />
+    <img class="logo" src="https://res.cloudinary.com/dkdx7xytz/image/upload/v1772469610/blisslogo1_rwlktl.png" alt="Kilifonia Beauty Logo" />
     <div class="brand-name">Kilifonia Beauty</div>
-    <div class="badge">🎉 WELCOME TO THE DUBOIS FAMILY</div>
+    <div class="badge">🎉 WELCOME TO THE KILIFONIA FAMILY</div>
   </div>
 
   <div class="body">
@@ -178,35 +187,44 @@ p {
         Receive expert skincare recommendations tailored to your skin type and concerns.
         Enjoy science-backed formulations, luxurious textures, and visible results.
       </p>
+
+      <% if(products && products.length){ %>
+        <div class="product-list">
+          <% products.forEach(product => { %>
+            <div class="product-item">
+              <img src="<%= product.img || 'https://via.placeholder.com/120' %>" alt="<%= product.name %>">
+              <h4><%= product.name %></h4>
+              <p><%= product.description %></p>
+              <% if(product.price){ %>
+                <p style="font-weight:bold;color:#f5576c;">$<%= product.price %></p>
+              <% } %>
+              <% if(product.link){ %>
+                <a href="<%= product.link %>" class="cta" style="padding:10px 20px;font-size:14px;">Shop Now</a>
+              <% } %>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
     </div>
 
     <div style="text-align:center">
       <a href="https://kilifoniabeauty.co.ke/shop" class="cta">Explore Collection</a>
-      <a href="https://kilifoniabeauty.co.ke/skincare-timetable" class="cta"
-         style="background:linear-gradient(135deg,#f093fb,#f5576c)">
+      <a href="https://kilifoniabeauty.co.ke/skincare-timetable" class="cta" style="background:linear-gradient(135deg,#f093fb,#f5576c)">
         Create Skincare Timetable
       </a>
     </div>
   </div>
 
   <div class="footer">
-    <p>
-      <strong style="color:#f5576c">Kilifonia Beauty</strong><br>
-      Elevating Beauty Through Science and Nature
-    </p>
-
+    <p><strong style="color:#f5576c">Kilifonia Beauty</strong><br>Elevating Beauty Through Science and Nature</p>
     <div class="social">
       <a href="https://kilifoniabeauty.co.ke">Website</a> |
       <a href="https://instagram.com/kilifoniabeauty">Instagram</a> |
       <a href="https://facebook.com/kilifoniabeauty">Facebook</a>
     </div>
-
-    <p style="font-size:12px;margin-top:30px">
-      © <%= new Date().getFullYear() %> Kilifonia Beauty. All rights reserved.
-    </p>
+    <p style="font-size:12px;margin-top:30px;">© <%= new Date().getFullYear() %> Kilifonia Beauty. All rights reserved.</p>
   </div>
 
 </div>
-
 </body>
 </html>

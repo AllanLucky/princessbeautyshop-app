@@ -7,7 +7,7 @@
 
 <style>
 /* ===========================
-GLOBAL STYLES
+   GLOBAL STYLES
 =========================== */
 body {
   margin: 0;
@@ -23,15 +23,15 @@ body {
   background: white;
   border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0,0,0,.15);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
 }
 
 /* ===========================
-HEADER
+   HEADER
 =========================== */
 .email-header {
   background: linear-gradient(135deg, #f093fb, #f5576c);
-  padding: 40px;
+  padding: 40px 20px;
   text-align: center;
   color: white;
 }
@@ -60,10 +60,10 @@ HEADER
 }
 
 /* ===========================
-BODY
+   BODY
 =========================== */
 .email-body {
-  padding: 40px;
+  padding: 40px 20px;
   background: white;
 }
 
@@ -73,6 +73,7 @@ h1, h2, h3 {
 
 p {
   margin: 0 0 15px 0;
+  line-height: 1.5;
 }
 
 .product-list {
@@ -83,12 +84,12 @@ p {
 }
 
 .product-item {
-  background: linear-gradient(135deg,#f8f9fa,#fff);
+  background: linear-gradient(135deg, #f8f9fa, #fff);
   padding: 25px;
   border-radius: 15px;
   text-align: center;
   border: 1px solid #eee;
-  transition: .3s;
+  transition: transform 0.3s, box-shadow 0.3s;
 }
 
 .product-item:hover {
@@ -102,6 +103,13 @@ p {
   object-fit: cover;
   border-radius: 12px;
   margin-bottom: 10px;
+}
+
+.price-tag {
+  color: #f5576c;
+  font-weight: bold;
+  font-size: 18px;
+  margin-top: 5px;
 }
 
 .shop-button {
@@ -121,11 +129,11 @@ p {
 }
 
 /* ===========================
-FOOTER
+   FOOTER
 =========================== */
 .email-footer {
   background: linear-gradient(135deg, #2d3748, #1a202c);
-  padding: 40px;
+  padding: 40px 20px;
   text-align: center;
   color: #a0aec0;
 }
@@ -142,7 +150,7 @@ FOOTER
 }
 
 /* ===========================
-RESPONSIVE
+   RESPONSIVE
 =========================== */
 @media(max-width:600px) {
   .email-body {
@@ -170,49 +178,39 @@ RESPONSIVE
 
   <!-- HEADER -->
   <div class="email-header">
-    <img
-      src="https://res.cloudinary.com/dkdx7xytz/image/upload/v1772469610/blisslogo1_rwlktl.png"
-      class="logo"
-      alt="Kilifonia Beauty Logo"
-    />
+    <img src="https://res.cloudinary.com/dkdx7xytz/image/upload/v1772469610/blisslogo1_rwlktl.png" 
+         class="logo" 
+         alt="Kilifonia Beauty Logo" />
     <div class="brand-name">Kilifonia Beauty</div>
     <div class="promotion-badge">✨ EXCLUSIVE BEAUTY OFFER ✨</div>
   </div>
 
   <!-- BODY -->
   <div class="email-body">
-    <h1 style="text-align:center;color:#2d3748">
+    <h1 style="text-align:center;color:#2d3748;">
       Discover Your New Favorite Skincare
     </h1>
 
-    <p style="text-align:center;color:#4a5568;max-width:600px;margin:auto">
+    <p style="text-align:center;color:#4a5568;max-width:600px;margin:auto;">
       We are excited to introduce premium beauty products specially curated to transform your skincare routine.
     </p>
 
-    <h2 style="text-align:center;margin-top:40px">Featured Products</h2>
+    <h2 style="text-align:center;margin-top:40px;">Featured Products</h2>
 
     <div class="product-list">
       <% if(products && products.length){ %>
         <% products.forEach(function(product){ %>
           <div class="product-item">
-            <img
-              src="<%= product.img || 'https://via.placeholder.com/120' %>"
-              class="product-img"
-              alt="<%= product.name || 'Product Image' %>"
-            />
+            <img src="<%= product.img || 'https://via.placeholder.com/120' %>" 
+                 class="product-img" 
+                 alt="<%= product.name || 'Product Image' %>" />
             <h3><%= product.name || 'Product' %></h3>
-            <p style="color:#718096;font-size:14px">
-              <%= product.description || '' %>
-            </p>
+            <p style="color:#718096;font-size:14px;"><%= product.description || '' %></p>
             <% if(product.price){ %>
-            <div style="color:#f5576c;font-weight:bold;font-size:18px">
-              $<%= product.price %>
-            </div>
+              <div class="price-tag">$<%= product.price %></div>
             <% } %>
             <% if(product.link){ %>
-            <a href="<%= product.link %>" class="shop-button">
-              Shop Now
-            </a>
+              <a href="<%= product.link %>" class="shop-button">Shop Now</a>
             <% } %>
           </div>
         <% }) %>
@@ -221,7 +219,7 @@ RESPONSIVE
       <% } %>
     </div>
 
-    <div style="text-align:center;margin-top:50px">
+    <div style="text-align:center;margin-top:50px;">
       <a href="https://kilifoniabeauty.co.ke/shop" class="shop-button">
         Explore All Products
       </a>
@@ -230,9 +228,9 @@ RESPONSIVE
 
   <!-- FOOTER -->
   <div class="email-footer">
-    <p style="color:#f5576c;font-weight:bold">Kilifonia Beauty</p>
+    <p style="color:#f5576c;font-weight:bold;">Kilifonia Beauty</p>
     <p>Crafting exceptional skincare experiences</p>
-    <div style="margin-top:25px;font-size:12px">
+    <div style="margin-top:25px;font-size:12px;">
       &copy; <%= new Date().getFullYear() %> Kilifonia Beauty. All rights reserved.
     </div>
   </div>
