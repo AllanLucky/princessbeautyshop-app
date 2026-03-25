@@ -2,30 +2,49 @@
 
 import ejs from "ejs";
 import dotenv from "dotenv";
+import path from "path";
 import sendMail from "../helpers/sendMailer.js";
 import Order from "../models/orderModel.js";
-import path from "path";
 
 dotenv.config();
 
 /*
 =====================================================
-SEND CONFIRMED ORDER EMAIL SERVICE
+SEND CONFIRMED ORDER EMAIL SERVICE ⭐ PRODUCTION READY
 =====================================================
 */
 
+const calculateProgress = (status) => {
+  // Progress Mapping: Pending → Confirmed → Processing → Shipped → Delivered
+  const progressMap = {
+    0: 20,
+    1: 40, // Confirmed
+    2: 60,
+    3: 80,
+    4: 100,
+    5: 0, // Cancelled
+  };
+  return progressMap[status] || 0;
+};
+
 const sendConfirmedOrderEmail = async () => {
   try {
-
+    // Fetch confirmed orders that haven't had confirmation emails sent yet
     const orders = await Order.find({
       status: 1, // Confirmed
       confirmedEmailSent: false,
-    });
+      email: { $exists: true, $ne: null },
+    })
+      .limit(50)
+      .sort({ createdAt: 1 });
 
     if (!orders.length) return;
 
     for (const order of orders) {
       try {
+        if (!order.products?.length) continue;
+
+        const progress = calculateProgress(order.status);
 
         const templatePath = path.join(
           process.cwd(),
@@ -34,15 +53,15 @@ const sendConfirmedOrderEmail = async () => {
         );
 
         const html = await ejs.renderFile(templatePath, {
-          name: order.name,
+          name: order.name || "Customer",
           orderNumber: order._id.toString().slice(-8),
           products: order.products,
-          total: order.total,
-          progress: order.progress,
+          total: order.total || 0,
+          progress,
           estimatedDeliveryDate: order.estimatedDeliveryDate
             ? new Date(order.estimatedDeliveryDate).toDateString()
-            : "To be announced",
-          statusText: order.statusText,
+            : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toDateString(),
+          statusText: "Confirmed",
         });
 
         const messageOptions = {
@@ -52,21 +71,24 @@ const sendConfirmedOrderEmail = async () => {
           html,
         };
 
-        await sendMail(messageOptions);
+        const mailResult = await sendMail(messageOptions);
 
-        await Order.findByIdAndUpdate(order._id, {
-          $set: {
-            confirmedEmailSent: true,
-          },
-        });
-
+        if (mailResult?.success !== false) {
+          await Order.updateOne(
+            { _id: order._id },
+            { $set: { confirmedEmailSent: true } }
+          );
+          console.log(`✅ Confirmation email sent to ${order.email}`);
+        }
       } catch (error) {
-        console.error("Confirmed order email error:", error);
+        console.error(
+          `❌ Error sending confirmed email for order ${order._id}:`,
+          error.message
+        );
       }
     }
-
   } catch (error) {
-    console.error("Confirmed service error:", error);
+    console.error("❌ Confirmed order service error:", error.message);
   }
 };
 

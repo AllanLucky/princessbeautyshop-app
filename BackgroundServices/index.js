@@ -19,7 +19,7 @@ import sendShippedOrderEmail from "./EmailServices/sendShippedOrderEmail.js";
 import sendDeliveredOrderEmail from "./EmailServices/sendDeliveredOrderEmail.js";
 import sendCancelledOrderEmail from "./EmailServices/sendCancelledOrderEmail.js";
 
-import sendPromotionEmail from "./EmailServices/sendPromotionemail.js";
+import sendPromotionEmail from "./EmailServices/sendPromotionEmail.js";
 import sendTimetableEmail from "./EmailServices/sendTimetabeEmail.js";
 import sendSkincareReminder from "./EmailServices/sendingSkincareReminder.js";
 
@@ -28,7 +28,7 @@ import { scheduleAnalyticsCleanup } from "./EmailServices/clearAnalytics.js";
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT ||8001;
 
 /*
 =====================================================
@@ -38,10 +38,10 @@ SAFE SERVICE EXECUTION WRAPPER
 
 const safeExecute = async (serviceName, fn) => {
   try {
-    console.log(`▶ Running service: ${serviceName}`);
+    console.log(`[${new Date().toISOString()}] ▶ Running service: ${serviceName}`);
     await fn();
   } catch (error) {
-    console.error(`❌ Service error (${serviceName}):`, error.message);
+    console.error(`[${new Date().toISOString()}] ❌ Service error (${serviceName}):`, error.message);
   }
 };
 
@@ -54,21 +54,23 @@ SCHEDULE SERVICES
 const services = () => {
   /*
   -------------------------------------------------
-  ORDER LIFECYCLE EMAILS
+  ORDER LIFECYCLE EMAILS (every 5 minutes)
   -------------------------------------------------
   */
-
-  cron.schedule("*/10 * * * * *", async () => {
-    await safeExecute("WelcomeEmail", sendWelcomeEmail);
-    await safeExecute("PendingOrderEmail", sendPendingOrderEmail);
-    await safeExecute("ConfirmedOrderEmail", sendConfirmedOrderEmail);
-    await safeExecute("ProcessingOrderEmail", sendProcessingOrderEmail);
-    await safeExecute("ShippedOrderEmail", sendShippedOrderEmail);
-    await safeExecute("DeliveredOrderEmail", sendDeliveredOrderEmail);
-    await safeExecute("CancelledOrderEmail", sendCancelledOrderEmail);
-
-    await safeExecute("TimetableEmail", sendTimetableEmail);
-  });
+  cron.schedule(
+    "*/5 * * * *",
+    async () => {
+      await safeExecute("WelcomeEmail", sendWelcomeEmail);
+      await safeExecute("PendingOrderEmail", sendPendingOrderEmail);
+      await safeExecute("ConfirmedOrderEmail", sendConfirmedOrderEmail);
+      await safeExecute("ProcessingOrderEmail", sendProcessingOrderEmail);
+      await safeExecute("ShippedOrderEmail", sendShippedOrderEmail);
+      await safeExecute("DeliveredOrderEmail", sendDeliveredOrderEmail);
+      await safeExecute("CancelledOrderEmail", sendCancelledOrderEmail);
+      await safeExecute("TimetableEmail", sendTimetableEmail);
+    },
+    { timezone: "Africa/Nairobi" }
+  );
 
   /*
   -------------------------------------------------
@@ -77,20 +79,24 @@ const services = () => {
   */
 
   // Morning reminders (5:00 AM EAT)
-  cron.schedule("0 2 * * *", async () => {
-    console.log("🌅 Starting morning skincare reminders...");
-    await safeExecute("MorningReminder", () =>
-      sendSkincareReminder("morning")
-    );
-  });
+  cron.schedule(
+    "0 5 * * *",
+    async () => {
+      console.log(`[${new Date().toISOString()}] 🌅 Starting morning skincare reminders...`);
+      await safeExecute("MorningReminder", () => sendSkincareReminder("morning"));
+    },
+    { timezone: "Africa/Nairobi" }
+  );
 
   // Evening reminders (7:00 PM EAT)
-  cron.schedule("0 16 * * *", async () => {
-    console.log("🌙 Starting evening skincare reminders...");
-    await safeExecute("EveningReminder", () =>
-      sendSkincareReminder("evening")
-    );
-  });
+  cron.schedule(
+    "0 19 * * *",
+    async () => {
+      console.log(`[${new Date().toISOString()}] 🌙 Starting evening skincare reminders...`);
+      await safeExecute("EveningReminder", () => sendSkincareReminder("evening"));
+    },
+    { timezone: "Africa/Nairobi" }
+  );
 
   /*
   -------------------------------------------------
@@ -98,10 +104,14 @@ const services = () => {
   -------------------------------------------------
   */
 
-  // Friday 5:30 AM UTC (Weekly promotion blast)
-  cron.schedule("30 5 * * 5", async () => {
-    await safeExecute("PromotionEmail", sendPromotionEmail);
-  });
+  // Friday 5:30 AM EAT (Weekly promotion blast)
+  cron.schedule(
+    "30 5 * * 5",
+    async () => {
+      await safeExecute("PromotionEmail", sendPromotionEmail);
+    },
+    { timezone: "Africa/Nairobi" }
+  );
 };
 
 /*
@@ -114,14 +124,17 @@ const startServer = async () => {
   try {
     await dbConnection();
 
+    // Start cron services
     services();
-    scheduleAnalyticsCleanup();
+
+    // Analytics cleanup wrapped in safeExecute
+    await safeExecute("AnalyticsCleanup", scheduleAnalyticsCleanup);
 
     app.listen(PORT, () => {
-      console.log(`🚀 Background service running on port ${PORT}`);
+      console.log(`[${new Date().toISOString()}] 🚀 Background service running on port ${PORT}`);
     });
   } catch (error) {
-    console.error("❌ Server bootstrap error:", error.message);
+    console.error(`[${new Date().toISOString()}] ❌ Server bootstrap error:`, error.message);
     process.exit(1);
   }
 };
