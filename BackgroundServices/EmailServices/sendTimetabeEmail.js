@@ -10,21 +10,16 @@ import { fileURLToPath } from "url";
 
 dotenv.config();
 
-/*
-====================================================
-ES MODULE DIRECTORY FIX
-====================================================
-*/
-
+/* ====================================================
+   ES MODULE DIRECTORY FIX
+==================================================== */
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-/*
-====================================================
-BATCH EMAIL WORKER
-====================================================
-*/
-
+/* ====================================================
+   BATCH EMAIL WORKER
+   Sends emails in batches to avoid throttling limits
+==================================================== */
 const sendEmailsInBatches = async (emails, batchSize = 5, delayMs = 1000) => {
   for (let i = 0; i < emails.length; i += batchSize) {
     const batch = emails.slice(i, i + batchSize);
@@ -37,16 +32,14 @@ const sendEmailsInBatches = async (emails, batchSize = 5, delayMs = 1000) => {
           if (result?.success) {
             await Timetable.findByIdAndUpdate(requestId, {
               $set: {
-                status: 1,
+                status: 1, // Sent successfully
                 processedAt: new Date(),
                 error: null
               }
             });
-
             console.log(`✅ Timetable email sent → ${options.to}`);
           } else {
             console.error(`❌ Mail sending failed → ${options.to}`);
-
             await Timetable.findByIdAndUpdate(requestId, {
               $set: {
                 error: result?.error || "Unknown email failure"
@@ -56,12 +49,7 @@ const sendEmailsInBatches = async (emails, batchSize = 5, delayMs = 1000) => {
         } catch (error) {
           console.error(`❌ Email worker error → ${options.to}`, error.message);
 
-          /*
-          ============================================
-          DISTINGUISH TEMPORARY VS PERMANENT FAILURE
-          ============================================
-          */
-
+          // Determine permanent vs temporary failure
           const permanent = !(
             error.code === "EENVELOPE" ||
             error.message?.includes("Temporary")
@@ -78,57 +66,33 @@ const sendEmailsInBatches = async (emails, batchSize = 5, delayMs = 1000) => {
       })
     );
 
-    /*
-    ============================================
-    RATE LIMIT CONTROL
-    ============================================
-    */
-
+    // Rate limit control between batches
     if (i + batchSize < emails.length) {
-      console.log(`⏳ Worker cooling down ${delayMs}ms`);
+      console.log(`⏳ Cooling down for ${delayMs}ms before next batch...`);
       await new Promise(resolve => setTimeout(resolve, delayMs));
     }
   }
 };
 
-/*
-====================================================
-TIMETABLE EMAIL SERVICE
-====================================================
-*/
-
+/* ====================================================
+   TIMETABLE EMAIL SERVICE
+==================================================== */
 const sendTimetableEmail = async () => {
   try {
-    /*
-    ============================================
-    FIND ONLY PENDING REQUESTS
-    ============================================
-    */
-
-    const timetableRequests = await Timetable.find({
-      status: 0
-    }).lean();
+    // Fetch pending timetable requests
+    const timetableRequests = await Timetable.find({ status: 0 }).lean();
 
     if (!timetableRequests.length) {
-      console.log("ℹ️ No pending timetable emails.");
+      console.log("ℹ️ No pending timetable emails to send.");
       return;
     }
 
-    console.log(`🚀 Processing ${timetableRequests.length} timetable emails`);
+    console.log(`🚀 Processing ${timetableRequests.length} timetable emails...`);
 
-    const templatePath = path.join(
-      __dirname,
-      "../templates/timetable.ejs"
-    );
-
+    const templatePath = path.join(__dirname, "../templates/timetable.ejs");
     const emailsQueue = [];
 
-    /*
-    ============================================
-    PREPARE EMAILS FIRST (AVOID BLOCKING SEND LOOP)
-    ============================================
-    */
-
+    // Prepare all emails first
     for (const request of timetableRequests) {
       try {
         const routine = generateSkincareRoutine(
@@ -160,9 +124,7 @@ const sendTimetableEmail = async () => {
             html: emailHtml,
             attachments: [
               {
-                filename: `Skincare-Timetable-${request.name
-                  .replace(/\s+/g, "-")
-                  .toLowerCase()}.pdf`,
+                filename: `Skincare-Timetable-${request.name.replace(/\s+/g, "-").toLowerCase()}.pdf`,
                 content: pdfBuffer,
                 contentType: "application/pdf"
               }
@@ -171,11 +133,7 @@ const sendTimetableEmail = async () => {
         });
 
       } catch (error) {
-        console.error(
-          `❌ Preparation error → ${request.email}`,
-          error.message
-        );
-
+        console.error(`❌ Preparation error → ${request.email}:`, error.message);
         await Timetable.findByIdAndUpdate(request._id, {
           $set: {
             status: 2,
@@ -186,17 +144,12 @@ const sendTimetableEmail = async () => {
       }
     }
 
-    /*
-    ============================================
-    SEND EMAIL WORKER
-    ============================================
-    */
-
+    // Send emails in batches
     if (emailsQueue.length > 0) {
       await sendEmailsInBatches(emailsQueue, 5, 1000);
     }
 
-    console.log("✅ Timetable email worker finished.");
+    console.log("✅ Timetable email worker completed.");
 
   } catch (error) {
     console.error("❌ Timetable email service crashed:", error);

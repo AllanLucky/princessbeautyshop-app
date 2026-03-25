@@ -2,9 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Order Processing</title>
 
 <style>
+/* ==============================
+   GLOBAL STYLE
+============================== */
 body {
     font-family: Arial, Helvetica, sans-serif;
     background: linear-gradient(135deg, #667eea, #764ba2);
@@ -22,34 +26,44 @@ body {
     box-shadow: 0 20px 60px rgba(0,0,0,0.15);
 }
 
+/* ==============================
+   HEADER
+============================== */
 .header {
     background: linear-gradient(135deg, #ed8936, #dd6b20);
     color: white;
     text-align: center;
-    padding: 40px;
+    padding: 40px 20px;
 }
 
-.badge {
+.header .badge {
     display: inline-block;
     background: white;
     color: #dd6b20;
     padding: 12px 25px;
     border-radius: 25px;
     font-weight: bold;
+    margin-bottom: 15px;
 }
 
+.header h1 {
+    font-size: 28px;
+    margin: 10px 0;
+}
+
+.header p {
+    font-size: 16px;
+    margin: 5px 0 0;
+}
+
+/* ==============================
+   BODY
+============================== */
 .body {
-    padding: 40px;
+    padding: 40px 20px;
+    line-height: 1.6;
 }
 
-.product {
-    background: #f8f9fa;
-    padding: 20px;
-    border-radius: 12px;
-    margin-top: 20px;
-}
-
-/* Progress bar */
 .progress-container {
     background: #e2e8f0;
     border-radius: 25px;
@@ -71,19 +85,85 @@ body {
     width: <%= progress || 0 %>%;
 }
 
+/* ==============================
+   PRODUCT SECTION
+============================== */
+.product {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 20px;
+}
+
+.product h3 {
+    margin-top: 0;
+}
+
+.product p {
+    margin: 10px 0;
+}
+
+.product hr {
+    border: 0;
+    border-top: 1px solid #e2e8f0;
+}
+
+/* ==============================
+   CTA BUTTON
+============================== */
+.cta-button {
+    display: inline-block;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white !important;
+    text-decoration: none;
+    padding: 12px 25px;
+    border-radius: 25px;
+    font-weight: bold;
+    margin-top: 20px;
+    transition: opacity 0.3s ease;
+}
+
+.cta-button:hover {
+    opacity: 0.9;
+}
+
+/* ==============================
+   FOOTER
+============================== */
 .footer {
     background: #1a202c;
     color: #a0aec0;
     text-align: center;
-    padding: 30px;
+    padding: 30px 20px;
+    font-size: 14px;
 }
 
-@media(max-width:600px) {
+/* ==============================
+   RESPONSIVE
+============================== */
+@media (max-width: 600px) {
+    .wrapper {
+        margin: 20px;
+    }
     .body {
         padding: 20px;
     }
     .header {
         padding: 20px;
+    }
+    .header h1 {
+        font-size: 22px;
+    }
+    .progress-container {
+        height: 16px;
+    }
+    .progress-bar {
+        line-height: 16px;
+        font-size: 12px;
+        padding-right: 5px;
+    }
+    .product {
+        padding: 15px;
     }
 }
 </style>
@@ -93,51 +173,59 @@ body {
 
 <div class="wrapper">
 
-<div class="header">
-    <div class="badge">🔄 ORDER PROCESSING</div>
-    <h1>Hello <%= name || "Customer" %></h1>
-    <p>Your order is currently being prepared.</p>
-</div>
+    <!-- HEADER -->
+    <div class="header">
+        <div class="badge">🔄 ORDER PROCESSING</div>
+        <h1>Hello <%= name || "Customer" %></h1>
+        <p>Your order is currently being prepared.</p>
+    </div>
 
-<div class="body">
-<p>
-Your order <strong>#<%= orderNumber || "N/A" %></strong> is now in the processing stage.
-Our team is preparing your products for shipment.
-</p>
-
-<div class="progress-container">
-    <div class="progress-bar"><%= progress || 0 %>%</div>
-</div>
-
-<div class="product">
-<h3>Order Summary</h3>
-
-<% if (products && products.length) { %>
-    <% products.forEach(product => { %>
+    <!-- BODY -->
+    <div class="body">
         <p>
-        <b><%= product.title || "Product" %></b><br>
-        Quantity: <%= product.quantity || 0 %><br>
-        Price: KES<%= product.price || 0 %>
+            Your order <strong>#<%= orderNumber || "N/A" %></strong> is now in the processing stage.
+            Our team is preparing your products for shipment.
         </p>
-        <hr/>
-    <% }) %>
-<% } else { %>
-    <p>No product information available.</p>
-<% } %>
 
-<p><strong>Total Amount:</strong> KES<%= total || 0 %></p>
-</div>
+        <!-- PROGRESS BAR -->
+        <div class="progress-container">
+            <div class="progress-bar"><%= progress || 0 %>%</div>
+        </div>
 
-<p style="margin-top:30px">
-We will notify you once your order is shipped.
-Thank you for trusting our service ❤️
-</p>
+        <!-- PRODUCTS -->
+        <div class="product">
+            <h3>Order Summary</h3>
 
-</div>
+            <% if (products && products.length) { %>
+                <% products.forEach(product => { %>
+                    <p>
+                        <b><%= product.title || "Product" %></b><br>
+                        Quantity: <%= product.quantity || 0 %><br>
+                        Price: KES<%= product.price || 0 %>
+                    </p>
+                    <hr/>
+                <% }) %>
+            <% } else { %>
+                <p>No product information available.</p>
+            <% } %>
 
-<div class="footer">
-Kilifonia Beauty © <%= new Date().getFullYear() %>
-</div>
+            <p><strong>Total Amount:</strong> KES<%= total || 0 %></p>
+        </div>
+
+        <p style="margin-top:30px; text-align:center;">
+            We will notify you once your order is shipped.
+            Thank you for trusting our service ❤️
+        </p>
+
+        <div style="text-align:center;">
+            <a href="https://kilifoniabeautybliss.co.ke/track-order" class="cta-button">Track Order Status</a>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        Kilifonia Beauty © <%= new Date().getFullYear() %>
+    </div>
 
 </div>
 

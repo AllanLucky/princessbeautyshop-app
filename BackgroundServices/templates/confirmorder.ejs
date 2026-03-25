@@ -1,169 +1,206 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>Order Confirmed</title>
-
 <style>
-
-body{
-font-family:Arial,Helvetica,sans-serif;
-background:linear-gradient(135deg,#667eea,#764ba2);
-margin:0;
-padding:0;
+/* ===========================
+GLOBAL STYLES
+=========================== */
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: linear-gradient(135deg,#667eea,#764ba2);
+    margin: 0;
+    padding: 0;
+    color: #333;
 }
 
-.wrapper{
-max-width:700px;
-margin:40px auto;
-background:white;
-border-radius:20px;
-overflow:hidden;
-box-shadow:0 20px 60px rgba(0,0,0,.15);
+.wrapper {
+    max-width: 700px;
+    margin: 40px auto;
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
 }
 
-.header{
-background:linear-gradient(135deg,#38a169,#48bb78);
-color:white;
-text-align:center;
-padding:40px;
+/* HEADER */
+.header {
+    background: linear-gradient(135deg,#38a169,#48bb78);
+    color: white;
+    text-align: center;
+    padding: 40px;
 }
 
-.badge{
-display:inline-block;
-background:white;
-color:#38a169;
-padding:12px 25px;
-border-radius:25px;
-font-weight:bold;
+.badge {
+    display: inline-block;
+    background: white;
+    color: #38a169;
+    padding: 12px 25px;
+    border-radius: 25px;
+    font-weight: bold;
+    margin-bottom: 15px;
 }
 
-.body{
-padding:40px;
+.header h1 {
+    font-size: 28px;
+    margin: 10px 0;
 }
 
-.product{
-background:#f8f9fa;
-padding:20px;
-border-radius:12px;
-margin-top:20px;
+.header p {
+    font-size: 16px;
+    margin: 0;
 }
 
-.progress-box{
-margin-top:30px;
-padding:20px;
-background:#f7fafc;
-border-radius:12px;
-text-align:center;
+/* BODY */
+.body {
+    padding: 40px;
 }
 
-.progress-bar{
-width:100%;
-background:#e2e8f0;
-border-radius:20px;
-height:12px;
-overflow:hidden;
-margin-top:10px;
+/* PROGRESS BAR */
+.progress-box {
+    margin-top: 30px;
+    padding: 20px;
+    background: #f7fafc;
+    border-radius: 12px;
+    text-align: center;
 }
 
-.progress-fill{
-height:12px;
-background:#38a169;
+.progress-bar {
+    width: 100%;
+    background: #e2e8f0;
+    border-radius: 20px;
+    height: 14px;
+    overflow: hidden;
+    margin-top: 10px;
 }
 
-.footer{
-background:#1a202c;
-color:#a0aec0;
-text-align:center;
-padding:30px;
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(135deg,#48bb78,#38a169);
+    width: <%= progress || 0 %>%;
+    transition: width 0.5s ease;
+    border-radius: 20px;
 }
 
+/* PRODUCT ITEMS */
+.product {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 20px;
+}
+
+.product p {
+    margin: 10px 0;
+}
+
+.product hr {
+    border: 0;
+    border-top: 1px solid #e2e8f0;
+}
+
+/* CTA / INFO */
+.body p {
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+/* FOOTER */
+.footer {
+    background: #1a202c;
+    color: #a0aec0;
+    text-align: center;
+    padding: 30px;
+    font-size: 14px;
+}
+
+/* RESPONSIVE */
+@media(max-width: 600px){
+    .body {
+        padding: 20px;
+    }
+    .header {
+        padding: 20px;
+    }
+    .product {
+        padding: 15px;
+    }
+    .progress-box {
+        padding: 15px;
+    }
+}
 </style>
-
 </head>
 
 <body>
 
 <div class="wrapper">
 
-<div class="header">
+    <!-- HEADER -->
+    <div class="header">
+        <div class="badge">✅ ORDER CONFIRMED</div>
+        <h1>Hello <%= name || "Customer" %></h1>
+        <p>Your order has been successfully confirmed.</p>
+    </div>
 
-<div class="badge">✅ ORDER CONFIRMED</div>
+    <!-- BODY -->
+    <div class="body">
 
-<h1>Hello <%= name %></h1>
+        <p>
+            Great news! Your order <strong>#<%= orderNumber || "N/A" %></strong> is now confirmed
+            and being prepared for shipment.
+        </p>
 
-<p>Your order has been successfully confirmed.</p>
+        <!-- ORDER PROGRESS -->
+        <div class="progress-box">
+            <h3>Order Progress</h3>
+            <p>Status: <strong><%= statusText || "Confirmed" %></strong></p>
 
-</div>
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
 
-<div class="body">
+            <p style="margin-top:10px;">
+                <%= progress || 0 %>% Completed
+            </p>
 
-<p>
-Great news! Your order <strong>#<%= orderNumber %></strong> is now confirmed
-and being prepared for shipment.
-</p>
+            <p>
+                Estimated Delivery:<br>
+                <strong><%= estimatedDeliveryDate || "To be announced" %></strong>
+            </p>
+        </div>
 
+        <!-- PRODUCTS -->
+        <div class="product">
+            <h3>Order Summary</h3>
 
-<!-- ORDER PROGRESS SECTION -->
+            <% if (products && products.length) { %>
+                <% products.forEach(product => { %>
+                    <p>
+                        <b><%= product.title || "Product" %></b><br>
+                        Quantity: <%= product.quantity || 0 %><br>
+                        Price: KES <%= product.price || 0 %>
+                    </p>
+                    <hr/>
+                <% }) %>
+            <% } else { %>
+                <p>No product information available.</p>
+            <% } %>
 
-<div class="progress-box">
+            <p><strong>Total Amount:</strong> KES <%= total || 0 %></p>
+        </div>
 
-<h3>Order Progress</h3>
+        <p style="margin-top:30px;">
+            We will notify you once your order is shipped. Thank you for shopping with us ❤️
+        </p>
 
-<p>Status: <strong><%= statusText %></strong></p>
+    </div>
 
-<div class="progress-bar">
-<div class="progress-fill" style="width:<%= progress %>%"></div>
-</div>
-
-<p style="margin-top:10px">
-<%= progress %>% Completed
-</p>
-
-<p>
-Estimated Delivery:<br>
-<strong><%= estimatedDeliveryDate %></strong>
-</p>
-
-</div>
-
-
-<div class="product">
-
-<h3>Order Summary</h3>
-
-<% products.forEach(product => { %>
-
-<p>
-<b><%= product.title %></b><br>
-Quantity: <%= product.quantity %><br>
-Price: KES <%= product.price %>
-</p>
-
-<hr/>
-
-<% }) %>
-
-<p>
-<strong>Total Amount:</strong> KES <%= total %>
-</p>
-
-</div>
-
-
-<p style="margin-top:30px">
-We will notify you once your order is shipped.
-Thank you for shopping with us ❤️
-</p>
-
-</div>
-
-
-<div class="footer">
-
-Kilifonia Beauty © <%= new Date().getFullYear() %>
-
-</div>
+    <!-- FOOTER -->
+    <div class="footer">
+        Kilifonia Beauty © <%= new Date().getFullYear() %>
+    </div>
 
 </div>
 

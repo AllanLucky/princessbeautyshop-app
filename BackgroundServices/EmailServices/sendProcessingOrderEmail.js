@@ -2,35 +2,35 @@
 
 import ejs from "ejs";
 import dotenv from "dotenv";
-import sendMail from "../helpers/sendMailer.js";
+import sendMailer from "../helpers/sendMailer.js"; // ✅ updated
 import Order from "../models/orderModel.js";
 
 dotenv.config();
 
 /*
 =====================================================
-SEND PROCESSING ORDER EMAIL SERVICE ⭐ PRODUCTION READY
+PROGRESS CALCULATION
 =====================================================
 */
 
 const calculateProgress = (status) => {
-  /*
-  Progress Mapping For Email UI Timeline
-
-  Pending → Confirmed → Processing → Shipped → Delivered
-  */
-
   const progressMap = {
-    0: 20,
-    1: 40,
-    2: 60,
-    3: 80,
-    4: 100,
-    5: 0,
+    0: 20,   // Pending
+    1: 40,   // Confirmed
+    2: 60,   // Processing
+    3: 80,   // Shipped
+    4: 100,  // Delivered
+    5: 0,    // Cancelled
   };
 
   return progressMap[status] || 0;
 };
+
+/*
+=====================================================
+SEND PROCESSING ORDER EMAIL SERVICE
+=====================================================
+*/
 
 const sendProcessingOrderEmail = async () => {
   try {
@@ -38,13 +38,15 @@ const sendProcessingOrderEmail = async () => {
       status: 2,
       processingEmailSent: false,
       email: { $exists: true, $ne: null },
-    }).limit(50);
+    })
+      .limit(50)
+      .sort({ createdAt: 1 }); // ✅ FIFO (important)
 
     if (!orders.length) return;
 
     for (const order of orders) {
       try {
-        if (!order.products || !order.products.length) continue;
+        if (!order.products?.length) continue;
 
         const progress = calculateProgress(order.status);
 
@@ -56,41 +58,52 @@ const sendProcessingOrderEmail = async () => {
             products: order.products,
             total: order.total || 0,
             status: order.status,
-            progress
+            progress,
           }
         );
-
-        const messageOptions = {
-          from: process.env.EMAIL,
-          to: order.email,
-          subject: "🔄 Your Order Is Being Processed",
-          html,
-        };
-
-        await sendMail(messageOptions);
 
         /*
         =============================================
-        MARK EMAIL AS SENT
+        SEND EMAIL VIA BREVO
         =============================================
         */
 
-        await Order.updateOne(
-          { _id: order._id },
-          {
-            $set: {
-              processingEmailSent: true,
-            },
-          }
-        );
+        const mailResult = await sendMailer({
+          to: order.email,
+          subject: "🔄 Your Order Is Being Processed",
+          htmlContent: html,
+        });
+
+        /*
+        =============================================
+        MARK EMAIL AS SENT (WITH TIMESTAMP ⭐)
+        =============================================
+        */
+
+        if (mailResult) {
+          await Order.updateOne(
+            { _id: order._id },
+            {
+              $set: {
+                processingEmailSent: true,
+                processingEmailSentAt: new Date(), // ✅ better tracking
+              },
+            }
+          );
+
+          console.log(`✅ Processing email sent: ${order._id}`);
+        }
 
       } catch (error) {
-        console.error("Processing order email error:", error.message);
+        console.error(
+          `❌ Processing order email error (${order._id}):`,
+          error.message
+        );
       }
     }
 
   } catch (error) {
-    console.error("Processing service error:", error.message);
+    console.error("❌ Processing service error:", error.message);
   }
 };
 

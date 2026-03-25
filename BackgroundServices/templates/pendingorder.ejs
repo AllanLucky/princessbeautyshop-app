@@ -6,112 +6,57 @@
 <title>Order Processing</title>
 
 <style>
-
-/* ===========================
-GLOBAL STYLE
-=========================== */
-
 body{
 margin:0;
 padding:0;
 font-family: Arial, Helvetica, sans-serif;
-background: linear-gradient(135deg,#667eea,#764ba2);
-color:#333;
+background:#f4f4f4; 
 }
 
 .email-wrapper{
 max-width:700px;
-margin:40px auto;
-background:white;
-border-radius:20px;
+margin:20px auto;
+background:#ffffff;
+border-radius:12px;
 overflow:hidden;
-box-shadow:0 20px 60px rgba(0,0,0,.15);
 }
 
 /* HEADER */
-
 .email-header{
-background: linear-gradient(135deg,#f093fb,#f5576c);
-padding:40px;
+background:#f5576c;
+padding:30px;
 text-align:center;
 color:white;
 }
 
 .logo{
-max-width:180px;
-border-radius:12px;
-box-shadow:0 8px 25px rgba(0,0,0,.2);
+max-width:150px;
+border-radius:10px;
 }
 
 .brand-name{
-font-size:28px;
+font-size:24px;
 font-weight:bold;
-margin-top:15px;
+margin-top:10px;
 }
 
 /* BODY */
-
 .email-body{
-padding:40px;
-background:white;
+padding:30px;
 }
 
 .processing-badge{
-background: linear-gradient(135deg,#ed8936,#dd6b20);
+background:#dd6b20;
 color:white;
-padding:12px 24px;
-border-radius:25px;
+padding:10px 20px;
+border-radius:20px;
 font-weight:bold;
 display:inline-block;
 }
 
-/* PRODUCT */
-
-.product-item{
-display:flex;
-align-items:center;
-padding:20px;
-background:#f8f9fa;
-border-radius:12px;
-margin-bottom:15px;
-border:1px solid #e9ecef;
-transition: transform 0.3s ease;
-}
-
-.product-item:hover{
-transform: translateY(-3px);
-}
-
-.product-img{
-width:80px;
-height:80px;
-object-fit:cover;
-border-radius:8px;
-margin-right:20px;
-}
-
-.product-details{
-flex:1;
-}
-
-.product-title{
-font-weight:bold;
-color:#2d3748;
-}
-
-.product-price{
-color:#718096;
-font-size:14px;
-}
-
-/* TIMELINE PROGRESS BAR ⭐ ENTERPRISE UX */
-
-.progress-container{
-margin:40px 0;
-}
-
+/* PROGRESS */
 .progress-bar-bg{
-height:14px;
+height:12px;
 border-radius:20px;
 background:#e2e8f0;
 overflow:hidden;
@@ -119,155 +64,124 @@ overflow:hidden;
 
 .progress-bar-fill{
 height:100%;
+background:#38a169;
 border-radius:20px;
-background: linear-gradient(135deg,#48bb78,#38a169);
-width:<%= progress || 0 %>%;
-transition: width 0.5s ease;
-}
-
-/* CTA BUTTON */
-
-.cta-button{
-display:inline-block;
-background: linear-gradient(135deg,#667eea,#764ba2);
-color:white;
-padding:15px 35px;
-border-radius:30px;
-text-decoration:none;
-font-weight:bold;
-transition: opacity 0.3s ease;
-}
-
-.cta-button:hover{
-opacity:0.9;
 }
 
 /* FOOTER */
-
 .email-footer{
-background: linear-gradient(135deg,#2d3748,#1a202c);
-padding:40px;
+background:#1a202c;
+padding:30px;
 text-align:center;
 color:#a0aec0;
 }
 
-/* RESPONSIVE */
-
 @media(max-width:600px){
-
-.email-wrapper{
-margin:20px;
+.email-body{
+padding:20px;
 }
-
-.product-item{
-flex-direction:column;
-text-align:center;
 }
-
-.product-img{
-margin:0 0 15px 0;
-}
-
-}
-
 </style>
 </head>
 
 <body>
 
+<!-- PREVIEW TEXT -->
+<div style="display:none;max-height:0;overflow:hidden;">
+Your order is being processed. Track it now.
+</div>
+
 <div class="email-wrapper">
 
 <!-- HEADER -->
-
 <div class="email-header">
-
-<img src="https://res.cloudinary.com/dkdx7xytz/image/upload/v1772469610/blisslogo1_rwlktl.png"
-class="logo"/>
-
+<img src="https://res.cloudinary.com/dkdx7xytz/image/upload/v1772469610/blisslogo1_rwlktl.png" class="logo"/>
 <div class="brand-name">Kilifonia Beauty</div>
 <p>Elevate Your Natural Beauty</p>
-
 </div>
 
 <!-- BODY -->
-
 <div class="email-body">
 
-<div style="text-align:center;margin-bottom:30px;">
-<div class="processing-badge">
-⏳ ORDER PROCESSING
-</div>
+<div style="text-align:center;margin-bottom:25px;">
+<span class="processing-badge">⏳ ORDER PROCESSING</span>
 </div>
 
-<h1 style="text-align:center;background:linear-gradient(135deg,#f093fb,#f5576c);-webkit-background-clip:text;color:transparent;">
+<h2 style="text-align:center;">
 Hello <%= name %>
-</h1>
+</h2>
 
-<p style="text-align:center;font-size:18px;">
-Your order is currently being processed.
+<p style="text-align:center;font-size:16px;">
+Your order is currently being processed.  
 We are preparing your premium skincare products.
 </p>
 
-<!-- ⭐ PROGRESS BAR -->
-<div class="progress-container">
-
-<p style="text-align:center;font-weight:bold;margin-bottom:10px;">
-Order Progress
-</p>
+<!-- PROGRESS BAR -->
+<div style="margin:30px 0;">
+<p style="text-align:center;font-weight:bold;">Order Progress</p>
 
 <div class="progress-bar-bg">
-<div class="progress-bar-fill"></div>
+<div class="progress-bar-fill" style="width:<%= progress || 0 %>%;"></div>
+</div>
 </div>
 
-</div>
+<hr style="margin:30px 0;border:0;height:1px;background:#eee"/>
 
-<hr style="margin:30px 0;border:0;height:2px;background:linear-gradient(90deg,transparent,#667eea,transparent)"/>
+<h3>Your Order Details</h3>
 
-<h2>Your Order Details</h2>
-
-<div class="product-list">
-
+<!-- PRODUCTS -->
 <% products.forEach(product => { %>
 
-<div class="product-item">
+<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:15px;border:1px solid #eee;border-radius:8px;">
+<tr>
 
+<td width="90" valign="top" style="padding:10px;">
 <img src="<%= product.img || 'https://via.placeholder.com/80' %>"
-class="product-img"/>
+style="width:80px;height:80px;border-radius:6px;object-fit:cover;" />
+</td>
 
-<div class="product-details">
-<p class="product-title"><%= product.title %></p>
-<p class="product-price">
+<td valign="top" style="padding:10px;">
+<p style="font-weight:bold;margin:0;">
+<%= product.title %>
+</p>
+
+<p style="margin:5px 0;color:#555;">
 Price: $<%= product.price %>
 </p>
 
 <% if(product.quantity){ %>
-<p class="product-price">
+<p style="margin:0;color:#777;">
 Quantity: <%= product.quantity %>
 </p>
 <% } %>
 
-</div>
+</td>
 
-</div>
+</tr>
+</table>
 
 <% }) %>
 
-</div>
-
-<div style="text-align:center;margin-top:30px;">
+<!-- BUTTON -->
+<div style="text-align:center;margin-top:25px;">
+<table align="center" cellpadding="0" cellspacing="0">
+<tr>
+<td bgcolor="#667eea" style="border-radius:25px;">
 <a href="https://kilifoniabeauty.co.ke/track-order"
-class="cta-button">
+style="display:inline-block;padding:12px 25px;color:#ffffff;text-decoration:none;font-weight:bold;">
 Track Order Status
 </a>
+</td>
+</tr>
+</table>
 </div>
 
 </div>
 
 <!-- FOOTER -->
-
 <div class="email-footer">
 
-<p style="color:#f5576c;font-weight:bold;font-size:18px;">
+<p style="color:#f5576c;font-weight:bold;font-size:16px;">
 Kilifonia Beauty
 </p>
 
