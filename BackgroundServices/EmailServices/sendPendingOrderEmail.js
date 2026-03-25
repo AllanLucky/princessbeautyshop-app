@@ -1,15 +1,9 @@
 import ejs from "ejs";
 import dotenv from "dotenv";
-import sendMail from "../helpers/sendMailer.js";
+import sendMailer from "../helpers/sendMailer.js"; 
 import Order from "../models/orderModel.js";
 
 dotenv.config();
-
-/*
-================================================
-SEND PENDING ORDER EMAIL SERVICE (ENTERPRISE SAFE ⭐)
-================================================
-*/
 
 const sendPendingOrderEmail = async () => {
   try {
@@ -45,17 +39,16 @@ const sendPendingOrderEmail = async () => {
           }
         );
 
-        const messageOptions = {
-          from: process.env.EMAIL,
+        // ✅ CLEAN BREVO FORMAT
+        const mailResult = await sendMailer({
           to: order.email,
           subject:
             "🛍️ Your order has been placed successfully. We are preparing it for you.",
-          html,
-        };
+          htmlContent: html,
+        });
 
-        const mailResult = await sendMail(messageOptions);
-
-        if (mailResult?.success !== false) {
+        // ✅ mark as sent
+        if (mailResult) {
           await Order.updateOne(
             { _id: order._id },
             {

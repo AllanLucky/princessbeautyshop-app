@@ -1,34 +1,39 @@
 import nodemailer from "nodemailer";
 
-/**
- * Send an email to a user
- * @param {string} to - Recipient email address
- * @param {string} subject - Email subject
- * @param {string} text - Plain text message
- * @param {string} [html] - Optional HTML message
- */
-const sendEmail = async (to, subject, text, html = null) => {
-  try {
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
+let transporter;
+
+const getTransporter = () => {
+  if (!transporter) {
+    transporter = nodemailer.createTransport({
+      host: process.env.EMAIL_HOST || "lim117.truehost.cloud",
+      port: Number(process.env.EMAIL_PORT) || 465,
+      secure: process.env.EMAIL_SECURE === "true",
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
+      tls: { rejectUnauthorized: false },
+      family: 4,
     });
+  }
+  return transporter;
+};
 
-    const mailOptions = {
-      from: `"BeautyBlis Shop Support" <${process.env.EMAIL_USER}>`,
+const sendEmail = async (to, subject, text, html = null) => {
+  try {
+    const info = await getTransporter().sendMail({
+      from: process.env.EMAIL_FROM || `"BeautyBliss Shop Support" <${process.env.EMAIL_USER}>`,
       to,
       subject,
       text,
       html: html || undefined,
-    };
+    });
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log("Email sent:", info.messageId, "to:", to);
+    console.log("📧 Email sent successfully to", to);
+    return info;
   } catch (error) {
-    console.error("Email sending failed:", error.message);
+    console.error(`❌ Failed to send email to ${to}:`, error);
+    throw error;
   }
 };
 

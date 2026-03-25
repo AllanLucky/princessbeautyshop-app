@@ -6,216 +6,232 @@
 <title>Order Delivered</title>
 
 <style>
-
-body{
-margin:0;
-padding:0;
-font-family: Arial, Helvetica, sans-serif;
-background: linear-gradient(135deg,#667eea,#764ba2);
-color:#333;
+/* ===========================
+   GLOBAL STYLE
+=========================== */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: linear-gradient(135deg,#667eea,#764ba2);
+  color: #333;
 }
 
-.email-wrapper{
-max-width:700px;
-margin:40px auto;
-background:white;
-border-radius:20px;
-overflow:hidden;
-box-shadow:0 20px 60px rgba(0,0,0,0.15);
+.email-wrapper {
+  max-width: 700px;
+  margin: 40px auto;
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
 }
 
-.email-header{
-background: linear-gradient(135deg,#f093fb,#f5576c);
-padding:40px;
-text-align:center;
-color:white;
+/* HEADER */
+.email-header {
+  background: linear-gradient(135deg,#f093fb,#f5576c);
+  padding: 40px;
+  text-align: center;
+  color: white;
 }
 
-.logo{
-max-width:180px;
-border-radius:12px;
-box-shadow:0 8px 25px rgba(0,0,0,.2);
+.logo {
+  max-width: 180px;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0,0,0,.2);
 }
 
-.brand-name{
-font-size:28px;
-font-weight:bold;
-margin-top:15px;
+.brand-name {
+  font-size: 28px;
+  font-weight: bold;
+  margin-top: 15px;
 }
 
-.email-body{
-padding:40px;
-background:white;
+/* BODY */
+.email-body {
+  padding: 40px;
+  background: white;
 }
 
-.delivery-badge{
-background: linear-gradient(135deg,#48bb78,#38a169);
-color:white;
-padding:12px 24px;
-border-radius:25px;
-font-weight:bold;
-display:inline-block;
+.delivery-badge {
+  background: linear-gradient(135deg,#48bb78,#38a169);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-weight: bold;
+  display: inline-block;
 }
 
-.progress-box{
-margin-top:30px;
-padding:20px;
-background:#f7fafc;
-border-radius:12px;
-text-align:center;
+h1 {
+  text-align: center;
+  margin-top: 20px;
+  margin-bottom: 10px;
 }
 
-.progress-bar{
-width:100%;
-background:#e2e8f0;
-border-radius:20px;
-height:12px;
-overflow:hidden;
-margin-top:10px;
+.email-body p {
+  text-align: center;
+  font-size: 18px;
+  line-height: 1.6;
 }
 
-.progress-fill{
-height:12px;
-background:#38a169;
+/* PROGRESS BOX */
+.progress-box {
+  margin-top: 30px;
+  padding: 20px;
+  background: #f7fafc;
+  border-radius: 12px;
+  text-align: center;
 }
 
-.email-footer{
-background: linear-gradient(135deg,#2d3748,#1a202c);
-padding:40px;
-text-align:center;
-color:#a0aec0;
+.progress-bar {
+  width: 100%;
+  background: #e2e8f0;
+  border-radius: 20px;
+  height: 12px;
+  overflow: hidden;
+  margin-top: 10px;
 }
 
-.cta-button{
-display:inline-block;
-background: linear-gradient(135deg,#667eea,#764ba2);
-color:white;
-padding:15px 35px;
-border-radius:30px;
-text-decoration:none;
-font-weight:bold;
+.progress-fill {
+  height: 12px;
+  background: #38a169;
+  width: <%= progress || 100 %>%;
+  transition: width 0.5s ease;
 }
 
+/* PRODUCT LIST */
+.product-item {
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  margin-bottom: 15px;
+  border: 1px solid #e9ecef;
+}
+
+.product-img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-right: 20px;
+}
+
+.product-details p {
+  margin: 3px 0;
+}
+
+/* CTA BUTTON */
+.cta-button {
+  display: inline-block;
+  background: linear-gradient(135deg,#667eea,#764ba2);
+  color: white;
+  padding: 15px 35px;
+  border-radius: 30px;
+  text-decoration: none;
+  font-weight: bold;
+  margin-top: 25px;
+}
+
+/* FOOTER */
+.email-footer {
+  background: linear-gradient(135deg,#2d3748,#1a202c);
+  padding: 40px;
+  text-align: center;
+  color: #a0aec0;
+  margin-top: 40px;
+}
+
+/* RESPONSIVE */
+@media(max-width:600px) {
+  .email-wrapper {
+    margin: 20px;
+  }
+  .product-item {
+    flex-direction: column;
+    text-align: center;
+  }
+  .product-img {
+    margin: 0 0 15px 0;
+  }
+  .cta-button {
+    width: 100%;
+  }
+}
 </style>
 </head>
 
 <body>
-
 <div class="email-wrapper">
 
-<!-- HEADER -->
-<div class="email-header">
+  <!-- HEADER -->
+  <div class="email-header">
+    <img src="https://res.cloudinary.com/dkdx7xytz/image/upload/v1772469610/blisslogo1_rwlktl.png" class="logo" />
+    <div class="brand-name">Kilifonia Beauty</div>
+    <p>Elevate Your Natural Beauty</p>
+  </div>
 
-<img src="https://res.cloudinary.com/dkdx7xytz/image/upload/v1772469610/blisslogo1_rwlktl.png"
-class="logo"/>
+  <!-- BODY -->
+  <div class="email-body">
 
-<div class="brand-name">Kilifonia Beauty</div>
-<p>Elevate Your Natural Beauty</p>
+    <div style="text-align:center;margin-bottom:30px;">
+      <div class="delivery-badge">🎉 ORDER DELIVERED SUCCESSFULLY</div>
+    </div>
 
-</div>
+    <h1>Hello <%= name || "Customer" %></h1>
 
-<!-- BODY -->
-<div class="email-body">
+    <p>
+      Your order <strong>#<%= orderNumber || "N/A" %></strong> has been successfully delivered.
+      Thank you for choosing Kilifonia Beauty.
+    </p>
 
-<div style="text-align:center;margin-bottom:30px;">
-<div class="delivery-badge">
-🎉 ORDER DELIVERED SUCCESSFULLY
-</div>
-</div>
+    <!-- ORDER PROGRESS -->
+    <div class="progress-box">
+      <h3>Order Progress</h3>
+      <p>Status: <strong><%= statusText || "Delivered" %></strong></p>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width:<%= progress || 100 %>%"></div>
+      </div>
+      <p style="margin-top:10px;"><%= progress || 100 %>% Completed</p>
+      <p>Delivered On:<br><strong><%= estimatedDeliveryDate || new Date().toDateString() %></strong></p>
+    </div>
 
-<h1 style="text-align:center;">
-Hello <%= name %>
-</h1>
+    <!-- ORDER SUMMARY -->
+    <h2 style="margin-top:30px;">Your Order Summary</h2>
+    <div>
+      <% if (products && products.length) { %>
+        <% products.forEach(function(product){ %>
+          <div class="product-item">
+            <img src="<%= product.img || 'https://via.placeholder.com/80' %>" class="product-img"/>
+            <div class="product-details">
+              <p><b><%= product.title || "Product" %></b></p>
+              <p>Quantity: <%= product.quantity || 1 %></p>
+              <p>Price: KES <%= product.price || 0 %></p>
+            </div>
+          </div>
+        <% }) %>
+      <% } else { %>
+        <p>No products available.</p>
+      <% } %>
+    </div>
 
-<p style="text-align:center;font-size:18px;">
-Your order <strong>#<%= orderNumber %></strong> has been successfully delivered.
-Thank you for choosing Kilifonia Beauty.
-</p>
+    <div style="margin-top:25px;text-align:right;font-size:18px;">
+      <strong>Total: KES <%= total || 0 %></strong>
+    </div>
 
+    <div style="text-align:center;">
+      <a href="https://kilifoniabeauty.co.ke/track-order" class="cta-button">Track Your Orders</a>
+    </div>
 
-<!-- ORDER PROGRESS -->
+  </div>
 
-<div class="progress-box">
-
-<h3>Order Progress</h3>
-
-<p>Status: <strong><%= statusText %></strong></p>
-
-<div class="progress-bar">
-<div class="progress-fill" style="width:<%= progress %>%"></div>
-</div>
-
-<p style="margin-top:10px">
-<%= progress %>% Completed
-</p>
-
-<p>
-Delivered On:<br>
-<strong><%= estimatedDeliveryDate %></strong>
-</p>
-
-</div>
-
-
-<hr style="margin:30px 0;border:0;height:2px;background:linear-gradient(90deg,transparent,#667eea,transparent)"/>
-
-
-<h2>Your Order Summary</h2>
-
-<div>
-
-<% products.forEach(function(product){ %>
-
-<div style="display:flex;align-items:center;padding:20px;background:#f8f9fa;border-radius:12px;margin-bottom:15px;">
-
-<img src="<%= product.img %>"
-style="width:80px;height:80px;object-fit:cover;border-radius:8px;margin-right:20px;"/>
-
-<div style="flex:1">
-
-<p style="font-weight:bold"><%= product.title %></p>
-<p>Quantity: <%= product.quantity %></p>
-<p>Price: KES <%= product.price %></p>
+  <!-- FOOTER -->
+  <div class="email-footer">
+    <p style="color:#f5576c;font-weight:bold;font-size:18px;">Kilifonia Beauty</p>
+    <p>Elevating Beauty Through Science and Nature</p>
+    <p>&copy; <%= new Date().getFullYear() %> Kilifonia Beauty. All rights reserved.</p>
+  </div>
 
 </div>
-
-</div>
-
-<% }) %>
-
-</div>
-
-
-<div style="margin-top:25px;text-align:right;font-size:18px;">
-<strong>Total: KES <%= total %></strong>
-</div>
-
-
-<div style="text-align:center;margin-top:30px;">
-<a href="https://kilifoniabeauty.co.ke/track-order" class="cta-button">
-Track Your Orders
-</a>
-</div>
-
-</div>
-
-
-<!-- FOOTER -->
-<div class="email-footer">
-
-<p style="color:#f5576c;font-weight:bold;font-size:18px;">
-Kilifonia Beauty
-</p>
-
-<p>Elevating Beauty Through Science and Nature</p>
-
-<p>
-&copy; <%= new Date().getFullYear() %> Kilifonia Beauty. All rights reserved.
-</p>
-
-</div>
-
-</div>
-
 </body>
 </html>

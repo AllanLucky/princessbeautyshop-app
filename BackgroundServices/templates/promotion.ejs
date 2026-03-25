@@ -6,107 +6,161 @@
 <title>Kilifonia Beauty - Exclusive Product Promotion</title>
 
 <style>
-body{
-margin:0;
-padding:0;
-font-family: Arial, Helvetica, sans-serif;
-background: linear-gradient(135deg,#667eea,#764ba2);
+/* ===========================
+GLOBAL STYLES
+=========================== */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #333;
 }
 
-.email-wrapper{
-max-width:700px;
-margin:40px auto;
-background:white;
-border-radius:20px;
-overflow:hidden;
-box-shadow:0 20px 60px rgba(0,0,0,.15);
+.email-wrapper {
+  max-width: 700px;
+  margin: 40px auto;
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,.15);
 }
 
-.email-header{
-background:linear-gradient(135deg,#f093fb,#f5576c);
-padding:40px;
-text-align:center;
-color:white;
+/* ===========================
+HEADER
+=========================== */
+.email-header {
+  background: linear-gradient(135deg, #f093fb, #f5576c);
+  padding: 40px;
+  text-align: center;
+  color: white;
 }
 
-.logo{
-max-width:180px;
-border-radius:12px;
-box-shadow:0 8px 25px rgba(0,0,0,.2);
+.logo {
+  max-width: 180px;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0,0,0,.2);
 }
 
-.brand-name{
-font-size:28px;
-font-weight:bold;
-margin-top:15px;
+.brand-name {
+  font-size: 28px;
+  font-weight: bold;
+  margin-top: 15px;
 }
 
-.promotion-badge{
-display:inline-block;
-background:linear-gradient(135deg,#ffd89b,#19547b);
-padding:15px 30px;
-border-radius:30px;
-margin-top:20px;
-color:white;
-font-weight:bold;
-animation: pulse 2s infinite;
+.promotion-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #ffd89b, #19547b);
+  padding: 15px 30px;
+  border-radius: 30px;
+  margin-top: 20px;
+  color: white;
+  font-weight: bold;
+  animation: pulse 2s infinite;
 }
 
-.email-body{
-padding:40px;
-background:white;
+/* ===========================
+BODY
+=========================== */
+.email-body {
+  padding: 40px;
+  background: white;
 }
 
-.product-list{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-gap:25px;
+h1, h2, h3 {
+  margin: 0 0 15px 0;
 }
 
-.product-item{
-background:linear-gradient(135deg,#f8f9fa,#fff);
-padding:25px;
-border-radius:15px;
-text-align:center;
-border:1px solid #eee;
-transition:.3s;
+p {
+  margin: 0 0 15px 0;
 }
 
-.product-item:hover{
-transform:translateY(-5px);
-box-shadow:0 15px 30px rgba(0,0,0,.1);
+.product-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 25px;
+  margin-top: 20px;
 }
 
-.product-img{
-width:120px;
-height:120px;
-object-fit:cover;
-border-radius:12px;
+.product-item {
+  background: linear-gradient(135deg,#f8f9fa,#fff);
+  padding: 25px;
+  border-radius: 15px;
+  text-align: center;
+  border: 1px solid #eee;
+  transition: .3s;
 }
 
-.shop-button{
-display:inline-block;
-padding:12px 30px;
-border-radius:25px;
-background:linear-gradient(135deg,#667eea,#764ba2);
-color:white;
-text-decoration:none;
-margin-top:15px;
+.product-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0,0,0,.1);
 }
 
-.email-footer{
-background:linear-gradient(135deg,#2d3748,#1a202c);
-padding:40px;
-text-align:center;
-color:#a0aec0;
+.product-img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 10px;
 }
 
-@keyframes pulse{
-0%{transform:scale(1)}
-50%{transform:scale(1.05)}
-100%{transform:scale(1)}
+.shop-button {
+  display: inline-block;
+  padding: 12px 30px;
+  border-radius: 25px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  text-decoration: none;
+  margin-top: 15px;
+  font-weight: bold;
+  transition: opacity 0.3s ease;
 }
 
+.shop-button:hover {
+  opacity: 0.9;
+}
+
+/* ===========================
+FOOTER
+=========================== */
+.email-footer {
+  background: linear-gradient(135deg, #2d3748, #1a202c);
+  padding: 40px;
+  text-align: center;
+  color: #a0aec0;
+}
+
+.email-footer p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* ===========================
+RESPONSIVE
+=========================== */
+@media(max-width:600px) {
+  .email-body {
+    padding: 20px;
+  }
+  .email-header {
+    padding: 20px;
+  }
+  .product-list {
+    gap: 15px;
+  }
+  .product-item {
+    padding: 15px;
+  }
+  .shop-button {
+    padding: 10px 25px;
+  }
+}
 </style>
 </head>
 
@@ -114,98 +168,74 @@ color:#a0aec0;
 
 <div class="email-wrapper">
 
-<!-- HEADER -->
-<div class="email-header">
+  <!-- HEADER -->
+  <div class="email-header">
+    <img
+      src="https://res.cloudinary.com/dkdx7xytz/image/upload/v1772469610/blisslogo1_rwlktl.png"
+      class="logo"
+      alt="Kilifonia Beauty Logo"
+    />
+    <div class="brand-name">Kilifonia Beauty</div>
+    <div class="promotion-badge">✨ EXCLUSIVE BEAUTY OFFER ✨</div>
+  </div>
 
-<img
-src="https://res.cloudinary.com/dkdx7xytz/image/upload/v1772469610/blisslogo1_rwlktl.png"
-class="logo"
-/>
+  <!-- BODY -->
+  <div class="email-body">
+    <h1 style="text-align:center;color:#2d3748">
+      Discover Your New Favorite Skincare
+    </h1>
 
-<div class="brand-name">Kilifonia Beauty</div>
+    <p style="text-align:center;color:#4a5568;max-width:600px;margin:auto">
+      We are excited to introduce premium beauty products specially curated to transform your skincare routine.
+    </p>
 
-<div class="promotion-badge">
-✨ EXCLUSIVE BEAUTY OFFER ✨
-</div>
+    <h2 style="text-align:center;margin-top:40px">Featured Products</h2>
 
-</div>
+    <div class="product-list">
+      <% if(products && products.length){ %>
+        <% products.forEach(function(product){ %>
+          <div class="product-item">
+            <img
+              src="<%= product.img || 'https://via.placeholder.com/120' %>"
+              class="product-img"
+              alt="<%= product.name || 'Product Image' %>"
+            />
+            <h3><%= product.name || 'Product' %></h3>
+            <p style="color:#718096;font-size:14px">
+              <%= product.description || '' %>
+            </p>
+            <% if(product.price){ %>
+            <div style="color:#f5576c;font-weight:bold;font-size:18px">
+              $<%= product.price %>
+            </div>
+            <% } %>
+            <% if(product.link){ %>
+            <a href="<%= product.link %>" class="shop-button">
+              Shop Now
+            </a>
+            <% } %>
+          </div>
+        <% }) %>
+      <% } else { %>
+        <p style="text-align:center;color:#718096;">No featured products available at the moment.</p>
+      <% } %>
+    </div>
 
-<!-- BODY -->
-<div class="email-body">
+    <div style="text-align:center;margin-top:50px">
+      <a href="https://kilifoniabeauty.co.ke/shop" class="shop-button">
+        Explore All Products
+      </a>
+    </div>
+  </div>
 
-<h1 style="text-align:center;color:#2d3748">
-Discover Your New Favorite Skincare
-</h1>
-
-<p style="text-align:center;color:#4a5568;max-width:600px;margin:auto">
-We are excited to introduce premium beauty products specially curated to transform your skincare routine.
-</p>
-
-<h2 style="text-align:center;margin-top:40px">Featured Products</h2>
-
-<div class="product-list">
-
-<% products.forEach(function(product){ %>
-
-<div class="product-item">
-
-<img
-src="<%= product.img %>"
-class="product-img"
-/>
-
-<h3><%= product.name %></h3>
-
-<p style="color:#718096;font-size:14px">
-<%= product.description || '' %>
-</p>
-
-<% if(product.price){ %>
-<div style="color:#f5576c;font-weight:bold;font-size:18px">
-$<%= product.price %>
-</div>
-<% } %>
-
-<% if(product.link){ %>
-<a href="<%= product.link %>" class="shop-button">
-Shop Now
-</a>
-<% } %>
-
-</div>
-
-<% }) %>
-
-</div>
-
-<div style="text-align:center;margin-top:50px">
-
-<a href="https://kilifoniabeauty.co.ke/shop" class="shop-button">
-Explore All Products
-</a>
-
-</div>
-
-</div>
-
-<!-- FOOTER -->
-<div class="email-footer">
-
-<p style="color:#f5576c;font-weight:bold">
-Kilifonia Beauty
-</p>
-
-<p>
-Crafting exceptional skincare experiences
-</p>
-
-<div style="margin-top:25px;font-size:12px">
-
-&copy; <%= new Date().getFullYear() %> Kilifonia Beauty. All rights reserved.
-
-</div>
-
-</div>
+  <!-- FOOTER -->
+  <div class="email-footer">
+    <p style="color:#f5576c;font-weight:bold">Kilifonia Beauty</p>
+    <p>Crafting exceptional skincare experiences</p>
+    <div style="margin-top:25px;font-size:12px">
+      &copy; <%= new Date().getFullYear() %> Kilifonia Beauty. All rights reserved.
+    </div>
+  </div>
 
 </div>
 

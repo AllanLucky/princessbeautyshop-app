@@ -1,9 +1,8 @@
-// EmailServices/sendShippedOrderEmail.js
-
 import ejs from "ejs";
 import dotenv from "dotenv";
 import sendMail from "../helpers/sendMailer.js";
 import Order from "../models/orderModel.js";
+import path from "path";
 
 dotenv.config();
 
@@ -14,29 +13,33 @@ SEND SHIPPED ORDER EMAIL SERVICE
 */
 
 const getProgressFromStatus = (status) => {
-  const map = {
-    0: 0,
-    1: 25,
-    2: 50,
-    3: 75,
-    4: 100,
-    5: 0,
+  // Map order status to progress %
+  const progressMap = {
+    0: 0,    // Pending
+    1: 25,   // Confirmed
+    2: 50,   // Processing
+    3: 75,   // Shipped
+    4: 100,  // Delivered
+    5: 0,    // Cancelled / Unknown
   };
-
-  return map[status] ?? 0;
+  return progressMap[status] ?? 0;
 };
 
 const sendShippedOrderEmail = async () => {
   try {
+    // Fetch all orders that are shipped but email not yet sent
     const orders = await Order.find({
-      status: 3,
+      status: 3, // Shipped
       shippedEmailSent: false,
       email: { $exists: true, $ne: null },
     })
       .limit(50)
       .lean();
 
-    if (!orders.length) return;
+    if (!orders.length) {
+      console.log("No shipped orders pending email.");
+      return;
+    }
 
     for (const order of orders) {
       try {
@@ -44,45 +47,48 @@ const sendShippedOrderEmail = async () => {
 
         const progress = getProgressFromStatus(order.status);
 
-        const html = await ejs.renderFile(
-          "templates/shippingorder.ejs",
-          {
-            name: order.name || "Customer",
-            orderNumber: order._id.toString().slice(-8),
-            products: order.products,
-            total: order.total || 0,
-            progress,
-          }
+        const templatePath = path.join(
+          process.cwd(),
+          "templates",
+          "shippingorder.ejs"
         );
 
-        await sendMail({
+        const html = await ejs.renderFile(templatePath, {
+          name: order.name || "Customer",
+          orderNumber: order._id.toString().slice(-8),
+          products: order.products,
+          total: order.total || 0,
+          progress,
+          statusText: "Shipped",
+          estimatedDeliveryDate: order.estimatedDeliveryDate
+            ? new Date(order.estimatedDeliveryDate).toDateString()
+            : "To be updated",
+        });
+
+        const messageOptions = {
           from: process.env.EMAIL,
           to: order.email,
           subject: "📦 Good News! Your Order Has Been Shipped",
           html,
-        });
+        };
 
+        await sendMail(messageOptions);
+
+        // Mark email as sent
         await Order.updateOne(
           { _id: order._id },
-          {
-            $set: {
-              shippedEmailSent: true,
-            },
-          }
+          { $set: { shippedEmailSent: true } }
         );
 
         console.log(`✅ Shipped email sent → ${order.email}`);
 
-      } catch (error) {
-        console.error(
-          `❌ Shipped email error (${order.email}):`,
-          error.message
-        );
+      } catch (err) {
+        console.error(`❌ Shipped email error for order ${order._id}:`, err.message);
       }
     }
 
-  } catch (error) {
-    console.error("❌ Shipped service error:", error.message);
+  } catch (err) {
+    console.error("❌ Shipped service error:", err.message);
   }
 };
 
