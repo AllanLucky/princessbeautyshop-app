@@ -3,10 +3,24 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// ✅ Initialize once
-const client = SibApiV3Sdk.ApiClient.instance;
-const apiKey = client.authentications["api-key"];
-apiKey.apiKey = process.env.BREVO_API_KEY;
+let transporter;
+
+const getTransporter = () => {
+  if (!transporter) {
+    transporter = nodemailer.createTransport({
+      host: process.env.EMAIL_HOST || "lim117.truehost.cloud",
+      port: Number(process.env.EMAIL_PORT) || 465,
+      secure: process.env.EMAIL_SECURE === "true",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+      tls: { rejectUnauthorized: false },
+      family: 4,
+    });
+  }
+  return transporter;
+};
 
 const tranEmailApi = new SibApiV3Sdk.TransactionalEmailsApi();
 
