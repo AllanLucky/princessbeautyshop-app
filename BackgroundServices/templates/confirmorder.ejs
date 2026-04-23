@@ -91,6 +91,15 @@ body {
     margin-top: 20px;
 }
 
+.product img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
 .product p {
     margin: 10px 0;
 }
@@ -98,6 +107,19 @@ body {
 .product hr {
     border: 0;
     border-top: 1px solid #e2e8f0;
+}
+
+/* AMOUNT SUMMARY */
+.amount-summary {
+    background: #f1f5f9;
+    padding: 15px 20px;
+    border-radius: 12px;
+    margin-top: 20px;
+}
+
+.amount-summary p {
+    margin: 5px 0;
+    font-size: 14px;
 }
 
 /* CTA / INFO */
@@ -178,6 +200,9 @@ body {
             <% if (products && products.length) { %>
                 <% products.forEach(product => { %>
                     <p>
+                        <% if(product.img){ %>
+                            <img src="<%= product.img %>" alt="<%= product.title || 'Product' %>"/>
+                        <% } %>
                         <b><%= product.title || "Product" %></b><br>
                         Quantity: <%= product.quantity || 0 %><br>
                         Price: KES <%= product.price || 0 %>
@@ -188,7 +213,13 @@ body {
                 <p>No product information available.</p>
             <% } %>
 
-            <p><strong>Total Amount:</strong> KES <%= total || 0 %></p>
+            <div class="amount-summary">
+                <p><strong>Total Amount:</strong> KES <%= total || 0 %></p>
+                <% if(typeof amountPaid !== "undefined"){ %>
+                    <p><strong>Amount Paid:</strong> KES <%= amountPaid %></p>
+                    <p><strong>Balance:</strong> KES <%= (total - amountPaid) %></p>
+                <% } %>
+            </div>
         </div>
 
         <p style="margin-top:30px;">

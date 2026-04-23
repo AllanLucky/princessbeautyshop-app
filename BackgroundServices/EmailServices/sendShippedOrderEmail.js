@@ -1,33 +1,18 @@
 import ejs from "ejs";
 import dotenv from "dotenv";
-import sendMail from "../helpers/sendMailer.js";
+import sendMail from "../helpers/sendMailer.js"; // must handle Brevo payload
 import Order from "../models/orderModel.js";
 import path from "path";
 
 dotenv.config();
 
-/*
-=====================================================
-SEND SHIPPED ORDER EMAIL SERVICE
-=====================================================
-*/
-
 const getProgressFromStatus = (status) => {
-  // Map order status to progress %
-  const progressMap = {
-    0: 0,    // Pending
-    1: 25,   // Confirmed
-    2: 50,   // Processing
-    3: 75,   // Shipped
-    4: 100,  // Delivered
-    5: 0,    // Cancelled / Unknown
-  };
+  const progressMap = { 0: 0, 1: 25, 2: 50, 3: 75, 4: 100, 5: 0 };
   return progressMap[status] ?? 0;
 };
 
 const sendShippedOrderEmail = async () => {
   try {
-    // Fetch all orders that are shipped but email not yet sent
     const orders = await Order.find({
       status: 3, // Shipped
       shippedEmailSent: false,
@@ -65,16 +50,20 @@ const sendShippedOrderEmail = async () => {
             : "To be updated",
         });
 
-        const messageOptions = {
-          from: process.env.EMAIL,
-          to: order.email,
+        // ✅ Brevo-compatible payload
+        const brevoPayload = {
+          sender: {
+            name: "KilifoniaBeauty Shop",
+            email: process.env.EMAIL,
+          },
+          to: [{ email: order.email }], // must be array of objects
           subject: "📦 Good News! Your Order Has Been Shipped",
-          html,
+          htmlContent: html,
+          textContent: `Hi ${order.name || "Customer"}, your order has been shipped!`,
         };
 
-        await sendMail(messageOptions);
+        await sendMail(brevoPayload); // your helper must handle Brevo format
 
-        // Mark email as sent
         await Order.updateOne(
           { _id: order._id },
           { $set: { shippedEmailSent: true } }

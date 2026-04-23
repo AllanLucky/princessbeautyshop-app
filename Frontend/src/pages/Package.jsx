@@ -153,7 +153,7 @@ const Packages = () => {
           <div className="w-32 h-40 bg-gradient-to-b from-rose-400 to-pink-500 rounded-2xl relative shadow-2xl border-2 border-white">
             <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-2 w-24 h-6 bg-rose-300 rounded-t-2xl border-2 border-white"></div>
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white text-sm font-bold text-center">
-              DUBOIS<br />BEAUTY
+              KILIFONIA<br />BEAUTY
             </div>
           </div>
           <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-20 animate-fly-to-bag">

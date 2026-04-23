@@ -17,33 +17,23 @@ WELCOME EMAIL SERVICE
 const sendWelcomeEmail = async () => {
   try {
     // ====================================================
-    // FIND NEW USERS ONLY (STATUS = 0)
+    // FIND NEW USERS ONLY (status = 0)
     // ====================================================
     const users = await User.find({ status: 0 }).lean();
 
     if (!users.length) {
-      console.log("ℹ️ No pending welcome emails.");
+      console.log(`[${new Date().toISOString()}] ℹ️ No pending welcome emails.`);
       return;
     }
 
-    console.log(`🚀 Sending welcome emails to ${users.length} user(s)`);
+    console.log(`[${new Date().toISOString()}] 🚀 Sending welcome emails to ${users.length} user(s)`);
 
     // ====================================================
-    // PROMISE TEMPLATE RENDERER
+    // TEMPLATE RENDERER
     // ====================================================
-    const renderTemplate = (templateName, data) => {
-      const templatePath = path.join(
-        process.cwd(),
-        "templates",
-        `${templateName}.ejs`
-      );
-
-      return new Promise((resolve, reject) => {
-        ejs.renderFile(templatePath, data, (err, html) => {
-          if (err) reject(err);
-          else resolve(html);
-        });
-      });
+    const renderTemplate = async (templateName, data) => {
+      const templatePath = path.join(process.cwd(), "templates", `${templateName}.ejs`);
+      return ejs.renderFile(templatePath, data);
     };
 
     // ====================================================
@@ -51,8 +41,13 @@ const sendWelcomeEmail = async () => {
     // ====================================================
     for (const user of users) {
       try {
+        if (!user.email) {
+          console.warn(`[${new Date().toISOString()}] ⚠️ Skipping user without email: ${user._id}`);
+          continue;
+        }
+
         const html = await renderTemplate("welcome", {
-          name: user.name,
+          name: user.name || "Valued Customer",
           email: user.email
         });
 
@@ -73,15 +68,15 @@ const sendWelcomeEmail = async () => {
               error: null
             }
           });
-
-          console.log(`✅ Welcome email sent → ${user.email}`);
+          console.log(`[${new Date().toISOString()}] ✅ Welcome email sent → ${user.email}`);
         } else {
-          console.log(`❌ Welcome email failed → ${user.email}`);
+          console.log(`[${new Date().toISOString()}] ❌ Welcome email failed → ${user.email}`);
+          // Optional: implement retry logic here
           await User.findByIdAndUpdate(user._id, { $set: { status: 0 } });
         }
 
       } catch (error) {
-        console.error(`❌ Error sending to ${user.email}:`, error.message);
+        console.error(`[${new Date().toISOString()}] ❌ Error sending to ${user.email}:`, error.message);
         await User.findByIdAndUpdate(user._id, {
           $set: {
             error: error.message,
@@ -91,10 +86,10 @@ const sendWelcomeEmail = async () => {
       }
     }
 
-    console.log("✅ Welcome email process completed.");
+    console.log(`[${new Date().toISOString()}] ✅ Welcome email process completed.`);
 
   } catch (error) {
-    console.error("❌ sendWelcomeEmail service crashed:", error.message);
+    console.error(`[${new Date().toISOString()}] ❌ sendWelcomeEmail service crashed:`, error.message);
   }
 };
 

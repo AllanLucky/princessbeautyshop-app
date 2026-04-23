@@ -1,34 +1,100 @@
+// EmailServices/sendSkincareReminder.js
+
 import ejs from "ejs";
 import dotenv from "dotenv";
+import path from "path";
 import sendMail from "../helpers/sendMailer.js";
 import Timetable from "../models/timetableModel.js";
-import path from "path";
 
 dotenv.config();
 
-/*
-================================================
-SKINCARE REMINDER SERVICE (PRODUCTION VERSION)
-================================================
-*/
+/* ====================================================
+   BATCH EMAIL WORKER
+==================================================== */
+const sendRemindersInBatches = async (requests, timeOfDay, batchSize = 10, delayMs = 1000) => {
+  for (let i = 0; i < requests.length; i += batchSize) {
+    const batch = requests.slice(i, i + batchSize);
 
+    await Promise.all(
+      batch.map(async (request) => {
+        try {
+          const templatePath = path.join(process.cwd(), "templates", "reminder.ejs");
+
+          const routineType = timeOfDay === "morning" ? "AM" : "PM";
+          const subjectTime = timeOfDay === "morning" ? "Morning" : "Evening";
+
+          const emailHtml = await ejs.renderFile(templatePath, {
+            name: request.name || "Customer",
+            skinType: request.skinType || "General",
+            routineType,
+            timeOfDay,
+            scheduledTime:
+              (timeOfDay === "morning" ? request.morningTime : request.eveningTime) || "Not Set",
+            concerns: request.concerns || [],
+          });
+
+          const messageOptions = {
+            from: `"Kilifonia Beauty" <${process.env.EMAIL}>`,
+            to: request.email,
+            subject: `🌅 Skincare Reminder - Time for your ${subjectTime} Routine!`,
+            html: emailHtml,
+          };
+
+          const result = await sendMail(messageOptions);
+
+          if (result?.success) {
+            console.log(`[${new Date().toISOString()}] ✅ Reminder sent → ${request.email}`);
+
+            const updateFlag =
+              timeOfDay === "morning"
+                ? { reminderEmailSentMorning: true }
+                : { reminderEmailSentEvening: true };
+
+            await Timetable.updateOne(
+              { _id: request._id },
+              {
+                $set: {
+                  lastReminderSent: new Date(),
+                  lastReminderType: timeOfDay,
+                  ...updateFlag,
+                },
+              }
+            );
+          } else {
+            console.error(`[${new Date().toISOString()}] ❌ Failed to send → ${request.email}`, result?.error);
+          }
+        } catch (error) {
+          console.error(`[${new Date().toISOString()}] ❌ Error for ${request.email}:`, error.message);
+        }
+      })
+    );
+
+    // Rate limiting
+    if (i + batchSize < requests.length) {
+      console.log(`[${new Date().toISOString()}] ⏳ Cooling down for ${delayMs}ms before next batch...`);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+};
+
+/* ====================================================
+   MAIN SERVICE
+==================================================== */
 const sendSkincareReminder = async (timeOfDay) => {
   try {
-    console.log(`🕑 Starting ${timeOfDay} skincare reminder process...`);
+    console.log(`[${new Date().toISOString()}] 🕑 Starting ${timeOfDay} skincare reminder process...`);
 
     if (!["morning", "evening"].includes(timeOfDay)) {
-      console.error("❌ Invalid reminder time provided. Must be 'morning' or 'evening'.");
+      console.error("❌ Invalid reminder time. Must be 'morning' or 'evening'.");
       return;
     }
 
-    // Determine which email flag to use
     const emailFlag =
       timeOfDay === "morning"
         ? { reminderEmailSentMorning: false }
         : { reminderEmailSentEvening: false };
 
-    // Fetch timetable requests
-    const timetableRequests = await Timetable.find({
+    const requests = await Timetable.find({
       status: 1,
       ...emailFlag,
       email: { $exists: true, $ne: null },
@@ -36,77 +102,19 @@ const sendSkincareReminder = async (timeOfDay) => {
       .limit(50)
       .lean();
 
-    if (!timetableRequests.length) {
-      console.log(`ℹ️ No users found for ${timeOfDay} reminders.`);
+    if (!requests.length) {
+      console.log(`[${new Date().toISOString()}] ℹ️ No users found for ${timeOfDay} reminders.`);
       return;
     }
 
-    console.log(`📧 Sending ${timeOfDay} reminders to ${timetableRequests.length} users...`);
+    console.log(`[${new Date().toISOString()}] 📧 Sending ${timeOfDay} reminders to ${requests.length} users...`);
 
-    const routineType = timeOfDay === "morning" ? "AM" : "PM";
-    const subjectTime = timeOfDay === "morning" ? "Morning" : "Evening";
+    await sendRemindersInBatches(requests, timeOfDay);
 
-    for (const request of timetableRequests) {
-      try {
-        console.log(`🔔 Preparing ${timeOfDay} reminder for ${request.email}...`);
+    console.log(`[${new Date().toISOString()}] 🏁 ${timeOfDay} skincare reminder process completed.`);
 
-        // Construct path to EJS template
-        const templatePath = path.join(process.cwd(), "templates", "reminder.ejs");
-
-        const emailHtml = await ejs.renderFile(templatePath, {
-          name: request.name || "Customer",
-          skinType: request.skinType || "General",
-          routineType,
-          timeOfDay,
-          scheduledTime:
-            (timeOfDay === "morning" ? request.morningTime : request.eveningTime) || "Not Set",
-          concerns: request.concerns || [],
-        });
-
-        const messageOptions = {
-          from: `"Kilifonia Beauty" <${process.env.EMAIL}>`,
-          to: request.email,
-          subject: `🌅 Skincare Reminder - Time for your ${subjectTime} Routine!`,
-          html: emailHtml,
-        };
-
-        const result = await sendMail(messageOptions);
-
-        if (result?.success) {
-          console.log(`✅ Reminder sent successfully to ${request.email}`);
-
-          const updateFlag =
-            timeOfDay === "morning"
-              ? { reminderEmailSentMorning: true }
-              : { reminderEmailSentEvening: true };
-
-          await Timetable.updateOne(
-            { _id: request._id },
-            {
-              $set: {
-                lastReminderSent: new Date(),
-                lastReminderType: timeOfDay,
-                ...updateFlag,
-              },
-            }
-          );
-        } else {
-          console.error(
-            `❌ Failed to send reminder to ${request.email}`,
-            result?.error
-          );
-        }
-      } catch (error) {
-        console.error(
-          `❌ Error sending ${timeOfDay} reminder to ${request.email}:`,
-          error.message
-        );
-      }
-    }
-
-    console.log(`🏁 ${timeOfDay} skincare reminder process completed.`);
   } catch (error) {
-    console.error(`❌ Service error in skincare reminder:`, error.message);
+    console.error(`[${new Date().toISOString()}] ❌ Skincare reminder service error:`, error.message);
   }
 };
 

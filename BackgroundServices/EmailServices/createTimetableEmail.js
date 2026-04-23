@@ -1,10 +1,45 @@
+// EmailServices/createTimetableEmail.js
+
 import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
 
 // Product Database (Dubois Beauty)
-const productDatabase = { 
-  /* All product data remains exactly as your original code */
+const productDatabase = {
+  // Example structure (replace with your real data)
+  cleansers: {
+    dry: { product: 'Hydrating Cleanser', instructions: 'Gently cleanse morning & evening' },
+    oily: { product: 'Foaming Cleanser', instructions: 'Use morning & evening' },
+    combination: { product: 'Balancing Cleanser', instructions: 'Use morning & evening' },
+    normal: { product: 'Gentle Cleanser', instructions: 'Use daily' },
+    sensitive: { product: 'Soothing Cleanser', instructions: 'Use morning & evening' }
+  },
+  toners: {
+    dry: { product: 'Hydrating Toner', instructions: 'Apply with cotton pad' },
+    oily: { product: 'Clarifying Toner', instructions: 'Apply morning & evening' },
+    combination: { product: 'Balancing Toner', instructions: 'Apply daily' },
+    normal: { product: 'Refreshing Toner', instructions: 'Use as needed' },
+    sensitive: { product: 'Soothing Toner', instructions: 'Use morning & evening' }
+  },
+  moisturizers: {
+    dry: { product: 'Rich Moisturizer', instructions: 'Apply generously' },
+    oily: { product: 'Lightweight Gel', instructions: 'Apply morning & evening' },
+    combination: { product: 'Balancing Cream', instructions: 'Apply to dry areas' },
+    normal: { product: 'Daily Moisturizer', instructions: 'Apply daily' },
+    sensitive: { product: 'Barrier Cream', instructions: 'Apply morning & evening' }
+  },
+  sunscreens: {
+    dry: { product: 'Hydrating SPF50', instructions: 'Apply every morning' },
+    oily: { product: 'Mattifying SPF50', instructions: 'Apply every morning' },
+    combination: { product: 'SPF50 Lotion', instructions: 'Apply daily' },
+    normal: { product: 'Daily SPF50', instructions: 'Apply morning' },
+    sensitive: { product: 'Soothing SPF50', instructions: 'Apply every morning' }
+  },
+  serums: {
+    acne: { product: 'BHA Serum', instructions: 'Apply on affected areas' },
+    aging: { product: 'Retinol Serum', instructions: 'Apply at night' },
+    darkSpots: { product: 'Vitamin C Serum', instructions: 'Apply in the morning' }
+  }
 };
 
 // Generate personalized skincare routine
@@ -23,7 +58,7 @@ export const generateSkincareRoutine = (skinType, concerns, morningTime, evening
   routine.products.toner = productDatabase.toners[skinType];
   routine.products.moisturizer = productDatabase.moisturizers[skinType];
   routine.products.sunscreen = productDatabase.sunscreens[skinType];
-  routine.products.serums = concerns.map(concern => productDatabase.serums[concern]).filter(Boolean);
+  routine.products.serums = concerns.map(c => productDatabase.serums[c]).filter(Boolean);
 
   routine.weeklySchedule = generateWeeklySchedule(skinType, concerns);
   routine.instructions = generateDetailedInstructions(routine.products);
@@ -34,14 +69,18 @@ export const generateSkincareRoutine = (skinType, concerns, morningTime, evening
 
 // Weekly schedule logic
 const generateWeeklySchedule = (skinType, concerns) => {
-  const baseSchedule = { 
-    /* Base weekly schedule as per your code */ 
+  const baseSchedule = {
+    monday: { am: 'Cleanse, Tone, Moisturize, SPF', pm: 'Cleanse, Tone, Moisturize' },
+    tuesday: { am: 'Cleanse, Tone, Moisturize, SPF', pm: 'Cleanse, Tone, Moisturize' },
+    wednesday: { am: 'Cleanse, Tone, Moisturize, SPF', pm: 'Cleanse, Tone, Moisturize' },
+    thursday: { am: 'Cleanse, Tone, Moisturize, SPF', pm: 'Cleanse, Tone, Moisturize' },
+    friday: { am: 'Cleanse, Tone, Moisturize, SPF', pm: 'Cleanse, Tone, Moisturize' },
+    saturday: { am: 'Cleanse, Tone, Moisturize, SPF', pm: 'Cleanse, Tone, Moisturize' },
+    sunday: { am: 'Cleanse, Tone, Moisturize, SPF', pm: 'Cleanse, Tone, Moisturize' }
   };
 
-  // Adjustments for sensitive or acne/aging concerns
   if (skinType === 'sensitive') {
     baseSchedule.wednesday.pm = 'Double Cleanse, Soothing Serum, Barrier Cream';
-    baseSchedule.wednesday.focus = 'Gentle Care Day';
     baseSchedule.saturday.pm = 'Double Cleanse, Calming Mask, Recovery Balm';
   }
   if (concerns.includes('acne')) {
@@ -65,7 +104,7 @@ const generateDetailedInstructions = (products) => ({
     "Maintain a healthy lifestyle with balanced diet and adequate hydration"
   ],
   morning: [
-    "Start with a clean face using your Dubois cleanser",
+    "Start with a clean face using your cleanser",
     products.cleanser.instructions,
     "Follow with toner to balance and prepare skin",
     products.toner.instructions,
@@ -95,18 +134,18 @@ const generateDetailedInstructions = (products) => ({
 const generatePersonalizedTips = (skinType, concerns) => {
   const tips = [];
   const skinTypeTips = {
-    dry: ["Apply moisturizer to damp skin to lock in hydration", "Use a humidifier in your bedroom overnight", "Avoid very hot water when cleansing"],
-    oily: ["Don't skip moisturizer - dehydration can increase oil production", "Use blotting papers instead of powder throughout the day", "Clean your phone screen regularly to prevent bacterial transfer"],
-    combination: ["Apply different products to different zones as needed", "Use lighter textures on T-zone, richer formulas on cheeks", "Pay attention to seasonal changes in your skin's needs"],
-    normal: ["Focus on prevention and maintaining your skin's balance", "Don't over-complicate your routine - simplicity works best", "Regular professional facials can maintain optimal skin health"],
-    sensitive: ["Always patch test new products for 24-48 hours", "Keep a product diary to track reactions", "Avoid fragrance and essential oils in your products"]
+    dry: ["Apply moisturizer to damp skin", "Use a humidifier overnight", "Avoid hot water when cleansing"],
+    oily: ["Don't skip moisturizer", "Use blotting papers", "Clean your phone screen regularly"],
+    combination: ["Apply different products to zones", "Lighter textures on T-zone", "Adjust for seasons"],
+    normal: ["Focus on prevention", "Simplicity is best", "Regular facials maintain skin health"],
+    sensitive: ["Patch test new products", "Keep a product diary", "Avoid fragrance and essential oils"]
   };
 
   tips.push(...(skinTypeTips[skinType] || []));
 
-  if (concerns.includes('acne')) tips.push("Change pillowcases every 3-4 days", "Avoid touching your face throughout the day");
-  if (concerns.includes('aging')) tips.push("Always wear sunscreen, even on cloudy days", "Sleep on your back to prevent sleep lines");
-  if (concerns.includes('darkSpots')) tips.push("Be consistent with treatment - results take 8-12 weeks", "Never pick at dark spots or scabs");
+  if (concerns.includes('acne')) tips.push("Change pillowcases every 3-4 days", "Avoid touching your face");
+  if (concerns.includes('aging')) tips.push("Always wear sunscreen", "Sleep on your back to prevent lines");
+  if (concerns.includes('darkSpots')) tips.push("Be consistent with treatment", "Never pick at dark spots");
 
   return tips;
 };
@@ -132,7 +171,7 @@ export const generateSkincarePDF = (userData, routine) => {
         doc.rotate(-45);
         doc.fillColor(colors.light).opacity(0.03);
         doc.fontSize(72).font('Helvetica-Bold');
-        doc.text('DUBOIS BEAUTY', -350, 0, { width: 700, align: 'center' });
+        doc.text('KILIFONIA BEAUTY', -350, 0, { width: 700, align: 'center' });
         doc.restore();
       };
 
@@ -141,7 +180,7 @@ export const generateSkincarePDF = (userData, routine) => {
       addWatermark();
 
       let y = 45;
-      doc.fillColor(colors.primary).fontSize(16).font('Helvetica-Bold').text('DUBOIS BEAUTY', 50, y);
+      doc.fillColor(colors.primary).fontSize(16).font('Helvetica-Bold').text('KILIFONIA BEAUTY', 50, y);
       y += 25;
       doc.fillColor(colors.dark).fontSize(20).font('Helvetica-Bold').text('Personalized Skincare Journey', 50, y, { align: 'center' });
       y += 25;
@@ -153,8 +192,8 @@ export const generateSkincarePDF = (userData, routine) => {
       doc.moveTo(50, y + 20).lineTo(550, y + 20).strokeColor(colors.secondary).lineWidth(2).stroke();
       y += 35;
       const profile = [
-        { label: 'Skin Type', value: userData.skinType.charAt(0).toUpperCase() + userData.skinType.slice(1) },
-        { label: 'Primary Concerns', value: userData.concerns.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(', ') },
+        { label: 'Skin Type', value: userData.skinType },
+        { label: 'Primary Concerns', value: userData.concerns.join(', ') },
         { label: 'Morning Routine', value: userData.morningTime },
         { label: 'Evening Routine', value: userData.eveningTime }
       ];
@@ -165,8 +204,8 @@ export const generateSkincarePDF = (userData, routine) => {
       });
       y += 100;
 
-      // NOTE: Continue adding sections: Products, Serums, Weekly Schedule, Instructions, Personalized Tips, Footer
-      // You can follow your original code here and keep the structure consistent
+      // TODO: Add sections for Products, Serums, Weekly Schedule, Instructions, Personalized Tips
+      // You can follow the same layout logic for each section as above
 
       doc.end();
     } catch (error) {

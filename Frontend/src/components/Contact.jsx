@@ -35,7 +35,7 @@ const ContactUs = () => {
     try {
       // Prepare email data
       const emailData = {
-        to: 'kilifonialbeautyblis@gmail.com',
+        to: 'support@kilifoniabeautybliss.co.ke',
         from: formData.email,
         subject: `Kilifonia Beauty Contact: ${formData.subject}`,
         html: `
@@ -89,7 +89,7 @@ const ContactUs = () => {
 
       if (response.ok) {
         setSubmitStatus('success');
-        setSubmitMessage('Thank you! Your message has been sent to Dubois Beauty. We will get back to you within 2-4 hours.');
+        setSubmitMessage('Thank you! Your message has been sent to Kilifonia Beauty. We will get back to you within 2-4 hours.');
         
         // Reset form
         setFormData({
@@ -105,7 +105,7 @@ const ContactUs = () => {
     } catch (error) {
       console.error('Error sending message:', error);
       setSubmitStatus('error');
-      setSubmitMessage('Sorry, there was an error sending your message. Please try again or contact us directly at kilifonialbeautyblis@gmail.com');
+      setSubmitMessage('Sorry, there was an error sending your message. Please try again or contact us directly at support@kilifoniabeautybliss.co.ke');
     } finally {
       setIsSubmitting(false);
     }
@@ -135,19 +135,19 @@ const ContactUs = () => {
       icon: FaEnvelope,
       title: 'Email Support',
       description: 'Send us a message anytime',
-      contact: 'kilifonialbeautyblis@gmail.com',
+      contact: 'support@kilifoniabeautybliss.co.ke',
       hours: 'Response within 2-4 hours',
       action: 'Send Email',
-      link: 'mailto:kilifonialbeautyblis@gmail.com'
+      link: 'mailto:support@kilifonialbeautyblis.co.ke'
     },
     {
       icon: FaMapMarkerAlt,
       title: 'Visit Our Shop',
       description: 'Experience our products in person',
-      contact: 'Nairobi CBD, Kenya',
+      contact: 'Kilifi CBD, Kenya',
       hours: 'Mon-Sat: 9:00 AM - 7:00 PM',
       action: 'Get Directions',
-      link: 'https://maps.google.com/?q=Nairobi+CBD+Kenya'
+      link: 'https://maps.google.com/?q=Kilifi+CBD+Kenya'
     }
   ];
 
@@ -214,9 +214,9 @@ const ContactUs = () => {
   const businessInfo = {
     name: 'Kilifonia Beauty',
     description: 'Your premier destination for luxury skincare and beauty products in Kenya.',
-    email: 'kilifonialbeautyblis@gmail.com',
+    email: 'support@kilifoniabeautybliss.co.ke',
     phone: '+254 792491368',
-    address: 'Nairobi CBD, Kenya',
+    address: 'Kilifi CBD, Kenya',
     operatingHours: 'Monday - Sunday: 8:00 AM - 10:00 PM EAT'
   };
 
@@ -358,7 +358,7 @@ const ContactUs = () => {
               </button>
 
               <p className="text-sm text-gray-500 text-center">
-                Your message will be sent directly to <strong>kilifonialbeautyblis@gmail.com</strong>
+                Your message will be sent directly to <strong>support@kilifoniabeautybliss.co.ke</strong>
               </p>
             </form>
           </div>
@@ -479,7 +479,7 @@ const ContactUs = () => {
               <FaEnvelope className="text-2xl text-rose-600" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Direct Email Contact</h3>
-            <p className="text-gray-600">All form messages are sent directly to <strong>kilifonialbeautyblis@gmail.com</strong></p>
+            <p className="text-gray-600">All form messages are sent directly to <strong>support@kilifoniabeautybliss.co.ke</strong></p>
           </div>
           
           <div className="text-center">
