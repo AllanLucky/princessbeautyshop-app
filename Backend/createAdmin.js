@@ -15,7 +15,7 @@ const createAdmins = async () => {
     // Super Admin
     const superAdmin = await User.create({
       name: "Chief Admin",
-      email: "chiefadmin@princessbeautyshop.com",
+      email: "clarisakinyi2002@gmail.com",
       password: "admin123", // plain text, schema will hash
       role: "admin",
       status: "active",
@@ -25,7 +25,7 @@ const createAdmins = async () => {
     // Allan Admin
     const allanAdmin = await User.create({
       name: "director allan",
-      email: "director.allan@princessbeautyshop.com",
+      email: "shehetsory.dev@gmail.com",
       password: "35600879", // plain text, schema will hash
       role: "admin",
       status: "active",
